@@ -4,8 +4,8 @@
 
 import uproot3
 
-inputPath = '/nfs/kloe/einstein4/HDBS/newDataFromRob/'
-outputPath = '/nfs/kloe/einstein4/HDBS/DNN_InputDataFrames/'
+ntuplePath = '/nfs/kloe/einstein4/HDBS/newDataFromRob/'
+dfPath = '/nfs/kloe/einstein4/HDBS/DNN_InputDataFrames/'
 inputFiles = ['Data', 
               'Diboson-0', 
               'Diboson-1', 
@@ -42,13 +42,13 @@ inputFiles = ['Data',
               'Zjets-9']
 
 for i in inputFiles:
-    inFile = inputPath+i+'.root'
+    inFile = ntuplePath+i+'.root'
     print('Loading '+inFile)
     theFile = uproot3.open(inFile)
     tree = theFile['Nominal']
     Nevents = tree.numentries
     print('Number of events in '+inFile,'\t'+str(Nevents))
     DF = tree.pandas.df()
-    outFile = outputPath+i+'_DF.pkl'
+    outFile = dfPath+i+'_DF.pkl'
     DF.to_pickle(outFile)
     print('Written '+outFile)
