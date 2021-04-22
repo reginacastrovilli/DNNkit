@@ -1,41 +1,60 @@
-### todo list
-# 0) place common variables in a config file
-# 1) make sure #events is the same in signal and background. This can be done by cutting or by weighting
-# DONE 2) select variables to use
-# DONE 3) DSID-mass map
-# DONE 4) signal flag
-# 5) apply preselection cuts
-
 import pandas as pd
 import numpy as np
+import argparse, configparser
+import re
+import ast
+import os.path
+from os import path
+from colorama import init, Fore
+init(autoreset=True)
 
-dfPath = '/nfs/kloe/einstein4/HDBS/DNN_InputDataFrames/'
-inputFiles = ['Diboson-0', 'Diboson-1', 'Signal']#, 'stop-0', 'stop-1', 'ttbar-0', 'ttbar-1', 'ttbar-2', 'ttbar-3', 'ttbar-4', 'ttbar-5', 'Wjets-0', 'Wjets-1', 'Wjets-2', 'Wjets-3', 'Wjets-4', 'Wjets-5', 'Wjets-6', 'Wjets-7', 'Wjets-8', 'Wjets-9', 'Zjets-0', 'Zjets-10', 'Zjets-11', 'Zjets-1', 'Zjets-2', 'Zjets-3', 'Zjets-4', 'Zjets-5', 'Zjets-6', 'Zjets-7', 'Zjets-8', 'Zjets-9']
-dataType   = ['bkg'      , 'bkg'      , 'sig']#   , 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg']
-rootBranchSubSample = ['DSID','lep1_m', 'lep1_pt', 'lep1_eta', 'lep1_phi', 'lep2_m','lep2_pt', 'lep2_eta', 'lep2_phi', 'fatjet_m', 'fatjet_pt', 'fatjet_eta', 'fatjet_phi', 'fatjet_D2', 'NJets', 'weight', 'X_boosted_m', 'Zcand_m', 'Zcand_pt', 'Pass_MergHP_GGF_ZZ_Tag_SR', 'Pass_MergHP_GGF_ZZ_Untag_SR', 'Pass_MergLP_GGF_ZZ_Tag_SR', 'Pass_MergLP_GGF_ZZ_Untag_SR', 'Pass_MergHP_GGF_ZZ_Tag_ZCR', 'Pass_MergHP_GGF_ZZ_Untag_ZCR', 'Pass_MergLP_GGF_ZZ_Tag_ZCR', 'Pass_MergLP_GGF_ZZ_Untag_ZCR']
+parser = argparse.ArgumentParser(description = 'Deep Neural Network Training and testing Framework')
+parser.add_argument('-p', '--Preselection', default = "", help = 'String which will be translated to python command to filter the initial PDs according to it. E.g. \'lep1_pt >0 and lep1_eta > 0\'', type = str)
+args = parser.parse_args()
 
+### Reading from config file
+config = configparser.ConfigParser()
+config.read('Config.txt')
+dfPath = config.get('config', 'dfPath')
+inputFiles = ast.literal_eval(config.get('config', 'inputFiles'))
+dataType = ast.literal_eval(config.get('config', 'dataType'))
+rootBranchSubSample = ast.literal_eval(config.get('config', 'rootBranchSubSample'))
 
 if len(inputFiles) != len(dataType):
-    print('Data type array doesnt match input files array')
+    print(format(Fore.RED + 'Data type array does not match input files array'))
     exit()
 
 ### Loading DSID-mass map
 f = open('data/DSIDMap_2lep.txt')
 lines = f.readlines()
-DSID = [i.split(':')[0] for i in lines]
-print (DSID)
+DSID = [int(i.split(':')[0]) for i in lines]
 mass = [int(i.split(':')[1]) for i in lines]
-print (mass)
 
-### Loading pkl files, select only relevant variables, create sig/bkg flag, convert DSID into mass
+### Loading pkl files, selecting only relevant variables, creating sig/bkg flag, converting DSID into mass
 df = []
-counter=0
+counter = 0
+logFile = open('logFile.txt', 'w')
+PreselectionCuts = args.Preselection
+if PreselectionCuts != '':
+    logFile.write('Preselection cuts: ' + PreselectionCuts)
+logFile.write('\nInput files path: ' + dfPath + '\nInput files: [')
 for i in inputFiles:
-#    if (dataType[counter] == 'data'):
-    inFile = dfPath+i+'_DF.pkl'
-    print('Loading '+inFile)
-    newDf=pd.read_pickle(inFile)
-    newDf=newDf[rootBranchSubSample]
+    inFile = dfPath + i + '_DF.pkl'
+    if path.exists(inFile) == False:
+        print(format(Fore.RED + 'File ' + inFile + ' does not exist'))
+        counter+=1
+        continue
+    print('Loading ' + inFile)
+    logFile.write(i + '_DF.pkl')
+    if counter != (len(inputFiles) - 1):
+        logFile.write(', ')
+    else:
+        logFile.write(']')
+    newDf = pd.read_pickle(inFile)
+    newDf = newDf[rootBranchSubSample]
+                
+    if PreselectionCuts != '':
+        newDf = newDf.query(PreselectionCuts)
     if (dataType[counter] == 'sig'):
         newDf.insert(len(newDf.columns), "isSignal", np.ones(newDf.shape[0]), True)
         for k in range(newDf.shape[0]):
@@ -45,13 +64,23 @@ for i in inputFiles:
                     newDf.iat[k,0] = int(mass[j])
                     found = True
             if (found == False):
-                print('WARNING !!! missing mass value for DSID ' + str(newDf.iat[k,0]))
+                print(format(Fore.RED + 'WARNING !!! missing mass value for DSID ' + str(newDf.iat[k,0])))
     else:
         newDf.insert(len(newDf.columns), "isSignal", np.zeros(newDf.shape[0]), True)
     print(newDf[0:10])
     df.append(newDf)
     counter+=1
 
+### Dividing sig from bkg
+df_sig = pd.DataFrame()
+df_bkg = pd.DataFrame()
+
+for i in range(len(df)):
+    if dataType[i] == 'sig':
+        df_sig = pd.concat([df_sig, df[i]], ignore_index=True)
+    else:
+        df_bkg = pd.concat([df_bkg, df[i]], ignore_index=True)
+        
 ### Shuffling data
 import sklearn.utils
 def Shuffling(df):
@@ -59,28 +88,32 @@ def Shuffling(df):
     df = df.reset_index(drop=True)
     return df
 
-for i in range(len(df)):
-    print("Shuffling "+inputFiles[i])
-    df[i] = Shuffling(df[i])
+df_sig = Shuffling(df_sig)
+df_bkg = Shuffling(df_bkg)
 
-### divide sig from bkg and select only the number of events needed
-df_sig = pd.DataFrame()
-df_bkg = pd.DataFrame()
-for i in range(len(df)):
-    if dataType[i]=='sig':
-        df_sig = pd.concat([df_sig, df[i][0:5000]], ignore_index=True) # here change #events signal (todo list 1))
-    else:
-        df_bkg = pd.concat([df_bkg, df[i][0:1700]], ignore_index=True) # here change #events background (todo list 1))
+### Selecting only the number of events needed
+if df_sig.shape[0] > df_bkg.shape[0]:
+    Nevents = df_bkg.shape[0]
+    print(format(Fore.RED + 'Number of signal events (' + str(df_sig.shape[0]) + ') higher than number of background events (' + str(df_bkg.shape[0]) + ') -> using '+ str(Nevents) + ' events'))
+else:
+    Nevents = df_sig.shape[0]
+    print(format(Fore.RED + 'Number of background events (' + str(df_bkg.shape[0]) + ') higher than number of signal events (' + str(df_sig.shape[0]) + ') -> using ' + str(Nevents) + ' events'))
+logFile.write('\nNumber of bkg/sig events selected: ' + str(Nevents))
+
+df_sig = df_sig[:Nevents]
+df_bkg = df_bkg[:Nevents]
 
 print(df_sig[0:10])
 print(df_bkg[0:10])
 
-print('    Signal events = ', df_sig.shape)
-print('Background events = ', df_bkg.shape)
+print('    Signal events: ', df_sig.shape)
+print('Background events: ', df_bkg.shape)
 
 df_total = pd.concat([df_sig, df_bkg], ignore_index=True)
 df_total = Shuffling(df_total)
-print("Total events after shuffling = ", df_total.shape)
-
-df_total.to_pickle(dfPath+'MixData_PD.pkl')
-print('Saved to '+dfPath+'MixData_PD.pkl')
+print('Total events after shuffling: ', df_total.shape)
+logFile.write('\nTotal events after shuffling: ' + str(df_total.shape[0]))
+logFile.close()
+    
+df_total.to_pickle(dfPath + 'MixData_PD.pkl')
+print('Saved to ' + dfPath + 'MixData_PD.pkl')
