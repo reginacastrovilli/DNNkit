@@ -9,7 +9,9 @@ from colorama import init, Fore
 init(autoreset=True)
 
 parser = argparse.ArgumentParser(description = 'Deep Neural Network Training and testing Framework')
-parser.add_argument('-p', '--Preselection', default = "", help = 'String which will be translated to python command to filter the initial PDs according to it. E.g. \'lep1_pt >0 and lep1_eta > 0\'', type = str)
+parser.add_argument('-p', '--Preselection', default = '', help = 'String which will be translated to python command to filter the initial PDs according to it. E.g. \'lep1_pt >0 and lep1_eta > 0\'', type = str)
+parser.add_argument('-a', '--Analysis', default = 'all', help = 'Type of analysis: \'merged\' or \'resolved\'', type = str)
+parser.add_argument('-c', '--Channel', default = 'all', help = 'Channel: \'ggF\' or \'VBF\'')
 args = parser.parse_args()
 
 ### Reading from config file
@@ -35,8 +37,12 @@ df = []
 counter = 0
 logFile = open('logFile.txt', 'w')
 PreselectionCuts = args.Preselection
+analysis = args.Analysis
+logFile.write('Analysis: ' + analysis)
+channel = args.Channel
+logFile.write('\nChannel: ' + channel)
 if PreselectionCuts != '':
-    logFile.write('Preselection cuts: ' + PreselectionCuts)
+    logFile.write('\nPreselection cuts: ' + PreselectionCuts)
 logFile.write('\nInput files path: ' + dfPath + '\nInput files: [')
 for i in inputFiles:
     inFile = dfPath + i + '_DF.pkl'
@@ -55,6 +61,16 @@ for i in inputFiles:
                 
     if PreselectionCuts != '':
         newDf = newDf.query(PreselectionCuts)
+    if analysis == 'merged':
+        selection = 'Pass_MergHP_GGF_ZZ_Tag_SR == True or Pass_MergHP_GGF_ZZ_Untag_SR == True or Pass_MergLP_GGF_ZZ_Tag_SR == True or Pass_MergLP_GGF_ZZ_Untag_SR == True or Pass_MergHP_GGF_ZZ_Tag_ZCR == True or Pass_MergHP_GGF_ZZ_Untag_ZCR == True or Pass_MergLP_GGF_ZZ_Tag_ZCR == True or Pass_MergLP_GGF_ZZ_Untag_ZCR == True'
+        newDf = newDf.query(selection)
+    elif analysis == 'resolved':
+        selection = 'Pass_MergHP_GGF_ZZ_Tag_SR == False and Pass_MergHP_GGF_ZZ_Untag_SR == False and Pass_MergLP_GGF_ZZ_Tag_SR == False and Pass_MergLP_GGF_ZZ_Untag_SR == False and Pass_MergHP_GGF_ZZ_Tag_ZCR == False and Pass_MergHP_GGF_ZZ_Untag_ZCR == False and Pass_MergLP_GGF_ZZ_Tag_ZCR == False and Pass_MergLP_GGF_ZZ_Untag_ZCR == False'
+        newDf = newDf.query(selection)
+    if channel == 'ggF':
+        newDf = newDf.query('Pass_isVBF == False')
+    elif channel == 'VBF':
+        newDf = newDf.query('Pass_isVBF == True')
     if (dataType[counter] == 'sig'):
         newDf.insert(len(newDf.columns), "isSignal", np.ones(newDf.shape[0]), True)
         for k in range(newDf.shape[0]):
@@ -115,5 +131,5 @@ print('Total events after shuffling: ', df_total.shape)
 logFile.write('\nTotal events after shuffling: ' + str(df_total.shape[0]))
 logFile.close()
     
-df_total.to_pickle(dfPath + 'MixData_PD.pkl')
-print('Saved to ' + dfPath + 'MixData_PD.pkl')
+df_total.to_pickle(dfPath + 'MixData_PD_' + analysis + '_' + channel + '.pkl')
+print('Saved to ' + dfPath + 'MixData_PD_' + analysis + '_' + channel + '.pkl')
