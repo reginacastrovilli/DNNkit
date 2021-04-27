@@ -13,9 +13,9 @@ trainingFraction = float(args.training)
 
 if args.training and (trainingFraction < 0. or trainingFraction > 1.):
     parser.error('Training fraction must be between 0 and 1')
-if args.Analysis and (analysis != 'merged' or 'resolved'):
+#if args.Analysis and (analysis != 'merged' or 'resolved'):
     parser.error('Analysis can be either \'merged\' or \'resolved\'')
-if args.Channel and (channel != 'ggF' or 'VBF'):
+#if args.Channel and (channel != 'ggF' or 'VBF'):
     parser.error('Channel can be either \'ggF\' or \'VBF\'')
 #logFile = open('logFile.txt', 'a')
 #logFile.write('\nTraining fraction: ' + str(trainingFraction))
@@ -23,7 +23,7 @@ if args.Channel and (channel != 'ggF' or 'VBF'):
 
 ### Reading from config file
 config = configparser.ConfigParser()
-config.read('Config.txt')
+config.read('Configuration.txt')
 dfPath = config.get('config', 'dfPath')
 
 #### Loading data

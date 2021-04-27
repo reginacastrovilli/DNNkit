@@ -9,14 +9,14 @@ from colorama import init, Fore
 init(autoreset=True)
 
 parser = argparse.ArgumentParser(description = 'Deep Neural Network Training and testing Framework')
-parser.add_argument('-p', '--Preselection', default = '', help = 'String which will be translated to python command to filter the initial PDs according to it. E.g. \'lep1_pt >0 and lep1_eta > 0\'', type = str)
-parser.add_argument('-a', '--Analysis', default = 'all', help = 'Type of analysis: \'merged\' or \'resolved\'', type = str)
-parser.add_argument('-c', '--Channel', default = 'all', help = 'Channel: \'ggF\' or \'VBF\'')
+parser.add_argument('-p', '--Preselection', default = '', help = 'String which will be translated to python command to filter the initial PDs according to it. E.g. \'lep1_pt > 0 and lep1_eta > 0\'', type = str)
+parser.add_argument('-a', '--Analysis', help = 'Type of analysis: \'merged\' or \'resolved\'', type = str)
+parser.add_argument('-c', '--Channel', help = 'Channel: \'ggF\' or \'VBF\'')
 args = parser.parse_args()
 
 ### Reading from config file
 config = configparser.ConfigParser()
-config.read('Config.txt')
+config.read('Configuration.txt')
 dfPath = config.get('config', 'dfPath')
 inputFiles = ast.literal_eval(config.get('config', 'inputFiles'))
 dataType = ast.literal_eval(config.get('config', 'dataType'))
@@ -38,8 +38,16 @@ counter = 0
 logFile = open('logFile.txt', 'w')
 PreselectionCuts = args.Preselection
 analysis = args.Analysis
+if args.Analysis is None:
+    parser.error('Requested type of analysis (either \'mergered\' or \'resolved\')')
+elif args.Analysis != 'resolved' and args.Analysis != 'merged':
+    parser.error('Analysis can be either \'merged\' or \'resolved\'')
 logFile.write('Analysis: ' + analysis)
 channel = args.Channel
+if args.Channel is None:
+    parser.error('Requested channel (either \'ggF\' or \'VBF\')')
+elif args.Channel != 'ggF' and args.Channel != 'VBF':
+    parser.error('Channel can be either \'ggF\' or \'VBF\'')
 logFile.write('\nChannel: ' + channel)
 if PreselectionCuts != '':
     logFile.write('\nPreselection cuts: ' + PreselectionCuts)

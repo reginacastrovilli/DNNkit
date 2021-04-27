@@ -6,10 +6,10 @@ import uproot3
 import configparser
 import ast
 from colorama import init, Fore
-init(autoreset=True)
+init(autoreset = True)
 
 config = configparser.ConfigParser()
-config.read('Config.txt')
+config.read('Configuration.txt')
 inputFiles = ast.literal_eval(config.get('config', 'inputFiles'))
 
 for i in inputFiles:
