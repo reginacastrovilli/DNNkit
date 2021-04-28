@@ -5,12 +5,22 @@
 import uproot3
 import configparser
 import ast
+import os
 from colorama import init, Fore
 init(autoreset = True)
+
+def checkCreateDir(dir):
+    if not os.path.isdir(dir):
+        os.makedirs(dir)
+        return Fore.RED + ' : created'
+    else:
+        return Fore.RED + ' : already there'
 
 config = configparser.ConfigParser()
 config.read('Configuration.txt')
 inputFiles = ast.literal_eval(config.get('config', 'inputFiles'))
+dfPath = config.get('config', 'dfPath')
+print (format('Output directory: ' + Fore.GREEN + dfPath), checkCreateDir(dfPath))
 
 for i in inputFiles:
     inFile = config.get('config', 'ntuplePath') + i + '.root'
@@ -23,6 +33,6 @@ for i in inputFiles:
         print(format(Fore.RED + 'Ignoring empty file'))
         continue
     DF = tree.pandas.df()
-    outFile = config.get('config', 'dfPath') + i + '_DF.pkl'
+    outFile = dfPath + i + '_DF.pkl'
     DF.to_pickle(outFile)
-    print('Written ' + outFile)
+    print('Saved ' + outFile)

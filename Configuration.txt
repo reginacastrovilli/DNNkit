@@ -1,7 +1,7 @@
 [config]
 ntuplePath = /nfs/kloe/einstein4/HDBS/newDataFromRob/
-dfPath = /nfs/kloe/einstein4/HDBS/AP_DNN_InputDataFrames/
-modelPath = /nfs/kloe/einstein4/HDBS/AP_DNNModels/
+dfPath = /nfs/kloe/einstein4/HDBS/NN_InputDataFrames/
+modelPath = /nfs/kloe/einstein4/HDBS/NNModels/
 inputFiles = ['Diboson-0', 'Diboson-1', 'Signal', 'stop-0', 'stop-1', 'ttbar-0', 'ttbar-1', 'ttbar-2', 'ttbar-3', 'ttbar-4', 'ttbar-5', 'Wjets-1', 'Wjets-2', 'Wjets-3', 'Wjets-4', 'Wjets-5', 'Wjets-6', 'Wjets-7', 'Wjets-8', 'Wjets-9', 'Zjets-0', 'Zjets-1', 'Zjets-2', 'Zjets-3', 'Zjets-4', 'Zjets-5', 'Zjets-6', 'Zjets-7', 'Zjets-8', 'Zjets-9', 'Zjets-10', 'Zjets-11']
 dataType   = ['bkg', 'bkg', 'sig', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg', 'bkg']
 rootBranchSubSample = ['DSID', 'lep1_m', 'lep1_pt', 'lep1_eta', 'lep1_phi', 'lep2_m', 'lep2_pt', 'lep2_eta', 'lep2_phi', 'fatjet_m', 'fatjet_pt', 'fatjet_eta', 'fatjet_phi', 'NJets', 'weight', 'Zcand_m', 'Zcand_pt', 'Pass_MergHP_GGF_ZZ_Tag_SR', 'Pass_MergHP_GGF_ZZ_Untag_SR', 'Pass_MergLP_GGF_ZZ_Tag_SR', 'Pass_MergLP_GGF_ZZ_Untag_SR', 'Pass_MergHP_GGF_ZZ_Tag_ZCR', 'Pass_MergHP_GGF_ZZ_Untag_ZCR', 'Pass_MergLP_GGF_ZZ_Tag_ZCR', 'Pass_MergLP_GGF_ZZ_Untag_ZCR', 'Pass_isVBF', 'Wdijet_m', 'Wdijet_pt', 'Wdijet_eta', 'Wdijet_phi', 'sigWJ1_m', 'sigWJ1_pt', 'sigWJ1_eta', 'sigWJ1_phi', 'sigWJ2_m', 'sigWJ2_pt', 'sigWJ2_eta', 'sigWJ2_phi', 'sigZJ1_m', 'sigZJ1_pt', 'sigZJ1_eta', 'sigZJ1_phi', 'sigZJ2_m', 'sigZJ2_pt', 'sigZJ2_eta', 'sigZJ2_phi']

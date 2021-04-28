@@ -6,7 +6,14 @@ import ast
 import os.path
 from os import path
 from colorama import init, Fore
-init(autoreset=True)
+init(autoreset = True)
+
+def checkCreateDir(dir):
+    if not os.path.isdir(dir):
+        os.makedirs(dir)
+        return Fore.RED + ' : created'
+    else:
+        return Fore.RED + ' : already there'
 
 parser = argparse.ArgumentParser(description = 'Deep Neural Network Training and testing Framework')
 parser.add_argument('-p', '--Preselection', default = '', help = 'String which will be translated to python command to filter the initial PDs according to it. E.g. \'lep1_pt > 0 and lep1_eta > 0\'', type = str)
@@ -14,13 +21,26 @@ parser.add_argument('-a', '--Analysis', help = 'Type of analysis: \'merged\' or 
 parser.add_argument('-c', '--Channel', help = 'Channel: \'ggF\' or \'VBF\'')
 args = parser.parse_args()
 
+analysis = args.Analysis
+if args.Analysis is None:
+    parser.error('Requested type of analysis (either \'mergered\' or \'resolved\')')
+elif args.Analysis != 'resolved' and args.Analysis != 'merged':
+    parser.error('Analysis can be either \'merged\' or \'resolved\'')
+channel = args.Channel
+if args.Channel is None:
+    parser.error('Requested channel (either \'ggF\' or \'VBF\')')
+elif args.Channel != 'ggF' and args.Channel != 'VBF':
+    parser.error('Channel can be either \'ggF\' or \'VBF\'')
+PreselectionCuts = args.Preselection
+
 ### Reading from config file
 config = configparser.ConfigParser()
 config.read('Configuration.txt')
-dfPath = config.get('config', 'dfPath')
 inputFiles = ast.literal_eval(config.get('config', 'inputFiles'))
 dataType = ast.literal_eval(config.get('config', 'dataType'))
 rootBranchSubSample = ast.literal_eval(config.get('config', 'rootBranchSubSample'))
+dfPath = config.get('config', 'dfPath')
+print (format('Output directory: ' + Fore.GREEN + dfPath), checkCreateDir(dfPath))
 
 if len(inputFiles) != len(dataType):
     print(format(Fore.RED + 'Data type array does not match input files array'))
@@ -35,23 +55,10 @@ mass = [int(i.split(':')[1]) for i in lines]
 ### Loading pkl files, selecting only relevant variables, creating sig/bkg flag, converting DSID into mass
 df = []
 counter = 0
-logFile = open('logFile.txt', 'w')
-PreselectionCuts = args.Preselection
-analysis = args.Analysis
-if args.Analysis is None:
-    parser.error('Requested type of analysis (either \'mergered\' or \'resolved\')')
-elif args.Analysis != 'resolved' and args.Analysis != 'merged':
-    parser.error('Analysis can be either \'merged\' or \'resolved\'')
-logFile.write('Analysis: ' + analysis)
-channel = args.Channel
-if args.Channel is None:
-    parser.error('Requested channel (either \'ggF\' or \'VBF\')')
-elif args.Channel != 'ggF' and args.Channel != 'VBF':
-    parser.error('Channel can be either \'ggF\' or \'VBF\'')
-logFile.write('\nChannel: ' + channel)
-if PreselectionCuts != '':
-    logFile.write('\nPreselection cuts: ' + PreselectionCuts)
-logFile.write('\nInput files path: ' + dfPath + '\nInput files: [')
+logFileName = dfPath + 'buildDataSetLogFile_' + analysis + '_' + channel + '.txt'
+logFile = open(logFileName, 'w')
+logFile.write('Analysis: ' + analysis + '\nChannel: ' + channel + '\nPreselection cuts: ' + PreselectionCuts + '\nInput files path: ' + dfPath + '\nrootBranchSubSamples: ' + str(rootBranchSubSample) + '\nInput files: [')
+
 for i in inputFiles:
     inFile = dfPath + i + '_DF.pkl'
     if path.exists(inFile) == False:
@@ -95,6 +102,28 @@ for i in inputFiles:
     df.append(newDf)
     counter+=1
 
+df_pd = pd.DataFrame()
+for i in range(len(df)):
+    df_pd = pd.concat([df_pd, df[i]], ignore_index=True)
+
+### Shuffling data        
+import sklearn.utils
+def Shuffling(df):
+    df = sklearn.utils.shuffle(df, random_state = 123)
+    df = df.reset_index(drop = True)
+    return df
+
+df_pd = Shuffling(df_pd)
+
+logFile.write('\nNumber of events: ' + str(df_pd.shape[0]))                                                                                  
+print('Saved ' + logFileName)
+logFile.close()
+
+### Saving pkl files
+df_pd.to_pickle(dfPath + 'MixData_PD_' + analysis + '_' + channel + '.pkl')
+print('Saved to ' + dfPath + 'MixData_PD_' + analysis + '_' + channel + '.pkl')
+
+'''
 ### Dividing sig from bkg
 df_sig = pd.DataFrame()
 df_bkg = pd.DataFrame()
@@ -133,7 +162,7 @@ print(df_bkg[0:10])
 print('    Signal events: ', df_sig.shape)
 print('Background events: ', df_bkg.shape)
 
-df_total = pd.concat([df_sig, df_bkg], ignore_index=True)
+df_total = pd.concat([df_sig, df_bkg], ignore_index = True)
 df_total = Shuffling(df_total)
 print('Total events after shuffling: ', df_total.shape)
 logFile.write('\nTotal events after shuffling: ' + str(df_total.shape[0]))
@@ -141,3 +170,4 @@ logFile.close()
     
 df_total.to_pickle(dfPath + 'MixData_PD_' + analysis + '_' + channel + '.pkl')
 print('Saved to ' + dfPath + 'MixData_PD_' + analysis + '_' + channel + '.pkl')
+'''

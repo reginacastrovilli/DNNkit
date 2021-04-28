@@ -1,30 +1,47 @@
 from argparse import ArgumentParser
 import configparser
+import os
+from colorama import init, Fore
+init(autoreset = True)
+
+def checkCreateDir(dir):
+    if not os.path.isdir(dir):
+        os.makedirs(dir)
+        return Fore.RED + ' : created'
+    else:
+        return Fore.RED + ' : already there'
 
 parser = ArgumentParser()
-parser.add_argument('-t', '--training', help = 'Relative size of the training sample, between 0 and 1', default = 0.7)
-parser.add_argument('-a', '--Analysis', default = 'all', help = 'Type of analysis: \'merged\' or \'resolved\'', type = str)
-parser.add_argument('-c', '--Channel', default = 'all', help = 'Channel: \'ggF\' or \'VBF\'')
+parser.add_argument('-t', '--Training', help = 'Relative size of the training sample, between 0 and 1', default = 0.7)
+parser.add_argument('-a', '--Analysis', help = 'Type of analysis: \'merged\' or \'resolved\'', type = str)
+parser.add_argument('-c', '--Channel', help = 'Channel: \'ggF\' or \'VBF\'')
 
 args = parser.parse_args()
-analysis = args.Analysis
-channel = args.Channel
-trainingFraction = float(args.training)
 
-if args.training and (trainingFraction < 0. or trainingFraction > 1.):
-    parser.error('Training fraction must be between 0 and 1')
-#if args.Analysis and (analysis != 'merged' or 'resolved'):
+analysis = args.Analysis
+if args.Analysis is None:
+    parser.error('Requested type of analysis (either \'mergered\' or \'resolved\')')
+elif args.Analysis != 'resolved' and args.Analysis != 'merged':
     parser.error('Analysis can be either \'merged\' or \'resolved\'')
-#if args.Channel and (channel != 'ggF' or 'VBF'):
+channel = args.Channel
+if args.Channel is None:
+    parser.error('Requested channel (either \'ggF\' or \'VBF\')')
+elif args.Channel != 'ggF' and args.Channel != 'VBF':
     parser.error('Channel can be either \'ggF\' or \'VBF\'')
-#logFile = open('logFile.txt', 'a')
-#logFile.write('\nTraining fraction: ' + str(trainingFraction))
-#logFile.close()
+trainingFraction = float(args.Training)
+if args.Training and (trainingFraction < 0. or trainingFraction > 1.):
+    parser.error('Training fraction must be between 0 and 1')
 
 ### Reading from config file
 config = configparser.ConfigParser()
 config.read('Configuration.txt')
 dfPath = config.get('config', 'dfPath')
+print (format('Output directory: ' + Fore.GREEN + dfPath), checkCreateDir(dfPath))
+
+### Creating logFile
+logFileName = dfPath + 'splitDataSetLogFile_' + analysis + '_' + channel + '.txt'
+logFile = open(logFileName, 'w')
+logFile.write('Analysis: ' + analysis + '\nChannel: ' + channel)
 
 #### Loading data
 import pandas as pd
@@ -44,3 +61,8 @@ print(X_Test[:10])
 
 print('Size of the training saple: ', X_Train.shape)
 print('Size of the testing saple: ', X_Test.shape)
+
+logFile.write('\nSize of the training saple: ' + str(X_Train.shape[0]))
+logFile.write('\nSize of the testing saple: '+ str(X_Test.shape[0]))
+print('Saved ' + logFileName)
+logFile.close()
