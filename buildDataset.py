@@ -3,17 +3,10 @@ import numpy as np
 import argparse, configparser
 import re
 import ast
+from Functions import checkCreateDir
 import os.path
-from os import path
 from colorama import init, Fore
 init(autoreset = True)
-
-def checkCreateDir(dir):
-    if not os.path.isdir(dir):
-        os.makedirs(dir)
-        return Fore.RED + ' : created'
-    else:
-        return Fore.RED + ' : already there'
 
 parser = argparse.ArgumentParser(description = 'Deep Neural Network Training and testing Framework')
 parser.add_argument('-p', '--Preselection', default = '', help = 'String which will be translated to python command to filter the initial PDs according to it. E.g. \'lep1_pt > 0 and lep1_eta > 0\'', type = str)
@@ -61,7 +54,7 @@ logFile.write('Analysis: ' + analysis + '\nChannel: ' + channel + '\nPreselectio
 
 for i in inputFiles:
     inFile = dfPath + i + '_DF.pkl'
-    if path.exists(inFile) == False:
+    if os.path.exists(inFile) == False:
         print(format(Fore.RED + 'File ' + inFile + ' does not exist'))
         counter+=1
         continue

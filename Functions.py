@@ -1,15 +1,3 @@
-import configparser, ast
-def ReadConfig():
-    config = configparser.ConfigParser()
-    config.read('Configuration.txt')
-    dfPath = config.get('config', 'dfPath')
-    print('dfPath: ' + dfPath)
-    modelPath = config.get('config', 'modelPath')
-    if analysis == 'merged':
-        InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesMerged'))
-    elif analysis == 'resolved':
-        InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesResolved'))
-    
 ### Checking if the output directory exists. If not, creating it
 import os
 from colorama import init, Fore
@@ -18,9 +6,9 @@ init(autoreset = True)
 def checkCreateDir(dir):
     if not os.path.isdir(dir):
         os.makedirs(dir)
-        return Fore.RED + ' : created'
+        return Fore.RED + ' (created)'
     else:
-        return Fore.RED + ' : already there'
+        return Fore.RED + ' (already there)'
 
 ### Building the DNN
 from keras.models import Model, Sequential
@@ -43,6 +31,9 @@ def BuildDNN(N_input, width, depth):
 ### Drawing Accuracy
 import matplotlib
 import matplotlib.pyplot as plt
+plt.rcParams["figure.figsize"] = [7,7] # Setting plot size
+plt.rcParams.update({'font.size': 18}) # Setting font size
+
 def DrawAccuracy(modelMetricsHistory, testAccuracy, titleAccuracy, AccuracyPltName):
     plt.plot(modelMetricsHistory.history['accuracy'])
     plt.plot(modelMetricsHistory.history['val_accuracy'])
@@ -50,7 +41,7 @@ def DrawAccuracy(modelMetricsHistory, testAccuracy, titleAccuracy, AccuracyPltNa
     plt.ylabel('Accuracy')
     plt.xlabel('Epoch')
     plt.legend(['Training', 'Validation'], loc = 'lower right')
-    plt.figtext(0.5, 0.5, testAccuracy, wrap = True, horizontalalignment = 'center', fontsize = 10)
+    plt.figtext(0.69, 0.28, 'Test accuracy: ' + str(round(testAccuracy, 3)), wrap = True, horizontalalignment = 'center')#, fontsize = 10)
     plt.savefig(AccuracyPltName)
     print('Saved ' + AccuracyPltName)
     plt.clf()
@@ -63,7 +54,7 @@ def DrawLoss(modelMetricsHistory, testLoss, titleLoss, LossPltName):
     plt.ylabel('Loss')
     plt.xlabel('Epoch')
     plt.legend(['Training', 'Validation'], loc = 'upper right')
-    plt.figtext(0.5, 0.5, testLoss, wrap = True, horizontalalignment = 'center', fontsize = 10)
+    plt.figtext(0.7, 0.7, 'Test loss: ' + str(round(testLoss,2)), wrap = True, horizontalalignment = 'center')#, fontsize = 10)
     plt.savefig(LossPltName)
     print('Saved ' + LossPltName)
     plt.clf()
@@ -109,7 +100,7 @@ def DrawCM(cm, normalize, titleCM, CMPltName):
     np.set_printoptions(precision = 2)
     if normalize:
         cm = cm.astype('float') / cm.sum(axis = 1)[:, np.newaxis]
-    cmap = plt.cm.Blues
+    cmap = plt.cm.Oranges#Blues
     plt.imshow(cm, interpolation = 'nearest', cmap = cmap)
     plt.title(titleCM)
     plt.colorbar()
@@ -125,4 +116,4 @@ def DrawCM(cm, normalize, titleCM, CMPltName):
     plt.savefig(CMPltName)
     #plt.show()
     print('Saved ' + CMPltName)
-    plt.clf()
+    plt.clf()    

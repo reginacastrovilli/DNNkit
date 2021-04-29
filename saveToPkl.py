@@ -5,16 +5,9 @@
 import uproot3
 import configparser
 import ast
-import os
+from Functions import checkCreateDir
 from colorama import init, Fore
 init(autoreset = True)
-
-def checkCreateDir(dir):
-    if not os.path.isdir(dir):
-        os.makedirs(dir)
-        return Fore.RED + ' : created'
-    else:
-        return Fore.RED + ' : already there'
 
 config = configparser.ConfigParser()
 config.read('Configuration.txt')

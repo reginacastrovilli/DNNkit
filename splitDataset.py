@@ -1,15 +1,8 @@
 from argparse import ArgumentParser
 import configparser
-import os
+from Functions import checkCreateDir
 from colorama import init, Fore
 init(autoreset = True)
-
-def checkCreateDir(dir):
-    if not os.path.isdir(dir):
-        os.makedirs(dir)
-        return Fore.RED + ' : created'
-    else:
-        return Fore.RED + ' : already there'
 
 parser = ArgumentParser()
 parser.add_argument('-t', '--Training', help = 'Relative size of the training sample, between 0 and 1', default = 0.7)
