@@ -52,10 +52,10 @@ X_Test.to_pickle(dfPath + 'MixData_PD_' + analysis + '_' + channel + '_' + 'Test
 print('Saved ' + dfPath + 'MixData_PD_' + analysis + '_' + channel + '_' + 'Test.pkl')
 print(X_Test[:10])
 
-print('Size of the training saple: ', X_Train.shape)
-print('Size of the testing saple: ', X_Test.shape)
+print('Size of the train sample: ', X_Train.shape)
+print('Size of the test sample: ', X_Test.shape)
 
-logFile.write('\nSize of the training saple: ' + str(X_Train.shape[0]))
-logFile.write('\nSize of the testing saple: '+ str(X_Test.shape[0]))
+logFile.write('\nSize of the train sample: ' + str(X_Train.shape[0]))
+logFile.write('\nSize of the test sample: '+ str(X_Test.shape[0]))
 print('Saved ' + logFileName)
 logFile.close()

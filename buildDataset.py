@@ -97,7 +97,7 @@ for i in inputFiles:
 
 df_pd = pd.DataFrame()
 for i in range(len(df)):
-    df_pd = pd.concat([df_pd, df[i]], ignore_index=True)
+    df_pd = pd.concat([df_pd, df[i]], ignore_index = True)
 
 ### Shuffling data        
 import sklearn.utils
