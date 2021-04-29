@@ -263,3 +263,22 @@ def EventsCut(XTrainSignal, XTrainBkg, XTestSignal, XTestBkg):
         print(format(Fore.RED + 'Number of test background events (' + str(XTestBkg.shape[0]) + ') higher than number of test signal events (' + str(XTestSignal.shape[0]) + ') -> using ' + str(NeventsTest) + ' events'))
         XTestBkg = XTestBkg[:NeventsTest]
     return XTrainSignal, XTrainBkg, XTestSignal, XTestBkg
+
+
+def NewEventsCut(XTrainSignal, XTrainBkg):
+
+    WTrainSignal = []
+    WTrainBkg = []
+
+    if XTrainSignal.shape[0] > XTrainBkg.shape[0]:
+        kTrain = XTrainBkg.shape[0] / XTrainSignal.shape[0]       
+        WTrainBkg = np.ones(XTrainBkg.shape[0])
+        WTrainSignal = np.full(XTrainSignal.shape[0], kTrain)
+    else:
+        kTrain = XTrainSignal.shape[0] / XTrainBkg.shape[0]       
+        WTrainSignal = np.ones(XTrainSignal.shape[0])
+        WTrainBkg = np.full(XTrainBkg.shape[0], kTrain)
+
+    WTrain = np.concatenate((WTrainSignal, WTrainBkg), axis = 0)
+
+    return WTrain

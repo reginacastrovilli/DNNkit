@@ -63,11 +63,11 @@ for mass in massPointsList:
     X_train_bkg = transformer.fit_transform(X_train_bkg)
     X_test_bkg = transformer.fit_transform(X_test_bkg)
 
-    ### Number of signal events = number of background events
-    X_train_signal_mass, X_train_bkg, X_test_signal_mass, X_test_bkg = EventsCut(X_train_signal_mass, X_train_bkg, X_test_signal_mass, X_test_bkg)
-    logFile.write('\nNumber of events in the signal/background train samples: ' + str(X_train_bkg.shape[0]))
-    logFile.write('\nNumber of events in the signal/background test samples: ' + str(X_test_bkg.shape[0]))
-
+    ### Weighting events
+    W_Train_mass = NewEventsCut(X_train_signal_mass, X_train_bkg)
+    #    logFile.write('\nNumber of events in the signal/background train samples: ' + str(X_train_bkg.shape[0]))
+    #    logFile.write('\nNumber of events in the signal/background test samples: ' + str(X_test_bkg.shape[0]))
+    print(W_Train_mass)
     ### Putting signal and background events back togheter
     X_train_mass = np.concatenate((X_train_signal_mass, X_train_bkg), axis = 0) 
     X_test_mass = np.concatenate((X_test_signal_mass, X_test_bkg), axis = 0)
@@ -81,9 +81,13 @@ for mass in massPointsList:
     y_test_mass = np.concatenate((y_test_signal_mass, y_test_bkg), axis = 0)
 
     ### Training
-    callbacks = [EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss')]
+    callbacks = [
+        # If we don't have a decrease of the loss for 11 epochs, terminate training.
+        EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss')
+    ]
     
-    modelMetricsHistory = model.fit(X_train_mass, y_train_mass, epochs = numberOfEpochs, batch_size = 2048, validation_split = validationFraction, verbose = 1, callbacks = callbacks)
+    #modelMetricsHistory = model.fit(X_train_mass, y_train_mass, epochs = numberOfEpochs, batch_size = 2048, validation_split = validationFraction, verbose = 1, callbacks = callbacks)
+    modelMetricsHistory = model.fit(X_train_mass, y_train_mass, sample_weight = W_Train_mass, epochs = numberOfEpochs, batch_size = 2048, validation_split = validationFraction, verbose = 1, callbacks = callbacks)
 
     ### Evaluating the performance of the DNN
     testLoss, testAccuracy = EvaluatePerformance(model, X_test_mass, y_test_mass)
@@ -126,3 +130,4 @@ for mass in massPointsList:
     ### Closing the logFile
     logFile.close()
     print('Saved ' + logFileName)
+    exit()
