@@ -64,13 +64,16 @@ for mass in massPointsList:
     X_test_bkg = transformer.fit_transform(X_test_bkg)
 
     ### Weighting events
-    W_Train_mass = EventsWeight(X_train_signal_mass, X_train_bkg)
+    #W_Train_mass = EventsWeight(X_train_signal_mass, X_train_bkg)
     #    logFile.write('\nNumber of events in the signal/background train samples: ' + str(X_train_bkg.shape[0]))
     #    logFile.write('\nNumber of events in the signal/background test samples: ' + str(X_test_bkg.shape[0]))
+    W_train_signal_mass, W_train_bkg = EventsWeight(X_train_signal_mass, X_train_bkg)
 
-    ### Creating new extended arrays by adding value 1 (0) to signal (bkg) events (this information is needed in order to shuffle data properly)
-    X_train_signal_mass_ext = np.insert(X_train_signal_mass, X_train_signal_mass.shape[1], 1, axis = 1)
-    X_train_bkg_ext = np.insert(X_train_bkg, X_train_bkg.shape[1], 0, axis = 1)
+    ### Creating new extended arrays by adding W_train and value 1 (0) to signal (bkg) events (this information is needed in order to shuffle data properly)
+    X_train_signal_mass_ext = np.insert(X_train_signal_mass, X_train_signal_mass.shape[1], W_train_signal_mass, axis = 1)
+    X_train_signal_mass_ext = np.insert(X_train_signal_mass_ext, X_train_signal_mass_ext.shape[1], 1, axis = 1)
+    X_train_bkg_ext = np.insert(X_train_bkg, X_train_bkg.shape[1], W_train_bkg, axis = 1)
+    X_train_bkg_ext = np.insert(X_train_bkg_ext, X_train_bkg_ext.shape[1], 0, axis = 1)
     X_test_signal_mass_ext = np.insert(X_test_signal_mass, X_test_signal_mass.shape[1], 1, axis = 1)
     X_test_bkg_ext = np.insert(X_test_bkg, X_test_bkg.shape[1], 0, axis = 1)
 
@@ -82,13 +85,19 @@ for mass in massPointsList:
     X_train_mass_ext = ShufflingData(X_train_mass_ext)
     X_test_mass_ext = ShufflingData(X_test_mass_ext)
 
-    ### Extracting y_train_mass from X_train_mass
+    ### Extracting y_mass from X_mass_ext
     y_train_mass = X_train_mass_ext[:, X_train_mass_ext.shape[1] - 1]    
     y_test_mass = X_test_mass_ext[:, X_test_mass_ext.shape[1] - 1]    
 
-    ### Deleting y_train_mass from X_train_mass
-    X_train_mass = np.delete(X_train_mass_ext, X_train_mass_ext.shape[1] - 1, axis = 1)
+    ### Deleting y_mass from X_mass
+    X_train_mass_ext = np.delete(X_train_mass_ext, X_train_mass_ext.shape[1] - 1, axis = 1)
     X_test_mass = np.delete(X_test_mass_ext, X_test_mass_ext.shape[1] - 1, axis = 1)
+
+    ### Extracting W_train_mass from X_train_mass_ext
+    W_train_mass = X_train_mass_ext[:, X_train_mass_ext.shape[1] - 1]    
+
+    ### Deleting W_train_mass from X_train_mass_ext
+    X_train_mass = np.delete(X_train_mass_ext, X_train_mass_ext.shape[1] - 1, axis = 1)
 
     ### Training
     callbacks = [
@@ -96,7 +105,7 @@ for mass in massPointsList:
         EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss')
     ]
     
-    modelMetricsHistory = model.fit(X_train_mass, y_train_mass, sample_weight = W_Train_mass, epochs = numberOfEpochs, batch_size = 2048, validation_split = validationFraction, verbose = 1, callbacks = callbacks)
+    modelMetricsHistory = model.fit(X_train_mass, y_train_mass, sample_weight = W_train_mass, epochs = numberOfEpochs, batch_size = 2048, validation_split = validationFraction, verbose = 1, callbacks = callbacks)
 
     ### Evaluating the performance of the DNN
     testLoss, testAccuracy = EvaluatePerformance(model, X_test_mass, y_test_mass)
@@ -136,4 +145,3 @@ for mass in massPointsList:
     ### Closing the logFile
     logFile.close()
     print('Saved ' + logFileName)
-    exit()

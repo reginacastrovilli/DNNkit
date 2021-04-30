@@ -277,21 +277,13 @@ def EventsCut(XTrainSignal, XTrainBkg, XTestSignal, XTestBkg):
         XTestBkg = XTestBkg[:NeventsTest]
     return XTrainSignal, XTrainBkg, XTestSignal, XTestBkg
 
-
 def EventsWeight(XTrainSignal, XTrainBkg):
 
-    WTrainSignal = []
-    WTrainBkg = []
-
     if XTrainSignal.shape[0] > XTrainBkg.shape[0]:
-        kTrain = XTrainBkg.shape[0] / XTrainSignal.shape[0]       
-        WTrainBkg = np.ones(XTrainBkg.shape[0])
-        WTrainSignal = np.full(XTrainSignal.shape[0], kTrain)
+        WTrainSignal = XTrainBkg.shape[0] / XTrainSignal.shape[0]       
+        WTrainBkg = 1
     else:
-        kTrain = XTrainSignal.shape[0] / XTrainBkg.shape[0]       
-        WTrainSignal = np.ones(XTrainSignal.shape[0])
-        WTrainBkg = np.full(XTrainBkg.shape[0], kTrain)
+        WTrainBkg = XTrainSignal.shape[0] / XTrainBkg.shape[0]       
+        WTrainSignal = 1
 
-    WTrain = np.concatenate((WTrainSignal, WTrainBkg), axis = 0)
-
-    return WTrain
+    return WTrainSignal, WTrainBkg
