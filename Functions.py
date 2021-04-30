@@ -10,6 +10,7 @@ def ReadArgParser():
     parser.add_argument('-l', '--Layers', help = 'Number of layers of the (p)DNN', default = 2)
     parser.add_argument('-e', '--Epochs', help = 'Number of epochs for the training', default = 150)
     parser.add_argument('-v', '--Validation', help = 'Fraction of the training data that will actually be used for validation', default = 0.2)
+    parser.add_argument('-d', '--Dropout', help = 'Fraction of the ???', default = 0.2)
     
     args = parser.parse_args()
     
@@ -38,14 +39,18 @@ def ReadArgParser():
     validationFraction = float(args.Validation)
     if args.Validation and (validationFraction < 0. or validationFraction > 1.):
         parser.error('Validation fraction must be between 0 and 1')
+    dropout = float(args.Dropout)
+    if args.Dropout and (dropout < 0. or dropout > 1.):
+        parser.error('Dropout must be between 0 and 1')
 
     print('  training =', trainingFraction)
     print('     nodes =', numberOfNodes)
     print('    layers =', numberOfLayers)
     print('    epochs =', numberOfEpochs)
     print('validation =', validationFraction)
+    print('   dropout =', dropout)
 
-    return analysis, channel, trainingFraction, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction
+    return dropout, analysis, channel, trainingFraction, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction
 
 ### Reading from the configuration file
 import configparser, ast
@@ -73,6 +78,14 @@ def checkCreateDir(dir):
     else:
         return Fore.RED + ' (already there)'
 
+### Shuffling data
+import sklearn.utils
+
+def ShufflingData(df):
+    df = sklearn.utils.shuffle(df, random_state = 123)
+#    df = df.reset_index(drop = True)
+    return df
+
 ### Loading data and creating input arrays
 import pandas as pd
 
@@ -96,15 +109,15 @@ from keras.layers import Dense, Dropout, Input, BatchNormalization
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.layers.core import Dense, Activation
 
-def BuildDNN(N_input, width, depth):
+def BuildDNN(N_input, width, depth, dropout):
     model = Sequential()
     model.add(Dense(units = width, input_dim = N_input))
     model.add(Activation('relu'))
-    model.add(Dropout(0.2))
+    model.add(Dropout(dropout))
     for i in range(0, depth):
         model.add(Dense(width))
         model.add(Activation('relu'))
-        model.add(Dropout(0.2))
+        model.add(Dropout(dropout))
     model.add(Dense(1, activation = 'sigmoid'))
     
     return model
@@ -218,7 +231,7 @@ from sklearn.metrics import confusion_matrix
 import itertools
 
 def DrawCM(yhat_test, y_test, normalize, outputDir, mass):
-    yResult_test_cls = np.array([ int(round(x[0])) for x in yhat_test])                                                                                        
+    yResult_test_cls = np.array([ int(round(x[0])) for x in yhat_test])
     cm = confusion_matrix(y_test, yResult_test_cls)
     classes = ['Background', 'Signal']
     np.set_printoptions(precision = 2)
@@ -265,7 +278,7 @@ def EventsCut(XTrainSignal, XTrainBkg, XTestSignal, XTestBkg):
     return XTrainSignal, XTrainBkg, XTestSignal, XTestBkg
 
 
-def NewEventsCut(XTrainSignal, XTrainBkg):
+def EventsWeight(XTrainSignal, XTrainBkg):
 
     WTrainSignal = []
     WTrainBkg = []

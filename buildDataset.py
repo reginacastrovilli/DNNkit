@@ -3,7 +3,7 @@ import numpy as np
 import argparse, configparser
 import re
 import ast
-from Functions import checkCreateDir
+from Functions import checkCreateDir, ShufflingData
 import os.path
 from colorama import init, Fore
 init(autoreset = True)
@@ -99,14 +99,8 @@ df_pd = pd.DataFrame()
 for i in range(len(df)):
     df_pd = pd.concat([df_pd, df[i]], ignore_index = True)
 
-### Shuffling data        
-import sklearn.utils
-def Shuffling(df):
-    df = sklearn.utils.shuffle(df, random_state = 123)
-    df = df.reset_index(drop = True)
-    return df
-
-df_pd = Shuffling(df_pd)
+### Shuffling data
+df_pd = ShufflingData(df_pd)
 
 logFile.write('\nNumber of events: ' + str(df_pd.shape[0]))                                                                                  
 print('Saved ' + logFileName)
@@ -115,52 +109,3 @@ logFile.close()
 ### Saving pkl files
 df_pd.to_pickle(dfPath + 'MixData_PD_' + analysis + '_' + channel + '.pkl')
 print('Saved to ' + dfPath + 'MixData_PD_' + analysis + '_' + channel + '.pkl')
-
-'''
-### Dividing sig from bkg
-df_sig = pd.DataFrame()
-df_bkg = pd.DataFrame()
-
-for i in range(len(df)):
-    if dataType[i] == 'sig':
-        df_sig = pd.concat([df_sig, df[i]], ignore_index=True)
-    else:
-        df_bkg = pd.concat([df_bkg, df[i]], ignore_index=True)
-        
-### Shuffling data
-import sklearn.utils
-def Shuffling(df):
-    df = sklearn.utils.shuffle(df, random_state=123)
-    df = df.reset_index(drop=True)
-    return df
-
-df_sig = Shuffling(df_sig)
-df_bkg = Shuffling(df_bkg)
-
-### Selecting only the number of events needed
-if df_sig.shape[0] > df_bkg.shape[0]:
-    Nevents = df_bkg.shape[0]
-    print(format(Fore.RED + 'Number of signal events (' + str(df_sig.shape[0]) + ') higher than number of background events (' + str(df_bkg.shape[0]) + ') -> using '+ str(Nevents) + ' events'))
-else:
-    Nevents = df_sig.shape[0]
-    print(format(Fore.RED + 'Number of background events (' + str(df_bkg.shape[0]) + ') higher than number of signal events (' + str(df_sig.shape[0]) + ') -> using ' + str(Nevents) + ' events'))
-logFile.write('\nNumber of bkg/sig events selected: ' + str(Nevents))
-
-df_sig = df_sig[:Nevents]
-df_bkg = df_bkg[:Nevents]
-
-print(df_sig[0:10])
-print(df_bkg[0:10])
-
-print('    Signal events: ', df_sig.shape)
-print('Background events: ', df_bkg.shape)
-
-df_total = pd.concat([df_sig, df_bkg], ignore_index = True)
-df_total = Shuffling(df_total)
-print('Total events after shuffling: ', df_total.shape)
-logFile.write('\nTotal events after shuffling: ' + str(df_total.shape[0]))
-logFile.close()
-    
-df_total.to_pickle(dfPath + 'MixData_PD_' + analysis + '_' + channel + '.pkl')
-print('Saved to ' + dfPath + 'MixData_PD_' + analysis + '_' + channel + '.pkl')
-'''
