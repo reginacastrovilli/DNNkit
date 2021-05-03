@@ -1,4 +1,7 @@
+### Make sure that 'DSID' is the last input variable
 from Functions import *
+from sklearn.preprocessing import StandardScaler
+from sklearn.compose import ColumnTransformer
 
 plot = True
 NN = 'DNN'
@@ -10,19 +13,15 @@ dropout, analysis, channel, trainingFraction, numberOfNodes, numberOfLayers, num
 dfPath, modelPath, InputFeatures = ReadConfig(analysis)
 
 ### Loading data and creating input arrays
-X_train, y_train, X_test, y_test = LoadDataCreateArrays(dfPath, analysis, channel, InputFeatures)
+X_train, y_train, X_test, y_test, df_Train_path, df_Test_path = LoadDataCreateArrays(dfPath, analysis, channel, InputFeatures)
 
 ### Building the DNN
 n_dim = X_train.shape[1] - 1 # mass won't be given as input to the DNN
 
 model = BuildDNN(n_dim, numberOfNodes, numberOfLayers, dropout)
-
 model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', metrics = ['accuracy'])
 
 ### Dividing signal from background
-from sklearn.preprocessing import StandardScaler
-from sklearn.compose import ColumnTransformer
-
 X_test_signal = X_test[y_test == 1]
 X_test_bkg = X_test[y_test != 1]
 X_train_signal = X_train[y_train == 1]
@@ -31,7 +30,7 @@ X_train_bkg = X_train[y_train != 1]
 ### Saving mass values
 m_train_signal = []
 for event in X_train_signal:
-    m_train_signal.append(event[-1]) ### ONLY IF 'DSID' IS THE LAST VARIABLE IN InputFeatures(Merged/Resolved)
+    m_train_signal.append(event[-1])
 massPointsList = list(set(m_train_signal))
 print('Mass points: ' + str(massPointsList))
 
@@ -44,13 +43,13 @@ for mass in massPointsList:
     ### Creating the output directory
     outputDir = modelPath + NN + '/' + analysis + '/' + channel + '/' + str(int(mass))
     print (format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
-
+    
     ### Creating the logFile
     logFileName = outputDir + '/logFile.txt'
     logFile = open(logFileName, 'w')
-    
+
     ### Writing previous information to the logFile
-    logFile.write('dfPath: ' + dfPath + '\nmodelPath: ' + modelPath + '\nInputFeatures: ' + str(InputFeatures) + '\nAnalysis: ' + analysis + '\nChannel: ' + channel + '\nTraining fraction: ' + str(trainingFraction) + '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of layers: ' + str(numberOfLayers) + '\nNumber of epochs: ' + str(numberOfEpochs) + '\nValidation fraction: ' + str(validationFraction) + '\nMass points list: ' + str(massPointsList) + '\nMass point analyzed: ' + str(mass))
+    logFile.write('Input train array: ' + df_Train_path + '\nNumber of train events: ' + str(X_train.shape[0]) + ' (' + str(X_train_signal.shape[0]) + ' signal and ' + str(X_train_bkg.shape[0]) + ' background)' + '\nNumber of test events: ' +str(X_test.shape[0]) + ' (' + str(X_test_signal.shape[0]) + ' signal and ' + str(X_test_bkg.shape[0]) + ' background)' + '\nInput test array: ' + df_Test_path + '\nInputFeatures: ' + str(InputFeatures) + '\nTraining fraction: ' + str(trainingFraction) + '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of layers: ' + str(numberOfLayers) + '\nNumber of epochs: ' + str(numberOfEpochs) + '\nValidation fraction: ' + str(validationFraction) + '\nDropout: ' + str(dropout) + '\nMass points list: ' + str(massPointsList) + '\nMass point analyzed: ' + str(mass))
 
     ### Selecting only signal events with the same mass value 
     X_train_signal_mass = X_train_signal[m_train_signal == mass]
@@ -64,20 +63,21 @@ for mass in massPointsList:
     X_test_bkg = transformer.fit_transform(X_test_bkg)
 
     ### Weighting events
-    #W_Train_mass = EventsWeight(X_train_signal_mass, X_train_bkg)
-    #    logFile.write('\nNumber of events in the signal/background train samples: ' + str(X_train_bkg.shape[0]))
-    #    logFile.write('\nNumber of events in the signal/background test samples: ' + str(X_test_bkg.shape[0]))
     W_train_signal_mass, W_train_bkg = EventsWeight(X_train_signal_mass, X_train_bkg)
+    
+    logFile.write('\nNumber of train events with this mass: ' + str(X_train_signal_mass.shape[0]) + ' -> Weight for signal train events: ' + str(W_train_signal_mass) + ', weight for background train events: ' + str(W_train_bkg) + '\nNumber of test event with this mass: ' + str(X_test_signal_mass.shape[0]))
 
-    ### Creating new extended arrays by adding W_train and value 1 (0) to signal (bkg) events (this information is needed in order to shuffle data properly)
+    ### Creating new extended train arrays by adding W_train (this information is needed in order to shuffle data properly)
     X_train_signal_mass_ext = np.insert(X_train_signal_mass, X_train_signal_mass.shape[1], W_train_signal_mass, axis = 1)
-    X_train_signal_mass_ext = np.insert(X_train_signal_mass_ext, X_train_signal_mass_ext.shape[1], 1, axis = 1)
     X_train_bkg_ext = np.insert(X_train_bkg, X_train_bkg.shape[1], W_train_bkg, axis = 1)
+
+    ### Creating new extended train/test arrays by adding value 1 (0) to signal (background) events (this information is needed in order to shuffle data properly)
+    X_train_signal_mass_ext = np.insert(X_train_signal_mass_ext, X_train_signal_mass_ext.shape[1], 1, axis = 1)
     X_train_bkg_ext = np.insert(X_train_bkg_ext, X_train_bkg_ext.shape[1], 0, axis = 1)
     X_test_signal_mass_ext = np.insert(X_test_signal_mass, X_test_signal_mass.shape[1], 1, axis = 1)
     X_test_bkg_ext = np.insert(X_test_bkg, X_test_bkg.shape[1], 0, axis = 1)
 
-    ### Putting signal and background events back togheter
+    ### Putting signal and background events back together
     X_train_mass_ext = np.concatenate((X_train_signal_mass_ext, X_train_bkg_ext), axis = 0) 
     X_test_mass_ext = np.concatenate((X_test_signal_mass_ext, X_test_bkg_ext), axis = 0)
 
@@ -109,6 +109,7 @@ for mass in massPointsList:
 
     ### Evaluating the performance of the DNN
     testLoss, testAccuracy = EvaluatePerformance(model, X_test_mass, y_test_mass)
+    logFile.write('\nTestLoss: ' + str(testLoss) + '\nTestAccuracy: ' + str(testAccuracy))
 
     ### Drawing training history
     if plot:
@@ -133,7 +134,7 @@ for mass in massPointsList:
         DrawCM(yhat_test, y_test_mass, True, outputDir, mass)
 
     ### Saving performance parameters
-    logFile.write('\nTestLoss: ' + str(testLoss) + '\nTestAccuracy: ' + str(testAccuracy) + '\nROC_AUC: ' + str(roc_auc))
+    logFile.write('\nROC_AUC: ' + str(roc_auc))
 
     ### Prediction on signal and background separately
     yhat_train_signal, yhat_train_bkg, yhat_test_signal, yhat_test_bkg = PredictionSigBkg(model, X_train_signal_mass, X_train_bkg, X_test_signal_mass, X_test_bkg)

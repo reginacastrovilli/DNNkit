@@ -10,7 +10,7 @@ def ReadArgParser():
     parser.add_argument('-l', '--Layers', help = 'Number of layers of the (p)DNN', default = 2)
     parser.add_argument('-e', '--Epochs', help = 'Number of epochs for the training', default = 150)
     parser.add_argument('-v', '--Validation', help = 'Fraction of the training data that will actually be used for validation', default = 0.2)
-    parser.add_argument('-d', '--Dropout', help = 'Fraction of the ???', default = 0.2)
+    parser.add_argument('-d', '--Dropout', help = 'Fraction of the neurons to drop during the training', default = 0.2)
     
     args = parser.parse_args()
     
@@ -78,20 +78,14 @@ def checkCreateDir(dir):
     else:
         return Fore.RED + ' (already there)'
 
-### Shuffling data
-import sklearn.utils
-
-def ShufflingData(df):
-    df = sklearn.utils.shuffle(df, random_state = 123)
-#    df = df.reset_index(drop = True)
-    return df
-
 ### Loading data and creating input arrays
 import pandas as pd
 
 def LoadDataCreateArrays(dfPath, analysis, channel, InputFeatures):
-    df_Train = pd.read_pickle(dfPath + 'MixData_PD_' + analysis + '_' + channel + '_Train.pkl')
-    df_Test = pd.read_pickle(dfPath + 'MixData_PD_' + analysis + '_' + channel + '_Test.pkl')
+    df_Train_path = dfPath + 'MixData_PD_' + analysis + '_' + channel + '_Train.pkl'
+    df_Test_path = dfPath + 'MixData_PD_' + analysis + '_' + channel + '_Test.pkl'
+    df_Train = pd.read_pickle(df_Train_path)
+    df_Test = pd.read_pickle(df_Test_path)
 
     X_train = df_Train[InputFeatures].values
     y_train = df_Train['isSignal']
@@ -101,7 +95,15 @@ def LoadDataCreateArrays(dfPath, analysis, channel, InputFeatures):
     y_test = df_Test['isSignal']
     w_test = df_Test['weight']
 
-    return X_train, y_train, X_test, y_test
+    return X_train, y_train, X_test, y_test, df_Train_path, df_Test_path
+
+### Shuffling data
+import sklearn.utils
+
+def ShufflingData(df):
+    df = sklearn.utils.shuffle(df, random_state = 123)
+#    df = df.reset_index(drop = True)
+    return df
 
 ### Building the (p)DNN
 from keras.models import Model, Sequential
@@ -190,7 +192,7 @@ def DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, mass = 0):
     print('Saved ' + LossPltName)
     plt.clf()
 
-### Drawing ROC
+### Drawing ROC (Receiver Operating Characteristic)
 from sklearn.metrics import roc_curve, auc, roc_auc_score, classification_report
 def DrawROC(fpr, tpr, outputDir, mass):
     plt.plot(fpr,  tpr, color = 'darkorange', lw = 2, label = 'Full curve')
