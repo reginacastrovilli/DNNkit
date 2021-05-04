@@ -7,7 +7,7 @@ plot = True
 NN = 'DNN'
 
 ### Reading the command line
-dropout, analysis, channel, trainingFraction, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction = ReadArgParser()
+dropout, analysis, channel, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction = ReadArgParser()
 
 ### Reading the configuration file
 dfPath, modelPath, InputFeatures = ReadConfig(analysis)
@@ -37,7 +37,6 @@ print('Mass points: ' + str(massPointsList))
 m_test_signal = []
 for event in X_test_signal:
     m_test_signal.append(event[-1])
-
 for mass in massPointsList:
 
     ### Creating the output directory
@@ -49,7 +48,7 @@ for mass in massPointsList:
     logFile = open(logFileName, 'w')
 
     ### Writing previous information to the logFile
-    logFile.write('Input train array: ' + df_Train_path + '\nNumber of train events: ' + str(X_train.shape[0]) + ' (' + str(X_train_signal.shape[0]) + ' signal and ' + str(X_train_bkg.shape[0]) + ' background)' + '\nNumber of test events: ' +str(X_test.shape[0]) + ' (' + str(X_test_signal.shape[0]) + ' signal and ' + str(X_test_bkg.shape[0]) + ' background)' + '\nInput test array: ' + df_Test_path + '\nInputFeatures: ' + str(InputFeatures) + '\nTraining fraction: ' + str(trainingFraction) + '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of layers: ' + str(numberOfLayers) + '\nNumber of epochs: ' + str(numberOfEpochs) + '\nValidation fraction: ' + str(validationFraction) + '\nDropout: ' + str(dropout) + '\nMass points list: ' + str(massPointsList) + '\nMass point analyzed: ' + str(mass))
+    logFile.write('Input train array: ' + df_Train_path + '\nNumber of train events: ' + str(X_train.shape[0]) + ' (' + str(X_train_signal.shape[0]) + ' signal and ' + str(X_train_bkg.shape[0]) + ' background)' + '\nInput test array: ' + df_Test_path + '\nNumber of test events: ' +str(X_test.shape[0]) + ' (' + str(X_test_signal.shape[0]) + ' signal and ' + str(X_test_bkg.shape[0]) + ' background)' + '\nInputFeatures: ' + str(InputFeatures) + '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of layers: ' + str(numberOfLayers) + '\nNumber of epochs: ' + str(numberOfEpochs) + '\nValidation fraction: ' + str(validationFraction) + '\nDropout: ' + str(dropout) + '\nMass points list: ' + str(massPointsList) + '\nMass point analyzed: ' + str(mass))
 
     ### Selecting only signal events with the same mass value 
     X_train_signal_mass = X_train_signal[m_train_signal == mass]

@@ -5,7 +5,6 @@ def ReadArgParser():
     parser = ArgumentParser()
     parser.add_argument('-a', '--Analysis', help = 'Type of analysis: \'merged\' or \'resolved\'', type = str)
     parser.add_argument('-c', '--Channel', help = 'Channel: \'ggF\' or \'VBF\'', type = str)
-    parser.add_argument('-t', '--Training', help = 'Relative size of the training sample, between 0 and 1', default = 0.7)
     parser.add_argument('-n', '--Nodes', help = 'Number of nodes of the (p)DNN, should always be >= nColumns and strictly positive', default = 32)
     parser.add_argument('-l', '--Layers', help = 'Number of layers of the (p)DNN', default = 2)
     parser.add_argument('-e', '--Epochs', help = 'Number of epochs for the training', default = 150)
@@ -24,9 +23,6 @@ def ReadArgParser():
         parser.error('Requested channel (either \'ggF\' or \'VBF\')')
     elif args.Channel != 'ggF' and args.Channel != 'VBF':
         parser.error('Channel can be either \'ggF\' or \'VBF\'')
-    trainingFraction = float(args.Training)
-    if args.Training and (trainingFraction < 0. or trainingFraction > 1.):
-        parser.error('Training fraction must be between 0 and 1')
     numberOfNodes = int(args.Nodes)
     if args.Nodes and numberOfNodes < 1:
         parser.error('Number of nodes must be strictly positive')
@@ -43,14 +39,13 @@ def ReadArgParser():
     if args.Dropout and (dropout < 0. or dropout > 1.):
         parser.error('Dropout must be between 0 and 1')
 
-    print('  training =', trainingFraction)
     print('     nodes =', numberOfNodes)
     print('    layers =', numberOfLayers)
     print('    epochs =', numberOfEpochs)
     print('validation =', validationFraction)
     print('   dropout =', dropout)
 
-    return dropout, analysis, channel, trainingFraction, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction
+    return dropout, analysis, channel, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction
 
 ### Reading from the configuration file
 import configparser, ast
