@@ -32,7 +32,7 @@ This script splits the data frame produced at the previous step into train and t
 - channel (-c): the channel considered ('ggF' or 'VBF')
 - training fraction: relative size of the training sample, between 0 and 1
 
-All these flags are mandatory but only the first two must be specficied by the user (the last one can also assume its default values).
+All these flags are mandatory but only the first two must be specficied by the user (the last one can also assume its default value).
 
 # Step 4) buildDNN.py / buildPDNN.py
 These scripts run the (parametric) Deep Neural Network. 
