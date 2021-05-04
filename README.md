@@ -22,6 +22,7 @@ This script takes the .pkl files created at the previous step, selects only rele
 - analysis (-a): type of analysis ('merged' or 'resolved')
 - channel (-c): the channel considered ('ggF' or 'VBF')
 - preselection cuts (-p): string that will be translated to python commad to filter the inital PDs according to it (e.g. 'lep1_pt > 0 and lep1_eta > 0')
+
 Only the first two flags are mandatory.
 
 # Step 3) splitDataset.py
@@ -30,6 +31,7 @@ This script splits the data frame produced at the previous step into train and t
 - analysis (-a): type of analysis ('merged' or 'resolved')
 - channel (-c): the channel considered ('ggF' or 'VBF')
 - training fraction: relative size of the training sample, between 0 and 1
+
 All these flags are mandatory but only the first two must be specficied by the user (the last one can also assume their default values).
 
 # Step 4) buildDNN.py / buildPDNN.py
@@ -42,4 +44,5 @@ These scripts run the (parametric) Deep Neural Network.
 - epochs (-e): number of epochs for the training 
 - validation (-v): fraction of the training data that will actually be used for validation
 - dropout (-d): fraction of the neurons that will be dropped during the training
+
 All these flags are mandatory but only the first two must be specficied by the user (the other five can also assume their default values).
