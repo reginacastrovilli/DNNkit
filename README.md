@@ -29,13 +29,13 @@ This script takes the .pkl files created in the previous step. A new signal/back
 Only the first two flags are mandatory.
 
 # Step 3) splitDataset.py
-This script splits the data frame produced at the previous step into train and test samples and saves them into two separate .pkl files.
+This script splits the dataframe produced at the previous step into one train and one test sample and saves them into two separate .pkl files.
 3 input flags must be specified:
 - analysis (-a): type of analysis ('merged' or 'resolved')
 - channel (-c): the channel considered ('ggF' or 'VBF')
-- training fraction: relative size of the training sample, between 0 and 1
+- training fraction (-t): relative size of the training sample, between 0 and 1
 
-All these flags are mandatory but only the first two must be specficied by the user (the last one can also assume its default value).
+All these flags are mandatory but only the first two must be specified by the user (the last one can also assume its default value).
 
 # Step 4) buildDNN.py / buildPDNN.py
 These scripts run the (parametric) Deep Neural Network. 
