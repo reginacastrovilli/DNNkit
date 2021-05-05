@@ -40,7 +40,8 @@ if len(inputFiles) != len(dataType):
     exit()
 
 ### Loading DSID-mass map
-f = open('data/DSIDMap_2lep.txt')
+#f = open('data/DSIDMap_2lep.txt')
+f = open('DSIDtoMass.txt')
 lines = f.readlines()
 DSID = [int(i.split(':')[0]) for i in lines]
 mass = [int(i.split(':')[1]) for i in lines]

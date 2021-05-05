@@ -10,6 +10,9 @@ This text file contains the configuration parameters:
 - rootBranchSubSample = list of the variables (root branches) that will actually be converted into pandas dataframes
 - InputFeatures(Merged/Resolved) = list of the variables that will be fed to the (p)DNN in the merged/resolved regime
 
+# DSIDtoMass.txt
+This text file contains the map used to convert DSID variables into mass values.
+
 # Functions.py
 This file contains useful functions that will be called by the other .py scripts. 
 
@@ -17,7 +20,7 @@ This file contains useful functions that will be called by the other .py scripts
 This script takes the input .root files and converts them into .pkl files.
 
 # Step 2) buildDataset.py
-This script takes the .pkl files created at the previous step, selects only relevant (user-defined) variables and combines them into one data frame. Events are shuffled in the output data frame and a new signal/background flag is associated to each one of them. The "DSID" value is converted into the corresponding mass value, according to the map stored in data/DSIDMap_2lep.txt. 
+This script takes the .pkl files created at the previous step, selects only relevant (user-defined) variables and combines them into one data frame. Events are shuffled in the output data frame and a new signal/background flag is associated to each one of them. The "DSID" value is converted into the corresponding mass value, according to the map stored in DSIDtoMass.txt. 
 3 input flags can be specified: 
 - analysis (-a): type of analysis ('merged' or 'resolved')
 - channel (-c): the channel considered ('ggF' or 'VBF')
