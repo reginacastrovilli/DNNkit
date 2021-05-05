@@ -20,7 +20,7 @@ This file contains useful functions that will be called by the other .py scripts
 This script takes the input .root files and converts them into .pkl files.
 
 # Step 2) buildDataset.py
-This script takes the .pkl files created at the previous step, selects only relevant (user-defined) variables and combines them into one data frame. Events are shuffled in the output data frame and a new signal/background flag is associated to each one of them. The "DSID" value is converted into the corresponding mass value, according to the map stored in DSIDtoMass.txt. 
+This script takes the .pkl files created in the previous step. A new signal/background flag (isSignal) is associated to each one of them (1/0). The "DSID" value of signal events is converted into the corresponding mass value, according to the map stored in DSIDtoMass.txt. For each event only relevant variables (defined in Configuration.txt) are selected and combined into one dataframe, in which the events are shuffled. 
 3 input flags can be specified: 
 - analysis (-a): type of analysis ('merged' or 'resolved')
 - channel (-c): the channel considered ('ggF' or 'VBF')
