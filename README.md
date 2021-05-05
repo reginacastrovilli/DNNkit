@@ -17,11 +17,11 @@ This file contains useful functions that will be called by the other .py scripts
 This script takes the input .root files and converts them into .pkl files.
 
 # Step 2) buildDataset.py
-This script takes the .pkl files created at the previous step, selects only relevant (user-defined) variables and combines them into one data frame. Events are shuffled in the output data frame and a new signal/background flag is associated to each one of them. 
+This script takes the .pkl files created at the previous step, selects only relevant (user-defined) variables and combines them into one data frame. Events are shuffled in the output data frame and a new signal/background flag is associated to each one of them. The "DSID" value is converted into the corresponding mass value, according to the map stored in data/DSIDMap_2lep.txt. 
 3 input flags can be specified: 
 - analysis (-a): type of analysis ('merged' or 'resolved')
 - channel (-c): the channel considered ('ggF' or 'VBF')
-- preselection cuts (-p): string that will be translated to python commad to filter the inital PDs according to it (e.g. 'lep1_pt > 0 and lep1_eta > 0')
+- preselection cuts (-p): string that will be translated to python commad to filter the inital dataframes according to it (e.g. 'lep1_pt > 0 and lep1_eta > 0')
 
 Only the first two flags are mandatory.
 
