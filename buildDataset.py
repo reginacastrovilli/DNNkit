@@ -3,6 +3,7 @@ import numpy as np
 import argparse, configparser
 import re
 import ast
+import random
 from Functions import checkCreateDir, ShufflingData
 import os.path
 from colorama import init, Fore
@@ -91,7 +92,10 @@ for i in inputFiles:
                 print(format(Fore.RED + 'WARNING !!! missing mass value for DSID ' + str(newDf.iat[k,0])))
     else:
         newDf.insert(len(newDf.columns), "isSignal", np.zeros(newDf.shape[0]), True)
-    print(newDf[0:10])
+        ### Assigning to background events a random signal mass
+        for event in range(newDf.shape[0]):
+            newDf.iat[event,0] = random.choice(mass)
+    print(newDf[0:20])
     df.append(newDf)
     counter+=1
 
