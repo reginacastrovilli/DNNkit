@@ -20,7 +20,7 @@ This file contains useful functions that will be called by the other .py scripts
 This script takes the input .root files and converts them into .pkl files.
 
 # Step 2) buildDataset.py
-This script takes the .pkl files created in the previous step. A new signal/background flag (isSignal) is associated to each one of them (1/0). The "DSID" value of signal events is converted into the corresponding mass value, according to the map stored in DSIDtoMass.txt. For each event only relevant variables (defined in Configuration.txt) are selected and combined into one dataframe, in which the events are shuffled. 
+This script takes the .pkl files created in the previous step. A new signal/background flag (isSignal) is associated to each one of them (1/0). The "DSID" value of signal events is converted into the corresponding mass value, according to the map stored in DSIDtoMass.txt. The "DSID" value of background events is replaced by a mass value randomly chosen among those listed in DSIDtoMass.txt.For each event only relevant variables (defined in Configuration.txt) are selected and combined into one dataframe, in which the events are shuffled. 
 3 input flags can be specified: 
 - analysis (-a): type of analysis ('merged' or 'resolved')
 - channel (-c): the channel considered ('ggF' or 'VBF')
@@ -28,18 +28,9 @@ This script takes the .pkl files created in the previous step. A new signal/back
 
 Only the first two flags are mandatory.
 
-# Step 3) splitDataset.py
-This script splits the dataframe produced at the previous step into one train and one test sample and saves them into two separate .pkl files.
-3 input flags must be specified:
-- analysis (-a): type of analysis ('merged' or 'resolved')
-- channel (-c): the channel considered ('ggF' or 'VBF')
-- training fraction (-t): relative size of the training sample, between 0 and 1
-
-All these flags are mandatory but only the first two must be specified by the user (the last one can also assume its default value).
-
-# Step 4) buildDNN.py / buildPDNN.py
+# Step 3) buildDNN.py / buildPDNN.py
 These scripts run the (parametric) Deep Neural Network. 
-7 input flags can be specified:
+8 input flags can be specified:
 - analysis (-a): type of analysis ('merged' or 'resolved')
 - channel (-c): the channel considered ('ggF' or 'VBF')
 - nodes (-n): number of nodes of the (p)DNN
@@ -47,5 +38,6 @@ These scripts run the (parametric) Deep Neural Network.
 - epochs (-e): number of epochs for the training 
 - validation (-v): fraction of the training data that will actually be used for validation
 - dropout (-d): fraction of the neurons that will be dropped during the training
+- training fraction (-t): relative size of the training sample, between 0 and 1
 
 All these flags are mandatory but only the first two must be specficied by the user (the other five can also assume their default values).
