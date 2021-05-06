@@ -13,7 +13,7 @@ analysis, channel, numberOfNodes, numberOfLayers, numberOfEpochs, validationFrac
 dfPath, modelPath, InputFeatures = ReadConfig(analysis)
 
 ### Loading input dataframe
-X_input, y_input = LoadData(dfPath, analysis, channel, InputFeatures)
+X_input, y_input, dfInput = LoadData(dfPath, analysis, channel, InputFeatures)
 
 ### Building the DNN
 n_dim = X_input.shape[1] - 1 # mass won't be given as input to the DNN
@@ -40,10 +40,11 @@ for mass in massPointsList:
     logFile = open(logFileName, 'w')
 
     ### Writing previous information to the logFile
-    #logFile.write('Input dataframe: ' + dfInput + '\nNumber of input events: ' + str(X.shape[0]) + ' (' + str(X_signal.shape[0]) + ' signal and ' + str(X_bkg.shape[0]) + ' background)' + '\nInputFeatures: ' + str(InputFeatures) + '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of layers: ' + str(numberOfLayers) + '\nNumber of epochs: ' + str(numberOfEpochs) + '\nValidation fraction: ' + str(validationFraction) + '\nDropout: ' + str(dropout) + '\nMass points list: ' + str(massPointsList) + '\nMass point analyzed: ' + str(mass))
+    logFile.write('Input dataframe: ' + dfInput + '\nNumber of input events: ' + str(X_input.shape[0]) + ' (' + str(X_signal.shape[0]) + ' signal and ' + str(X_bkg.shape[0]) + ' background)' + '\nInputFeatures: ' + str(InputFeatures) + '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of layers: ' + str(numberOfLayers) + '\nNumber of epochs: ' + str(numberOfEpochs) + '\nValidation fraction: ' + str(validationFraction) + '\nDropout: ' + str(dropout) + '\nTraining fraction: ' + str(trainingFraction) + '\nMass points list: ' + str(massPointsList) + '\nMass point analyzed: ' + str(mass))
 
     ### Selecting only signal events with the same mass value 
     X_signal_mass = X_signal[m_signal == mass]
+    logFile.write('\nNumber of signal events with the analyzed mass: ' + str(X_signal_mass.shape[0]))
 
     ### Creating new extended arrays by adding 1 for signal events and 0 for background events
     X_signal_mass_ext = np.insert(X_signal_mass, X_signal_mass.shape[1], 1, axis = 1)
@@ -76,7 +77,7 @@ for mass in massPointsList:
 
     ### Weighting events
     W_train_signal_mass, W_train_bkg = EventsWeight(X_train_signal_mass_ext, X_train_bkg_ext)
-    logFile.write('\nW_train_signal_mass: ' + str(W_train_signal_mass) + '\nW_train_bkg: ' + str(W_train_bkg))
+    logFile.write('\nWeight for signal train events: ' + str(W_train_signal_mass) + '\nWeight for background train events: ' + str(W_train_bkg))
             
     ### Creating new extended train arrays by adding the weight
     X_train_signal_mass_ext = np.insert(X_train_signal_mass_ext, X_train_signal_mass_ext.shape[1], W_train_signal_mass, axis = 1)
@@ -127,8 +128,8 @@ for mass in massPointsList:
     ### Plotting ROC
     fpr, tpr, thresholds = roc_curve(y_test_mass, yhat_test)
     roc_auc = auc(fpr, tpr)
-    print(format(Fore.BLUE + 'ROC_AUC: ' + str(roc_auc)))
-    logFile.write('\nROC_AUC: ' + str(roc_auc))
+    print(format(Fore.BLUE + 'AUC: ' + str(roc_auc)))
+    logFile.write('\nAUC: ' + str(roc_auc))
 
     if plot:
         DrawROC(fpr, tpr, roc_auc, outputDir, mass)

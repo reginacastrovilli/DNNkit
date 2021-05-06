@@ -10,15 +10,28 @@ analysis, channel, numberOfNodes, numberOfLayers, numberOfEpochs, validationFrac
 ### Reading the configuration file
 dfPath, modelPath, InputFeatures = ReadConfig(analysis)
 
+### Creating the output directory
+outputDir = modelPath + NN + '/' + analysis + '/' + channel
+print (format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
+
+### Creating the logFile                                                                                                                                         
+logFileName = outputDir + '/logFile.txt'
+logFile = open(logFileName, 'w')
+
 ### Loading data and creating input arrays
-X, y = LoadData(dfPath, analysis, channel, InputFeatures)
+X_input, y_input, dfInput = LoadData(dfPath, analysis, channel, InputFeatures)
+
+logInfo = ''
+logString = 'Input dataframe: ' + dfInput + '\nNumber of input events: ' + str(X_input.shape[0]) + '\nInputFeatures: ' + str(InputFeatures) + '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of layers: ' + str(numberOfLayers) + '\nNumber of epochs: ' + str(numberOfEpochs) + '\nValidation fraction: ' + str(validationFraction) + '\nDropout: ' + str(dropout) + '\nTraining fraction: ' + str(trainingFraction)
+logFile.write(logString)
+logInfo += logString
 
 ### Splitting into test/train samples                                                                                                                        
-Ntrain_stop = int(round(X.shape[0] * trainingFraction))
-X_train = X[:Ntrain_stop]
-X_test = X[Ntrain_stop:]
-y_train = y[:Ntrain_stop]
-y_test = y[Ntrain_stop:]
+Ntrain_stop = int(round(X_input.shape[0] * trainingFraction))
+X_train = X_input[:Ntrain_stop]
+X_test = X_input[Ntrain_stop:]
+y_train = y_input[:Ntrain_stop]
+y_test = y_input[Ntrain_stop:]
 
 ### Dividing signal from background
 X_test_signal_unscaled = X_test[y_test == 1]
@@ -26,19 +39,29 @@ X_test_bkg_unscaled = X_test[y_test != 1]
 X_train_signal_unscaled = X_train[y_train == 1]
 X_train_bkg_unscaled = X_train[y_train != 1]
 
+logString = '\nNumber of train events: ' + str(X_train.shape[0]) + ' (' + str(X_train_signal_unscaled.shape[0]) + ' signal and ' + str(X_train_bkg_unscaled.shape[0]) + ' background)' + '\nNumber of test events: ' + str(X_test.shape[0]) + ' (' + str(X_test_signal_unscaled.shape[0]) + ' signal and ' + str(X_test_bkg_unscaled.shape[0]) + ' background)'
+logFile.write(logString) 
+logInfo = logInfo + logString
+
 ### Saving unscaled test mass values, sorted in ascending order
 unscaledMass = []
 for event in X_test_signal_unscaled:
     unscaledMass.append(event[-1])
 unscaledMassPointsList = sorted(list(set(unscaledMass)))
 print('Mass points: ' + str(unscaledMassPointsList))
+logString = '\nMass points: ' + str(unscaledMassPointsList)
+logFile.write(logString)
+logInfo = logInfo + logString
 
 ### Weighting train events
-W_train_signal, W_train_bkg = EventsWeight(X_train_signal_unscaled, X_train_bkg_unscaled)
+w_train_signal, w_train_bkg = EventsWeight(X_train_signal_unscaled, X_train_bkg_unscaled)
+logString = '\nWeight for signal train events: ' + str(w_train_signal) + '\nWeight for background train events: ' + str(w_train_bkg)
+logFile.write(logString)
+logInfo += logString
 
 ### Creating new extended train arrays by adding W_train (this information is needed in order to shuffle data properly)
-X_train_signal_ext = np.insert(X_train_signal_unscaled, X_train_signal_unscaled.shape[1], W_train_signal, axis = 1)
-X_train_bkg_ext = np.insert(X_train_bkg_unscaled, X_train_bkg_unscaled.shape[1], W_train_bkg, axis = 1)
+X_train_signal_ext = np.insert(X_train_signal_unscaled, X_train_signal_unscaled.shape[1], w_train_signal, axis = 1)
+X_train_bkg_ext = np.insert(X_train_bkg_unscaled, X_train_bkg_unscaled.shape[1], w_train_bkg, axis = 1)
 
 ### Creating new extended train/test arrays by adding value 1 (0) to signal (background) events (this information is needed in order to shuffle data properly)    
 X_train_signal_ext = np.insert(X_train_signal_ext, X_train_signal_ext.shape[1], 1, axis = 1)
@@ -62,10 +85,10 @@ y_test = X_test_ext_unscaled[:, X_test_ext_unscaled.shape[1] - 1]
 X_train_ext_unscaled = np.delete(X_train_ext_unscaled, X_train_ext_unscaled.shape[1] - 1, axis = 1)
 X_test_unscaled = np.delete(X_test_ext_unscaled, X_test_ext_unscaled.shape[1] - 1, axis = 1)
 
-### Extracting W_train from X_train_ext
-W_train = X_train_ext_unscaled[:, X_train_ext_unscaled.shape[1] - 1]
+### Extracting w_train from X_train_ext
+w_train = X_train_ext_unscaled[:, X_train_ext_unscaled.shape[1] - 1]
 
-### Deleting W_train from X_train_ext
+### Deleting w_train from X_train_ext
 X_train_unscaled = np.delete(X_train_ext_unscaled, X_train_ext_unscaled.shape[1] - 1, axis = 1)
 
 ### Scaling train/test data
@@ -102,27 +125,21 @@ callbacks = [
     EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss')
 ]
 
-modelMetricsHistory = model.fit(X_train, y_train, sample_weight = W_train, epochs = numberOfEpochs, batch_size = 2048, validation_split = validationFraction, verbose = 1, callbacks = callbacks)
+modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = 2048, validation_split = validationFraction, verbose = 1, callbacks = callbacks)
 
 ### Evaluating the performance of the pDNN
 testLoss, testAccuracy = EvaluatePerformance(model, X_test, y_test)
 
-### Drawing training history
-outputDir = modelPath + NN + '/' + analysis + '/' + channel
-print (format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
+logString = '\nTest loss: ' + str(testLoss) + '\nTest accuracy: ' + str(testAccuracy)
+logFile.write(logString)
+logInfo += logString
 
 if plot:
+    ### Drawing training history
     DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN)
     DrawLoss(modelMetricsHistory, testLoss, outputDir, NN)
 
-### Creating the logFile                                                                                                                                         
-logFileName = outputDir + '/logFile.txt'
-logFile = open(logFileName, 'w')
-
-### Writing previous information to the log file
-#logInfo = 'Input train array: ' + df_Train_path + '\nNumber of train events: ' + str(X_train.shape[0]) + ' (' + str(X_train_signal.shape[0]) + ' signal and ' + str(X_train_bkg.shape[0]) + ' background) -> Weight for signal train events: ' + str(W_train_signal) + ', weight for background train events: ' + str(W_train_bkg) + '\nInput test array: ' + df_Test_path + '\nNumber of test events: ' +str(X_test.shape[0]) + ' (' + str(X_test_signal.shape[0]) + ' signal and ' + str(X_test_bkg.shape[0]) + ' background)' + '\nInputFeatures: ' + str(InputFeatures) + '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of layers: ' + str(numberOfLayers) + '\nNumber of epochs: ' + str(numberOfEpochs) + '\nValidation fraction: ' + str(validationFraction) + '\nDropout: ' + str(dropout) + '\nTest loss: ' + str(testLoss) + '\nTest accuracy: ' + str(testAccuracy)
-#logFile.write(logInfo)
-#logFile.close()
+logFile.close()
 print('Saved ' + logFileName)
 
 ### Saving the model
@@ -141,7 +158,7 @@ for mass in scaledTestMassPointsList:
     print (format('Output directory: ' + Fore.GREEN + newOutputDir), checkCreateDir(newOutputDir))
     newLogFileName = newOutputDir + '/logFile.txt'
     newLogFile = open(newLogFileName, 'w')
-    #newLogFile.write(logInfo + '\nMass points list: ' + str(massPointsList) + '\nMass point analyzed: ' + str(mass))
+    newLogFile.write(logInfo + '\nMass point analyzed: ' + str(unscaledMass))
 
     ### Selecting only test signal events with the same mass value
     X_test_signal_mass = X_test_signal[m_test_signal == mass]

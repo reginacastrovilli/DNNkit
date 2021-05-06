@@ -1,5 +1,7 @@
 ### Reading from command line
 from argparse import ArgumentParser
+from colorama import init, Fore
+init(autoreset = True)
 
 def ReadArgParser():
     parser = ArgumentParser()
@@ -43,12 +45,12 @@ def ReadArgParser():
     if args.Training and (trainingFraction < 0. or trainingFraction > 1.):
         parser.error('Training fraction must be between 0 and 1')
 
-    print('              nodes =', numberOfNodes)
-    print('             layers =', numberOfLayers)
-    print('             epochs =', numberOfEpochs)
-    print('validation fraction =', validationFraction)
-    print('            dropout =', dropout)
-    print('  training fraction =', trainingFraction)
+    print(Fore.BLUE + '              nodes = ' + str(numberOfNodes))
+    print(Fore.BLUE + '             layers = ' + str(numberOfLayers))
+    print(Fore.BLUE + '             epochs = ' + str(numberOfEpochs))
+    print(Fore.BLUE + 'validation fraction = ' + str(validationFraction))
+    print(Fore.BLUE + '            dropout = ' + str(dropout))
+    print(Fore.BLUE + '  training fraction = ' + str(trainingFraction))
 
     return analysis, channel, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, trainingFraction
 
@@ -68,8 +70,6 @@ def ReadConfig(analysis):
 
 ### Checking if the output directory exists. If not, creating it
 import os
-from colorama import init, Fore
-init(autoreset = True)
 
 def checkCreateDir(dir):
     if not os.path.isdir(dir):
@@ -86,7 +86,7 @@ def LoadData(dfPath, analysis, channel, InputFeatures):
     df = pd.read_pickle(dfInput)
     X = df[InputFeatures].values
     y = df['isSignal']
-    return X, y
+    return X, y, dfInput
 
 ### Shuffling data
 import sklearn.utils
