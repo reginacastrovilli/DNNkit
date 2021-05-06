@@ -10,6 +10,7 @@ def ReadArgParser():
     parser.add_argument('-e', '--Epochs', help = 'Number of epochs for the training', default = 150)
     parser.add_argument('-v', '--Validation', help = 'Fraction of the training data that will actually be used for validation', default = 0.2)
     parser.add_argument('-d', '--Dropout', help = 'Fraction of the neurons to drop during the training', default = 0.2)
+    parser.add_argument('-t', '--Training', help = 'Relative size of the training sample, between 0 and 1', default = 0.7)
     
     args = parser.parse_args()
     
@@ -38,14 +39,18 @@ def ReadArgParser():
     dropout = float(args.Dropout)
     if args.Dropout and (dropout < 0. or dropout > 1.):
         parser.error('Dropout must be between 0 and 1')
+    trainingFraction = float(args.Training)
+    if args.Training and (trainingFraction < 0. or trainingFraction > 1.):
+        parser.error('Training fraction must be between 0 and 1')
 
-    print('     nodes =', numberOfNodes)
-    print('    layers =', numberOfLayers)
-    print('    epochs =', numberOfEpochs)
-    print('validation =', validationFraction)
-    print('   dropout =', dropout)
+    print('     nodes          =', numberOfNodes)
+    print('    layers          =', numberOfLayers)
+    print('    epochs          =', numberOfEpochs)
+    print('validation fraction =', validationFraction)
+    print('   dropout          =', dropout)
+    print('training fraction   = ', trainingFraction)
 
-    return dropout, analysis, channel, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction
+    return analysis, channel, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, trainingFraction
 
 ### Reading from the configuration file
 import configparser, ast
@@ -75,6 +80,13 @@ def checkCreateDir(dir):
 
 ### Loading data and creating input arrays
 import pandas as pd
+
+def LoadData(dfPath, analysis, channel, InputFeatures):
+    dfInput = dfPath + 'MixData_PD_' + analysis + '_' + channel + '.pkl'
+    df = pd.read_pickle(dfInput)
+    X = df[InputFeatures].values
+    y = df['isSignal']
+    return X, y
 
 def LoadDataCreateArrays(dfPath, analysis, channel, InputFeatures):
     df_Train_path = dfPath + 'MixData_PD_' + analysis + '_' + channel + '_Train.pkl'
@@ -181,7 +193,7 @@ def DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, mass = 0):
     plt.ylabel('Loss')
     plt.xlabel('Epoch')
     plt.legend(['Training', 'Validation'], loc = 'upper right')
-    plt.figtext(0.7, 0.7, 'Test loss: ' + str(round(testLoss,2)), wrap = True, horizontalalignment = 'center')#, fontsize = 10)
+    plt.figtext(0.7, 0.7, 'Test loss: ' + str(round(testLoss, 2)), wrap = True, horizontalalignment = 'center')#, fontsize = 10)
     LossPltName = outputDir + '/Loss.png'
     plt.savefig(LossPltName)
     print('Saved ' + LossPltName)
@@ -189,16 +201,17 @@ def DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, mass = 0):
 
 ### Drawing ROC (Receiver Operating Characteristic)
 from sklearn.metrics import roc_curve, auc, roc_auc_score, classification_report
-def DrawROC(fpr, tpr, outputDir, mass):
-    plt.plot(fpr,  tpr, color = 'darkorange', lw = 2, label = 'Full curve')
-    plt.plot([0, 0], [1, 1], color = 'navy', lw = 2, linestyle = '--')
+def DrawROC(fpr, tpr, AUC, outputDir, mass):
+    plt.plot(fpr,  tpr, color = 'darkorange', lw = 2)#, label = 'Full curve')
+    #plt.plot([0, 0], [1, 1], color = 'navy', lw = 2, linestyle = '--')
     plt.xlim([-0.05, 1.0])
     plt.ylim([0.0, 1.05])
     plt.ylabel('True Positive Rate')
     plt.xlabel('False Positive Rate')
     titleROC = 'ROC curves (mass: ' + str(int(mass)) + ')'
     plt.title(titleROC)
-    plt.legend(loc = 'lower right')
+    #plt.legend(loc = 'lower right')
+    plt.figtext(0.7, 0.25, 'AUC: ' + str(round(AUC, 2)), wrap = True, horizontalalignment = 'center')
     ROCPltName = outputDir + '/ROC.png'
     plt.savefig(ROCPltName)
     print('Saved ' + ROCPltName)
