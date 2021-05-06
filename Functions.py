@@ -43,12 +43,12 @@ def ReadArgParser():
     if args.Training and (trainingFraction < 0. or trainingFraction > 1.):
         parser.error('Training fraction must be between 0 and 1')
 
-    print('     nodes          =', numberOfNodes)
-    print('    layers          =', numberOfLayers)
-    print('    epochs          =', numberOfEpochs)
+    print('              nodes =', numberOfNodes)
+    print('             layers =', numberOfLayers)
+    print('             epochs =', numberOfEpochs)
     print('validation fraction =', validationFraction)
-    print('   dropout          =', dropout)
-    print('training fraction   = ', trainingFraction)
+    print('            dropout =', dropout)
+    print('  training fraction =', trainingFraction)
 
     return analysis, channel, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, trainingFraction
 
@@ -93,7 +93,7 @@ import sklearn.utils
 
 def ShufflingData(df):
     df = sklearn.utils.shuffle(df, random_state = 123)
-#    df = df.reset_index(drop = True)
+    #df = df.reset_index(drop = True)
     return df
 
 ### Building the (p)DNN
@@ -211,6 +211,7 @@ def DrawScores(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bk
     plt.hist(yhat_test_bkg, bins = bins, histtype = 'stepfilled', lw = 2, color = 'orange', alpha = 0.5, label = [r'Background Test'], density = True)
     plt.ylabel('Norm. Entries')
     plt.xlabel(NN + ' score')
+    plt.yscale("log")
     titleScores = 'Scores (mass: ' + str(int(mass)) + ')'
     plt.title(titleScores)
     plt.legend(loc = 'upper center')

@@ -206,4 +206,3 @@ for mass in scaledTestMassPointsList:
     newLogFile.close()
     print('Saved ' + newLogFileName)
     counter = counter + 1
-    exit()
