@@ -78,7 +78,7 @@ def checkCreateDir(dir):
     else:
         return Fore.RED + ' (already there)'
 
-### Loading data and creating input arrays
+### Loading input data
 import pandas as pd
 
 def LoadData(dfPath, analysis, channel, InputFeatures):
@@ -87,22 +87,6 @@ def LoadData(dfPath, analysis, channel, InputFeatures):
     X = df[InputFeatures].values
     y = df['isSignal']
     return X, y
-
-def LoadDataCreateArrays(dfPath, analysis, channel, InputFeatures):
-    df_Train_path = dfPath + 'MixData_PD_' + analysis + '_' + channel + '_Train.pkl'
-    df_Test_path = dfPath + 'MixData_PD_' + analysis + '_' + channel + '_Test.pkl'
-    df_Train = pd.read_pickle(df_Train_path)
-    df_Test = pd.read_pickle(df_Test_path)
-
-    X_train = df_Train[InputFeatures].values
-    y_train = df_Train['isSignal']
-    w_train = df_Train['weight']
-    
-    X_test = df_Test[InputFeatures].values
-    y_test = df_Test['isSignal']
-    w_test = df_Test['weight']
-
-    return X_train, y_train, X_test, y_test, df_Train_path, df_Test_path
 
 ### Shuffling data
 import sklearn.utils
@@ -202,7 +186,7 @@ def DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, mass = 0):
 ### Drawing ROC (Receiver Operating Characteristic)
 from sklearn.metrics import roc_curve, auc, roc_auc_score, classification_report
 def DrawROC(fpr, tpr, AUC, outputDir, mass):
-    plt.plot(fpr,  tpr, color = 'darkorange', lw = 2)#, label = 'Full curve')
+    plt.plot(fpr,  tpr, color = 'darkorange', lw = 2)
     #plt.plot([0, 0], [1, 1], color = 'navy', lw = 2, linestyle = '--')
     plt.xlim([-0.05, 1.0])
     plt.ylim([0.0, 1.05])
@@ -210,7 +194,6 @@ def DrawROC(fpr, tpr, AUC, outputDir, mass):
     plt.xlabel('False Positive Rate')
     titleROC = 'ROC curves (mass: ' + str(int(mass)) + ')'
     plt.title(titleROC)
-    #plt.legend(loc = 'lower right')
     plt.figtext(0.7, 0.25, 'AUC: ' + str(round(AUC, 2)), wrap = True, horizontalalignment = 'center')
     ROCPltName = outputDir + '/ROC.png'
     plt.savefig(ROCPltName)
@@ -266,26 +249,6 @@ def DrawCM(yhat_test, y_test, normalize, outputDir, mass):
     #plt.show()
     print('Saved ' + CMPltName)
     plt.clf()    
-
-### Number of events in signal samples = number of events in bkg samples
-def EventsCut(XTrainSignal, XTrainBkg, XTestSignal, XTestBkg):
-    if XTrainSignal.shape[0] > XTrainBkg.shape[0]:
-        NeventsTrain = XTrainBkg.shape[0]
-        print(format(Fore.RED + 'Number of train signal events (' + str(XTrainSignal.shape[0]) + ') higher than number of train background events (' + str(XTrainBkg.shape[0]) + ') -> using '+ str(NeventsTrain) + ' events'))
-        XTrainSignal = XTrainSignal[:NeventsTrain]
-    else:
-        NeventsTrain = XTrainSignal.shape[0]
-        print(format(Fore.RED + 'Number of train background events (' + str(XTrainBkg.shape[0]) + ') higher than number of train signal events (' + str(XTrainSignal.shape[0]) + ') -> using ' + str(NeventsTrain) + ' events'))
-        XTrainBkg = XTrainBkg[:NeventsTrain]
-    if XTestSignal.shape[0] > XTestBkg.shape[0]:
-        NeventsTest = XTestBkg.shape[0]
-        print(format(Fore.RED + 'Number of test signal events (' + str(XTestSignal.shape[0]) + ') higher than number of test background events (' + str(XTestBkg.shape[0]) + ') -> using '+ str(NeventsTest) + ' events'))
-        XTestSignal = XTestSignal[:NeventsTest]
-    else:
-        NeventsTest = XTestSignal.shape[0]
-        print(format(Fore.RED + 'Number of test background events (' + str(XTestBkg.shape[0]) + ') higher than number of test signal events (' + str(XTestSignal.shape[0]) + ') -> using ' + str(NeventsTest) + ' events'))
-        XTestBkg = XTestBkg[:NeventsTest]
-    return XTrainSignal, XTrainBkg, XTestSignal, XTestBkg
 
 def EventsWeight(XTrainSignal, XTrainBkg):
 
