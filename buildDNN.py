@@ -7,36 +7,28 @@ plot = True
 NN = 'DNN'
 
 ### Reading the command line
-dropout, analysis, channel, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction = ReadArgParser()
+analysis, channel, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, trainingFraction = ReadArgParser()
 
 ### Reading the configuration file
 dfPath, modelPath, InputFeatures = ReadConfig(analysis)
 
-### Loading data and creating input arrays
-X_train, y_train, X_test, y_test, df_Train_path, df_Test_path = LoadDataCreateArrays(dfPath, analysis, channel, InputFeatures)
+### Loading input dataframe
+X_input, y_input = LoadData(dfPath, analysis, channel, InputFeatures)
 
 ### Building the DNN
-n_dim = X_train.shape[1] - 1 # mass won't be given as input to the DNN
-
+n_dim = X_input.shape[1] - 1 # mass won't be given as input to the DNN
 model = BuildDNN(n_dim, numberOfNodes, numberOfLayers, dropout)
 model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', metrics = ['accuracy'])
 
 ### Dividing signal from background
-X_test_signal = X_test[y_test == 1]
-X_test_bkg = X_test[y_test != 1]
-X_train_signal = X_train[y_train == 1]
-X_train_bkg = X_train[y_train != 1]
+X_signal = X_input[y_input == 1]
+X_bkg = X_input[y_input != 1]
 
-### Saving mass values
-m_train_signal = []
-for event in X_train_signal:
-    m_train_signal.append(event[-1])
-massPointsList = list(set(m_train_signal))
+### Saving unscaled signal mass values
+m_signal = X_signal[:, X_signal.shape[1] - 1]
+massPointsList = list(set(m_signal))
 print('Mass points: ' + str(massPointsList))
 
-m_test_signal = []
-for event in X_test_signal:
-    m_test_signal.append(event[-1])
 for mass in massPointsList:
 
     ### Creating the output directory
@@ -48,55 +40,66 @@ for mass in massPointsList:
     logFile = open(logFileName, 'w')
 
     ### Writing previous information to the logFile
-    logFile.write('Input train array: ' + df_Train_path + '\nNumber of train events: ' + str(X_train.shape[0]) + ' (' + str(X_train_signal.shape[0]) + ' signal and ' + str(X_train_bkg.shape[0]) + ' background)' + '\nInput test array: ' + df_Test_path + '\nNumber of test events: ' +str(X_test.shape[0]) + ' (' + str(X_test_signal.shape[0]) + ' signal and ' + str(X_test_bkg.shape[0]) + ' background)' + '\nInputFeatures: ' + str(InputFeatures) + '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of layers: ' + str(numberOfLayers) + '\nNumber of epochs: ' + str(numberOfEpochs) + '\nValidation fraction: ' + str(validationFraction) + '\nDropout: ' + str(dropout) + '\nMass points list: ' + str(massPointsList) + '\nMass point analyzed: ' + str(mass))
+    #logFile.write('Input dataframe: ' + dfInput + '\nNumber of input events: ' + str(X.shape[0]) + ' (' + str(X_signal.shape[0]) + ' signal and ' + str(X_bkg.shape[0]) + ' background)' + '\nInputFeatures: ' + str(InputFeatures) + '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of layers: ' + str(numberOfLayers) + '\nNumber of epochs: ' + str(numberOfEpochs) + '\nValidation fraction: ' + str(validationFraction) + '\nDropout: ' + str(dropout) + '\nMass points list: ' + str(massPointsList) + '\nMass point analyzed: ' + str(mass))
 
     ### Selecting only signal events with the same mass value 
-    X_train_signal_mass = X_train_signal[m_train_signal == mass]
-    X_test_signal_mass = X_test_signal[m_test_signal == mass]
+    X_signal_mass = X_signal[m_signal == mass]
 
-    ### Scaling and dropping the mass value
-    transformer = ColumnTransformer(transformers = [('name', StandardScaler(), slice(0, X_train_signal_mass.shape[1] - 1))], remainder = 'drop')
-    X_train_signal_mass = transformer.fit_transform(X_train_signal_mass)
-    X_test_signal_mass = transformer.fit_transform(X_test_signal_mass)
-    X_train_bkg = transformer.fit_transform(X_train_bkg)
-    X_test_bkg = transformer.fit_transform(X_test_bkg)
-
-    ### Weighting events
-    W_train_signal_mass, W_train_bkg = EventsWeight(X_train_signal_mass, X_train_bkg)
-    
-    logFile.write('\nNumber of train events with this mass: ' + str(X_train_signal_mass.shape[0]) + ' -> Weight for signal train events: ' + str(W_train_signal_mass) + ', weight for background train events: ' + str(W_train_bkg) + '\nNumber of test event with this mass: ' + str(X_test_signal_mass.shape[0]))
-
-    ### Creating new extended train arrays by adding W_train (this information is needed in order to shuffle data properly)
-    X_train_signal_mass_ext = np.insert(X_train_signal_mass, X_train_signal_mass.shape[1], W_train_signal_mass, axis = 1)
-    X_train_bkg_ext = np.insert(X_train_bkg, X_train_bkg.shape[1], W_train_bkg, axis = 1)
-
-    ### Creating new extended train/test arrays by adding value 1 (0) to signal (background) events (this information is needed in order to shuffle data properly)
-    X_train_signal_mass_ext = np.insert(X_train_signal_mass_ext, X_train_signal_mass_ext.shape[1], 1, axis = 1)
-    X_train_bkg_ext = np.insert(X_train_bkg_ext, X_train_bkg_ext.shape[1], 0, axis = 1)
-    X_test_signal_mass_ext = np.insert(X_test_signal_mass, X_test_signal_mass.shape[1], 1, axis = 1)
-    X_test_bkg_ext = np.insert(X_test_bkg, X_test_bkg.shape[1], 0, axis = 1)
+    ### Creating new extended arrays by adding 1 for signal events and 0 for background events
+    X_signal_mass_ext = np.insert(X_signal_mass, X_signal_mass.shape[1], 1, axis = 1)
+    X_bkg_ext = np.insert(X_bkg, X_bkg.shape[1], 0, axis = 1)
 
     ### Putting signal and background events back together
-    X_train_mass_ext = np.concatenate((X_train_signal_mass_ext, X_train_bkg_ext), axis = 0) 
+    X_mass_ext = np.concatenate((X_signal_mass_ext, X_bkg_ext), axis = 0)
+
+    ### Shuffling data
+    X_mass_ext = ShufflingData(X_mass_ext)
+
+    ### Splitting into test/train samples
+    Ntrain_stop = int(round(X_mass_ext.shape[0] * trainingFraction))
+    X_train_mass_ext = X_mass_ext[:Ntrain_stop]
+    X_test_mass_ext = X_mass_ext[Ntrain_stop:]    
+
+    logFile.write('\nNumber of train events: ' + str(X_train_mass_ext.shape[0]) + '\nNumber of test events: ' + str(X_test_mass_ext.shape[0]))
+
+    ### Extracting y_mass from X_mass_ext
+    y_train_mass = X_train_mass_ext[:, X_train_mass_ext.shape[1] - 1]
+    y_test_mass = X_test_mass_ext[:, X_test_mass_ext.shape[1] - 1]
+
+    ### Dividing signal from background
+    X_train_signal_mass_ext = X_train_mass_ext[y_train_mass == 1]
+    X_train_bkg_ext = X_train_mass_ext[y_train_mass != 1]
+    X_test_signal_mass_ext = X_test_mass_ext[y_test_mass == 1]
+    X_test_bkg_ext = X_test_mass_ext[y_test_mass != 1]
+
+    logFile.write('\nNumber of signal train events: ' + str(X_train_signal_mass_ext.shape[0]) + '\nNumber of bkg train events: ' + str(X_train_bkg_ext.shape[0]))
+
+    ### Weighting events
+    W_train_signal_mass, W_train_bkg = EventsWeight(X_train_signal_mass_ext, X_train_bkg_ext)
+    logFile.write('\nW_train_signal_mass: ' + str(W_train_signal_mass) + '\nW_train_bkg: ' + str(W_train_bkg))
+            
+    ### Creating new extended train arrays by adding the weight
+    X_train_signal_mass_ext = np.insert(X_train_signal_mass_ext, X_train_signal_mass_ext.shape[1], W_train_signal_mass, axis = 1)
+    X_train_bkg_ext = np.insert(X_train_bkg_ext, X_train_bkg_ext.shape[1], W_train_bkg, axis = 1)
+
+    ### Putting signal and background events back together
+    X_train_mass_ext = np.concatenate((X_train_signal_mass_ext, X_train_bkg_ext), axis = 0)
     X_test_mass_ext = np.concatenate((X_test_signal_mass_ext, X_test_bkg_ext), axis = 0)
 
     ### Shuffling data
     X_train_mass_ext = ShufflingData(X_train_mass_ext)
     X_test_mass_ext = ShufflingData(X_test_mass_ext)
 
-    ### Extracting y_mass from X_mass_ext
-    y_train_mass = X_train_mass_ext[:, X_train_mass_ext.shape[1] - 1]    
-    y_test_mass = X_test_mass_ext[:, X_test_mass_ext.shape[1] - 1]    
+    ### Extracting w_mass and y_mass
+    w_train_mass = X_train_mass_ext[:, X_train_mass_ext.shape[1] - 1]
+    y_train_mass = X_train_mass_ext[:, X_train_mass_ext.shape[1] - 2]
+    y_test_mass = X_test_mass_ext[:, X_test_mass_ext.shape[1] - 1]
 
-    ### Deleting y_mass from X_mass
-    X_train_mass_ext = np.delete(X_train_mass_ext, X_train_mass_ext.shape[1] - 1, axis = 1)
-    X_test_mass = np.delete(X_test_mass_ext, X_test_mass_ext.shape[1] - 1, axis = 1)
-
-    ### Extracting W_train_mass from X_train_mass_ext
-    W_train_mass = X_train_mass_ext[:, X_train_mass_ext.shape[1] - 1]    
-
-    ### Deleting W_train_mass from X_train_mass_ext
-    X_train_mass = np.delete(X_train_mass_ext, X_train_mass_ext.shape[1] - 1, axis = 1)
+    ### Scaling and dropping mass/y/weight values
+    transformerTrain = ColumnTransformer(transformers = [('name', StandardScaler(), slice(0, X_train_mass_ext.shape[1] - 3))], remainder = 'drop')
+    transformerTest = ColumnTransformer(transformers = [('name', StandardScaler(), slice(0, X_test_mass_ext.shape[1] - 2))], remainder = 'drop')
+    X_train_mass = transformerTrain.fit_transform(X_train_mass_ext)
+    X_test_mass = transformerTest.fit_transform(X_test_mass_ext)
 
     ### Training
     callbacks = [
@@ -104,7 +107,7 @@ for mass in massPointsList:
         EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss')
     ]
     
-    modelMetricsHistory = model.fit(X_train_mass, y_train_mass, sample_weight = W_train_mass, epochs = numberOfEpochs, batch_size = 2048, validation_split = validationFraction, verbose = 1, callbacks = callbacks)
+    modelMetricsHistory = model.fit(X_train_mass, y_train_mass, sample_weight = w_train_mass, epochs = numberOfEpochs, batch_size = 2048, validation_split = validationFraction, verbose = 1, callbacks = callbacks)
 
     ### Evaluating the performance of the DNN
     testLoss, testAccuracy = EvaluatePerformance(model, X_test_mass, y_test_mass)
@@ -125,17 +128,22 @@ for mass in massPointsList:
     fpr, tpr, thresholds = roc_curve(y_test_mass, yhat_test)
     roc_auc = auc(fpr, tpr)
     print(format(Fore.BLUE + 'ROC_AUC: ' + str(roc_auc)))
+    logFile.write('\nROC_AUC: ' + str(roc_auc))
 
     if plot:
-        DrawROC(fpr, tpr, outputDir, mass)
+        DrawROC(fpr, tpr, roc_auc, outputDir, mass)
 
         ### Plotting confusion matrix
         DrawCM(yhat_test, y_test_mass, True, outputDir, mass)
 
-    ### Saving performance parameters
-    logFile.write('\nROC_AUC: ' + str(roc_auc))
+    ###### Prediction on signal and background separately
 
-    ### Prediction on signal and background separately
+    ### Dividing signal from background
+    X_train_signal_mass = X_train_mass[y_train_mass == 1]
+    X_train_bkg = X_train_mass[y_train_mass != 1]
+    X_test_signal_mass = X_test_mass[y_test_mass == 1]
+    X_test_bkg = X_test_mass[y_test_mass != 1]
+
     yhat_train_signal, yhat_train_bkg, yhat_test_signal, yhat_test_bkg = PredictionSigBkg(model, X_train_signal_mass, X_train_bkg, X_test_signal_mass, X_test_bkg)
 
     if plot:
