@@ -1,5 +1,6 @@
 ### Make sure that 'DSID' is the last input variable
 from Functions import *
+from keras.models import load_model
 
 plot = True
 NN = 'PDNN'
@@ -36,9 +37,8 @@ logString = '\nMass points: ' + str(unscaledMassPointsList)
 logFile.write(logString)
 logInfo = logInfo + logString
 
-### Scaling train/test data
+### Scaling data
 from sklearn.preprocessing import StandardScaler
-from sklearn.compose import ColumnTransformer
 
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X_input)
@@ -72,6 +72,18 @@ logString = '\nWeight for signal train events: ' + str(w_train_signal) + '\nWeig
 logFile.write(logString)
 logInfo += logString
 
+y_train = []
+w_train = []
+for event in range(len(X_train)):
+    if event < len(X_train_signal):
+        y_train.append(1)
+        w_train.append(w_train_signal)
+    else:
+        y_train.append(0)
+        w_train.append(w_train_bkg)
+y_train = np.array(y_train)
+w_train = np.array(w_train)
+'''
 ### Creating new extended train arrays by adding W_train (this information is needed in order to shuffle data properly)
 X_train_signal_ext = np.insert(X_train_signal, X_train_signal.shape[1], w_train_signal, axis = 1)
 X_train_bkg_ext = np.insert(X_train_bkg, X_train_bkg.shape[1], w_train_bkg, axis = 1)
@@ -103,6 +115,8 @@ w_train = X_train_ext[:, X_train_ext.shape[1] - 1]
 
 ### Deleting w_train from X_train_ext
 X_train = np.delete(X_train_ext, X_train_ext.shape[1] - 1, axis = 1)
+'''
+X_train = np.concatenate((X_train_signal, X_train_bkg), axis = 0)
 
 ### Building the PDNN
 n_dim = X_train.shape[1]
@@ -113,13 +127,10 @@ model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', metrics = ['a
 ### Training
 callbacks = [
     # If we don't have a decrease of the loss for 11 epochs, terminate training.
-    EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss')#, ModelCheckpoint(outputDir+'/model.h5', monitor='val_loss', verbose=True, save_best_only=True)
+    EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss')#, ModelCheckpoint('model.hdf5', save_weights_only = False, monitor = 'val_loss', mode = 'min', verbose = True, save_best_only = True)
 ]
 
-#del model
-#model = load_model(outputDir + '/model.h5')
-
-modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = 2048, validation_split = validationFraction, verbose = 1, callbacks = callbacks)
+modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = 2048, validation_split = validationFraction, verbose = 1, shuffle = True, callbacks = callbacks)
 
 ### Evaluating the performance of the PDNN
 testLoss, testAccuracy = EvaluatePerformance(model, X_test, y_test)
@@ -127,6 +138,26 @@ testLoss, testAccuracy = EvaluatePerformance(model, X_test, y_test)
 logString = '\nTest loss: ' + str(testLoss) + '\nTest accuracy: ' + str(testAccuracy)
 logFile.write(logString)
 logInfo += logString
+'''
+arch = model.to_json()
+with open('architecture.json', 'w') as arch_file:
+    print('Saving model as json')
+    arch_file.write(arch)
+'''
+model = BuildDNN(n_dim, numberOfNodes, numberOfLayers, dropout)
+model.load_weights('model.hdf5')
+'''
+model = tf.keras.models.load_model('model.hdf5')
+arch = model.to_json()
+with open('newarchitecture.json', 'w') as arch_file:
+    print('Saving model as json')
+    arch_file.write(arch)
+exit()
+
+### Evaluating the performance of the PDNN
+testLoss, testAccuracy = EvaluatePerformance(model, X_test, y_test)
+'''
+logString = '\nTest loss: ' + str(testLoss) + '\nTest accuracy: ' + str(testAccuracy)
 
 if plot:
     ### Drawing training history
