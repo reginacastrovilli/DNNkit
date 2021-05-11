@@ -1,14 +1,14 @@
-Code to produce the (parametric) Deep Neural Network ((p)DNN) for the HDBS analysis.
+Code to produce the (parametric) Deep Neural Network ((P)DNN) for the HDBS analysis.
 
 # Configuration.txt
 This text file contains the configuration parameters:
 - ntuplePath: path to the flat ntuples produced by the CxAODReader
 - dfPath: path to the pandas data frames into which the flat ntuples are converted by the saveToPkl.py file
-- modelPath: path to directory in which the results of the (p)DNN will be stored
+- modelPath: path to directory in which the results of the (P)DNN will be stored
 - inputFiles: list of names of the input .root files that will be converted into pandas dataframes (without absolute path and extension)
 - dataType: list of flags that specifies the nature of the corresponding input file (it can be either 'data', 'sig' or 'bkg')
 - rootBranchSubSample = list of the variables (root branches) that will actually be converted into pandas dataframes
-- InputFeatures(Merged/Resolved) = list of the variables that will be fed to the (p)DNN in the merged/resolved regime
+- InputFeatures(Merged/Resolved) = list of the variables that will be fed to the (P)DNN in the merged/resolved regime
 
 # DSIDtoMass.txt
 This text file contains the map used to convert DSID variables into mass values.
@@ -29,12 +29,12 @@ This script takes the .pkl files created in the previous step. A new signal/back
 Only the first two flags are mandatory.
 
 # Step 3) buildDNN.py / buildPDNN.py
-These scripts run the (parametric) Deep Neural Network. 
+These scripts run the (Parametric) Deep Neural Network. 
 8 input flags can be specified:
 - analysis (-a): type of analysis ('merged' or 'resolved')
 - channel (-c): the channel considered ('ggF' or 'VBF')
-- nodes (-n): number of nodes of the (p)DNN
-- layers (-l): number of layers of the (p)DNN
+- nodes (-n): number of nodes of the (P)DNN
+- layers (-l): number of layers of the (P)DNN
 - epochs (-e): number of epochs for the training 
 - validation (-v): fraction of the training data that will actually be used for validation
 - dropout (-d): fraction of the neurons that will be dropped during the training

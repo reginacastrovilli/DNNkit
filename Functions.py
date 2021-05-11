@@ -96,7 +96,7 @@ def ShufflingData(df):
     #df = df.reset_index(drop = True)
     return df
 
-### Building the (p)DNN
+### Building the (P)DNN
 from keras.models import Model, Sequential
 from keras.layers import Dense, Dropout, Input, BatchNormalization
 from keras.callbacks import EarlyStopping, ModelCheckpoint
@@ -112,7 +112,7 @@ def BuildDNN(N_input, width, depth, dropout):
         model.add(Activation('relu'))
         model.add(Dropout(dropout))
     model.add(Dense(1, activation = 'sigmoid'))
-    
+    #model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', metrics = ['accuracy'])
     return model
 
 import matplotlib
@@ -120,7 +120,7 @@ import matplotlib.pyplot as plt
 plt.rcParams["figure.figsize"] = [7,7]
 plt.rcParams.update({'font.size': 16})
 
-### Evaluating the (p)DNN performance
+### Evaluating the (P)DNN performance
 def EvaluatePerformance(model, X_test, y_test):
     perf = model.evaluate(X_test, y_test, batch_size = 2048)
     testLoss = perf[0]
@@ -155,12 +155,12 @@ def DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, mass = 0):
     plt.plot(modelMetricsHistory.history['val_accuracy'])
     titleAccuracy = 'Model accuracy'
     if NN == 'DNN':
-        titleAccuracy = 'Model accuracy (mass: ' + str(int(mass)) + ')'
+        titleAccuracy = 'Model accuracy (mass: ' + str(int(mass)) + ' GeV)'
     plt.title(titleAccuracy)
     plt.ylabel('Accuracy')
     plt.xlabel('Epoch')
     plt.legend(['Training', 'Validation'], loc = 'lower right')
-    plt.figtext(0.69, 0.28, 'Test accuracy: ' + str(round(testAccuracy, 3)), wrap = True, horizontalalignment = 'center')#, fontsize = 10)
+    #plt.figtext(0.69, 0.28, 'Test accuracy: ' + str(round(testAccuracy, 3)), wrap = True, horizontalalignment = 'center')#, fontsize = 10)
     AccuracyPltName = outputDir + '/Accuracy.png'
     plt.savefig(AccuracyPltName)
     print('Saved ' + AccuracyPltName)
@@ -172,12 +172,12 @@ def DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, mass = 0):
     plt.plot(modelMetricsHistory.history['val_loss'])
     titleLoss = 'Model loss'
     if NN == 'DNN':
-        titleLoss = 'Model loss (mass: ' + str(int(mass)) + ')'
+        titleLoss = 'Model loss (mass: ' + str(int(mass)) + ' GeV)'
     plt.title(titleLoss)
     plt.ylabel('Loss')
     plt.xlabel('Epoch')
     plt.legend(['Training', 'Validation'], loc = 'upper right')
-    plt.figtext(0.7, 0.7, 'Test loss: ' + str(round(testLoss, 2)), wrap = True, horizontalalignment = 'center')#, fontsize = 10)
+    #plt.figtext(0.7, 0.7, 'Test loss: ' + str(round(testLoss, 3)), wrap = True, horizontalalignment = 'center')#, fontsize = 10)
     LossPltName = outputDir + '/Loss.png'
     plt.savefig(LossPltName)
     print('Saved ' + LossPltName)
@@ -192,7 +192,7 @@ def DrawROC(fpr, tpr, AUC, outputDir, mass):
     plt.ylim([0.0, 1.05])
     plt.ylabel('True Positive Rate')
     plt.xlabel('False Positive Rate')
-    titleROC = 'ROC curves (mass: ' + str(int(mass)) + ')'
+    titleROC = 'ROC curves (mass: ' + str(int(mass)) + ' GeV)'
     plt.title(titleROC)
     plt.figtext(0.7, 0.25, 'AUC: ' + str(round(AUC, 2)), wrap = True, horizontalalignment = 'center')
     ROCPltName = outputDir + '/ROC.png'
@@ -212,7 +212,7 @@ def DrawScores(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bk
     plt.ylabel('Norm. Entries')
     plt.xlabel(NN + ' score')
     plt.yscale("log")
-    titleScores = 'Scores (mass: ' + str(int(mass)) + ')'
+    titleScores = 'Scores (mass: ' + str(int(mass)) + ' GeV)'
     plt.title(titleScores)
     plt.legend(loc = 'upper center')
     ScoresPltName = outputDir + '/Scores.png'
@@ -233,7 +233,7 @@ def DrawCM(yhat_test, y_test, normalize, outputDir, mass):
         cm = cm.astype('float') / cm.sum(axis = 1)[:, np.newaxis]
     cmap = plt.cm.Oranges#Blues
     plt.imshow(cm, interpolation = 'nearest', cmap = cmap)
-    titleCM = 'Confusion matrix (Mass: ' + str(int(mass)) + ')'
+    titleCM = 'Confusion matrix (Mass: ' + str(int(mass)) + ' GeV)'
     plt.title(titleCM)
     plt.colorbar()
     tick_marks = np.arange(len(classes))
