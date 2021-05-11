@@ -18,13 +18,17 @@ X_input, y_input, dfInput = LoadData(dfPath, analysis, channel, InputFeatures)
 ### Building the DNN
 n_dim = X_input.shape[1] - 1 # mass won't be given as input to the DNN
 model = BuildDNN(n_dim, numberOfNodes, numberOfLayers, dropout)
-model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', metrics = ['accuracy'])
+#model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', metrics = ['accuracy'])
+
+### Scaling (except for the mass value)
+transformer = ColumnTransformer(transformers = [('name', StandardScaler(), slice(0, X_input.shape[1] - 1))], remainder = 'passthrough')
+X_input = transformer.fit_transform(X_input)
 
 ### Dividing signal from background
 X_signal = X_input[y_input == 1]
 X_bkg = X_input[y_input != 1]
 
-### Saving unscaled signal mass values
+### Saving (unscaled) signal mass values
 m_signal = X_signal[:, X_signal.shape[1] - 1]
 massPointsList = list(set(m_signal))
 print('Mass points: ' + str(massPointsList))
@@ -67,47 +71,37 @@ for mass in massPointsList:
     y_train_mass = X_train_mass_ext[:, X_train_mass_ext.shape[1] - 1]
     y_test_mass = X_test_mass_ext[:, X_test_mass_ext.shape[1] - 1]
 
-    ### Dividing signal from background
-    X_train_signal_mass_ext = X_train_mass_ext[y_train_mass == 1]
-    X_train_bkg_ext = X_train_mass_ext[y_train_mass != 1]
-    X_test_signal_mass_ext = X_test_mass_ext[y_test_mass == 1]
-    X_test_bkg_ext = X_test_mass_ext[y_test_mass != 1]
+    ### Deleting y_mass and mass
+    X_train_mass = np.delete(X_train_mass_ext, [X_train_mass_ext.shape[1] - 2, X_train_mass_ext.shape[1] - 1], axis = 1)
+    X_test_mass = np.delete(X_test_mass_ext, [X_test_mass_ext.shape[1] - 2, X_test_mass_ext.shape[1] - 1], axis = 1)
 
-    logFile.write('\nNumber of signal train events: ' + str(X_train_signal_mass_ext.shape[0]) + '\nNumber of bkg train events: ' + str(X_train_bkg_ext.shape[0]))
+    ### Dividing signal from background
+    X_train_signal_mass = X_train_mass[y_train_mass == 1]
+    X_train_bkg = X_train_mass[y_train_mass != 1]
+    X_test_signal_mass = X_test_mass[y_test_mass == 1]
+    X_test_bkg = X_test_mass[y_test_mass != 1]
+
+    logFile.write('\nNumber of signal train events: ' + str(X_train_signal_mass.shape[0]) + '\nNumber of bkg train events: ' + str(X_train_bkg.shape[0]))
 
     ### Weighting events
-    W_train_signal_mass, W_train_bkg = EventsWeight(X_train_signal_mass_ext, X_train_bkg_ext)
+    W_train_signal_mass, W_train_bkg = EventsWeight(X_train_signal_mass, X_train_bkg)
     logFile.write('\nWeight for signal train events: ' + str(W_train_signal_mass) + '\nWeight for background train events: ' + str(W_train_bkg))
-            
-    ### Creating new extended train arrays by adding the weight
-    X_train_signal_mass_ext = np.insert(X_train_signal_mass_ext, X_train_signal_mass_ext.shape[1], W_train_signal_mass, axis = 1)
-    X_train_bkg_ext = np.insert(X_train_bkg_ext, X_train_bkg_ext.shape[1], W_train_bkg, axis = 1)
 
-    ### Putting signal and background events back together
-    X_train_mass_ext = np.concatenate((X_train_signal_mass_ext, X_train_bkg_ext), axis = 0)
-    X_test_mass_ext = np.concatenate((X_test_signal_mass_ext, X_test_bkg_ext), axis = 0)
-
-    ### Shuffling data
-    X_train_mass_ext = ShufflingData(X_train_mass_ext)
-    X_test_mass_ext = ShufflingData(X_test_mass_ext)
-
-    ### Extracting w_mass and y_mass
-    w_train_mass = X_train_mass_ext[:, X_train_mass_ext.shape[1] - 1]
-    y_train_mass = X_train_mass_ext[:, X_train_mass_ext.shape[1] - 2]
-    y_test_mass = X_test_mass_ext[:, X_test_mass_ext.shape[1] - 1]
-
-    ### Scaling and dropping mass/y/weight values
-    transformerTrain = ColumnTransformer(transformers = [('name', StandardScaler(), slice(0, X_train_mass_ext.shape[1] - 3))], remainder = 'drop')
-    transformerTest = ColumnTransformer(transformers = [('name', StandardScaler(), slice(0, X_test_mass_ext.shape[1] - 2))], remainder = 'drop')
-    X_train_mass = transformerTrain.fit_transform(X_train_mass_ext)
-    X_test_mass = transformerTest.fit_transform(X_test_mass_ext)
-
+    ### Creating array of weights
+    w_train_mass = []
+    for event in y_train_mass:
+        if event == 1:
+            w_train_mass.append(W_train_signal_mass)
+        elif event == 0: 
+            w_train_mass.append(W_train_bkg)
+    w_train_mass = np.array(w_train_mass)
+    
     ### Training
     callbacks = [
         # If we don't have a decrease of the loss for 11 epochs, terminate training.
         EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss')
     ]
-    
+    model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', metrics = ['accuracy'])
     modelMetricsHistory = model.fit(X_train_mass, y_train_mass, sample_weight = w_train_mass, epochs = numberOfEpochs, batch_size = 2048, validation_split = validationFraction, verbose = 1, callbacks = callbacks)
 
     ### Evaluating the performance of the DNN
