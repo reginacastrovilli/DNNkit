@@ -18,32 +18,32 @@ def ReadArgParser():
     
     analysis = args.Analysis
     if args.Analysis is None:
-        parser.error('Requested type of analysis (either \'mergered\' or \'resolved\')')
+        parser.error(Fore.RED + 'Requested type of analysis (either \'mergered\' or \'resolved\')')
     elif args.Analysis != 'resolved' and args.Analysis != 'merged':
-        parser.error('Analysis can be either \'merged\' or \'resolved\'')
+        parser.error(Fore.RED + 'Analysis can be either \'merged\' or \'resolved\'')
     channel = args.Channel
     if args.Channel is None:
-        parser.error('Requested channel (either \'ggF\' or \'VBF\')')
+        parser.error(Fore.RED + 'Requested channel (either \'ggF\' or \'VBF\')')
     elif args.Channel != 'ggF' and args.Channel != 'VBF':
-        parser.error('Channel can be either \'ggF\' or \'VBF\'')
+        parser.error(Fore.RED + 'Channel can be either \'ggF\' or \'VBF\'')
     numberOfNodes = int(args.Nodes)
     if args.Nodes and numberOfNodes < 1:
-        parser.error('Number of nodes must be strictly positive')
+        parser.error(Fore.RED + 'Number of nodes must be strictly positive')
     numberOfLayers = int(args.Layers)
     if args.Layers and numberOfLayers < 1:
-        parser.error('Number of layers must be strictly positive')
+        parser.error(Fore.RED + 'Number of layers must be strictly positive')
     numberOfEpochs = int(args.Epochs)
     if args.Epochs and numberOfEpochs < 1:
-        parser.error('Number of epochs must be strictly positive')
+        parser.error(Fore.RED + 'Number of epochs must be strictly positive')
     validationFraction = float(args.Validation)
     if args.Validation and (validationFraction < 0. or validationFraction > 1.):
-        parser.error('Validation fraction must be between 0 and 1')
+        parser.error(Fore.RED + 'Validation fraction must be between 0 and 1')
     dropout = float(args.Dropout)
     if args.Dropout and (dropout < 0. or dropout > 1.):
-        parser.error('Dropout must be between 0 and 1')
+        parser.error(Fore.RED + 'Dropout must be between 0 and 1')
     trainingFraction = float(args.Training)
     if args.Training and (trainingFraction < 0. or trainingFraction > 1.):
-        parser.error('Training fraction must be between 0 and 1')
+        parser.error(Fore.RED + 'Training fraction must be between 0 and 1')
 
     print(Fore.BLUE + '              nodes = ' + str(numberOfNodes))
     print(Fore.BLUE + '             layers = ' + str(numberOfLayers))
@@ -87,6 +87,17 @@ def LoadData(dfPath, analysis, channel, InputFeatures):
     X = df[InputFeatures].values
     y = df['isSignal']
     return X, y, dfInput
+
+def LoadDataNew(dfPath, analysis, channel, InputFeatures):
+    dfInputTrain = dfPath + '/MixData_PD_' + analysis + '_' + channel + '_Train.pkl'
+    dfInputTest = dfPath + '/MixData_PD_' + analysis + '_' + channel + '_Test.pkl'
+    df_Train = pd.read_pickle(dfInputTrain)
+    df_Test = pd.read_pickle(dfInputTest)
+    X_Train = df_Train[InputFeatures].values
+    X_Test = df_Test[InputFeatures].values
+    y_Train = df_Train['isSignal']
+    y_Test = df_Test['isSignal']
+    return X_Train, X_Test, y_Train, y_Test, dfInputTrain, dfInputTest
 
 ### Shuffling data
 import sklearn.utils
@@ -261,3 +272,23 @@ def EventsWeight(XTrainSignal, XTrainBkg):
         WTrainSignal = 1
 
     return WTrainSignal, WTrainBkg
+
+def EventsWeightNew(y_train):
+    eventsNumber = len(y_train)
+    signalEventsNumber = np.sum(y_train)
+    bkgEventsNumber = eventsNumber - signalEventsNumber
+    if signalEventsNumber > bkgEventsNumber:
+        WTrainSignal = bkgEventsNumber / signalEventsNumber
+        WTrainBkg = 1
+    else:
+        WTrainBkg = signalEventsNumber / bkgEventsNumber
+        WTrainSignal = 1
+    WTrain = []
+    for event in range(len(y_train)):
+        if event == 1:
+            WTrain.append(WTrainSignal)
+        else:
+            WTrain.append(WTrainBkg)
+    WTrain = np.array(WTrain)
+
+    return signalEventsNumber, bkgEventsNumber, WTrainSignal, WTrainBkg, WTrain
