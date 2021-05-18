@@ -83,39 +83,7 @@ for event in range(len(X_train)):
         w_train.append(w_train_bkg)
 y_train = np.array(y_train)
 w_train = np.array(w_train)
-'''
-### Creating new extended train arrays by adding W_train (this information is needed in order to shuffle data properly)
-X_train_signal_ext = np.insert(X_train_signal, X_train_signal.shape[1], w_train_signal, axis = 1)
-X_train_bkg_ext = np.insert(X_train_bkg, X_train_bkg.shape[1], w_train_bkg, axis = 1)
 
-### Creating new extended train/test arrays by adding value 1 (0) to signal (background) events (this information is needed in order to shuffle data properly)    
-X_train_signal_ext = np.insert(X_train_signal_ext, X_train_signal_ext.shape[1], 1, axis = 1)
-X_train_bkg_ext = np.insert(X_train_bkg_ext, X_train_bkg_ext.shape[1], 0, axis = 1)
-X_test_signal_ext = np.insert(X_test_signal, X_test_signal.shape[1], 1, axis = 1)
-X_test_bkg_ext = np.insert(X_test_bkg, X_test_bkg.shape[1], 0, axis = 1)
-
-### Putting train/test signal and background events back together
-X_train_ext = np.concatenate((X_train_signal_ext, X_train_bkg_ext), axis = 0)
-X_test_ext = np.concatenate((X_test_signal_ext, X_test_bkg_ext), axis = 0)
-
-### Shuffling train/test data
-X_train_ext = ShufflingData(X_train_ext)
-X_test_ext = ShufflingData(X_test_ext)
-
-### Extracting y_train/y_test from X_train_ext/X_test_ext
-y_train = X_train_ext[:, X_train_ext.shape[1] - 1]
-y_test = X_test_ext[:, X_test_ext.shape[1] - 1]
-
-### Deleting y_train/y_test from X_train_ext/X_test_ext
-X_train_ext = np.delete(X_train_ext, X_train_ext.shape[1] - 1, axis = 1)
-X_test = np.delete(X_test_ext, X_test_ext.shape[1] - 1, axis = 1)
-
-### Extracting w_train from X_train_ext
-w_train = X_train_ext[:, X_train_ext.shape[1] - 1]
-
-### Deleting w_train from X_train_ext
-X_train = np.delete(X_train_ext, X_train_ext.shape[1] - 1, axis = 1)
-'''
 X_train = np.concatenate((X_train_signal, X_train_bkg), axis = 0)
 
 ### Building the PDNN
@@ -138,25 +106,10 @@ testLoss, testAccuracy = EvaluatePerformance(model, X_test, y_test)
 logString = '\nTest loss: ' + str(testLoss) + '\nTest accuracy: ' + str(testAccuracy)
 logFile.write(logString)
 logInfo += logString
-'''
-arch = model.to_json()
-with open('architecture.json', 'w') as arch_file:
-    print('Saving model as json')
-    arch_file.write(arch)
-'''
+
 model = BuildDNN(n_dim, numberOfNodes, numberOfLayers, dropout)
 model.load_weights('model.hdf5')
-'''
-model = tf.keras.models.load_model('model.hdf5')
-arch = model.to_json()
-with open('newarchitecture.json', 'w') as arch_file:
-    print('Saving model as json')
-    arch_file.write(arch)
-exit()
 
-### Evaluating the performance of the PDNN
-testLoss, testAccuracy = EvaluatePerformance(model, X_test, y_test)
-'''
 logString = '\nTest loss: ' + str(testLoss) + '\nTest accuracy: ' + str(testAccuracy)
 
 if plot:

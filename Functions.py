@@ -284,7 +284,7 @@ def EventsWeightNew(y_train):
         WTrainBkg = signalEventsNumber / bkgEventsNumber
         WTrainSignal = 1
     WTrain = []
-    for event in range(len(y_train)):
+    for event in y_train:
         if event == 1:
             WTrain.append(WTrainSignal)
         else:
