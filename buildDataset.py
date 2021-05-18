@@ -80,13 +80,14 @@ for i in inputFiles:
         newDf = newDf.query('Pass_isVBF == False')
     elif channel == 'VBF':
         newDf = newDf.query('Pass_isVBF == True')
+    newDf.insert(len(newDf.columns), "mass", np.zeros(newDf.shape[0]), True)
     if (dataType[counter] == 'sig'):
         newDf.insert(len(newDf.columns), "isSignal", np.ones(newDf.shape[0]), True)
         for k in range(newDf.shape[0]):
             found = False
             for j in range(len(DSID)):
-                if (newDf.iat[k,0] == int(DSID[j])):
-                    newDf.iat[k,0] = int(mass[j])
+                if (newDf.iat[k, 0] == int(DSID[j])):               #if iat -> at we can address the column by name, so the order of the variables won't
+                    newDf.iat[k, newDf.shape[1] - 2] = int(mass[j]) #matter anymore. However, the code will really be slower
                     found = True
             if (found == False):
                 print(format(Fore.RED + 'WARNING !!! missing mass value for DSID ' + str(newDf.iat[k,0])))
@@ -94,7 +95,7 @@ for i in inputFiles:
         newDf.insert(len(newDf.columns), "isSignal", np.zeros(newDf.shape[0]), True)
         ### Assigning to background events a random signal mass
         for event in range(newDf.shape[0]):
-            newDf.iat[event,0] = random.choice(mass)
+            newDf.iat[event, newDf.shape[1] - 2] = random.choice(mass)
     print(newDf[0:20])
     df.append(newDf)
     counter+=1
