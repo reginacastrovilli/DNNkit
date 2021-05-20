@@ -1,6 +1,8 @@
 ### Make sure that 'DSID' is the last input variable
 from Functions import *
 from keras.models import load_model
+import json 
+from json import JSONEncoder
 
 plot = True
 NN = 'PDNN'
@@ -99,6 +101,12 @@ callbacks = [
 ]
 
 modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = 2048, validation_split = validationFraction, verbose = 1, shuffle = True, callbacks = callbacks)
+
+arch = model.to_json()
+with open('architecture.json', 'w') as arch_file:
+    arch_file.write(arch)
+
+model.save_weights('weights.h5')
 
 ### Evaluating the performance of the PDNN
 testLoss, testAccuracy = EvaluatePerformance(model, X_test, y_test)
