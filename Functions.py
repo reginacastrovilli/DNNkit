@@ -88,17 +88,6 @@ def LoadData(dfPath, analysis, channel, InputFeatures):
     y = df['isSignal']
     return X, y, dfInput
 
-def LoadDataNew(dfPath, analysis, channel, InputFeatures):
-    dfInputTrain = dfPath + '/MixData_PD_' + analysis + '_' + channel + '_Train.pkl'
-    dfInputTest = dfPath + '/MixData_PD_' + analysis + '_' + channel + '_Test.pkl'
-    df_Train = pd.read_pickle(dfInputTrain)
-    df_Test = pd.read_pickle(dfInputTest)
-    X_Train = df_Train[InputFeatures].values
-    X_Test = df_Test[InputFeatures].values
-    y_Train = df_Train['isSignal']
-    y_Test = df_Test['isSignal']
-    return X_Train, X_Test, y_Train, y_Test, dfInputTrain, dfInputTest
-
 ### Shuffling data
 import sklearn.utils
 
@@ -272,23 +261,3 @@ def EventsWeight(XTrainSignal, XTrainBkg):
         WTrainSignal = 1
 
     return WTrainSignal, WTrainBkg
-
-def EventsWeightNew(y_train):
-    eventsNumber = len(y_train)
-    signalEventsNumber = np.sum(y_train)
-    bkgEventsNumber = eventsNumber - signalEventsNumber
-    if signalEventsNumber > bkgEventsNumber:
-        WTrainSignal = bkgEventsNumber / signalEventsNumber
-        WTrainBkg = 1
-    else:
-        WTrainBkg = signalEventsNumber / bkgEventsNumber
-        WTrainSignal = 1
-    WTrain = []
-    for event in y_train:
-        if event == 1:
-            WTrain.append(WTrainSignal)
-        else:
-            WTrain.append(WTrainBkg)
-    WTrain = np.array(WTrain)
-
-    return signalEventsNumber, bkgEventsNumber, WTrainSignal, WTrainBkg, WTrain
