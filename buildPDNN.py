@@ -102,11 +102,14 @@ callbacks = [
 
 modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = 2048, validation_split = validationFraction, verbose = 1, shuffle = True, callbacks = callbacks)
 
+### Saving to files: Alessandra, we should put these files in the canonical output folder
 arch = model.to_json()
 with open('architecture.json', 'w') as arch_file:
     arch_file.write(arch)
 
 model.save_weights('weights.h5')
+
+#### ===> here we must add variables.json and FeatureScaling.dat
 
 ### Evaluating the performance of the PDNN
 testLoss, testAccuracy = EvaluatePerformance(model, X_test, y_test)
