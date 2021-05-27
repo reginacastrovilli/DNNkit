@@ -41,3 +41,7 @@ These scripts run the (Parametric) Deep Neural Network.
 - training fraction (-t): relative size of the training sample, between 0 and 1
 
 All these flags are mandatory but only the first two must be specficied by the user (the other five can also assume their default values).
+
+# Step 4) at this point you might want to use your (p)DNN into the CxAODReader. In order to do so, you first have to convert the model into a format that can be read by the reader.The interface between the neural network and the reader is the lwtnn package: https://github.com/lwtnn/lwtnn. This latter comes together with a bunch of conversion scripts. IMPORTANT NOTICE: the CxAODReader also has a duplicate of the lwtnn package. However, as of 2021-05-27, the lwtnn used by the reader is a deprecated version. For converting the model, please clone the latest version of lwtnn from its git repository. Detailed instructions on how to use the conversion tools are found in the README thereof. In summary, as we use a sequential model, we need to run the following command:
+
+  $ python lwtnn/converters/keras2json.py architecture.json variables.json weights.h5 > neural_net.json
