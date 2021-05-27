@@ -20,23 +20,6 @@ n_dim = X_input.shape[1] - 1 # mass won't be given as input to the DNN
 model = BuildDNN(n_dim, numberOfNodes, numberOfLayers, dropout)
 #model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', metrics = ['accuracy'])
 
-### EJS tests 2021-05-26, remove all this stuff
-#import matplotlib
-#import matplotlib.pyplot as plt
-#plt.rcParams["figure.figsize"] = [7,7]
-#plt.rcParams.update({'font.size': 16})
-#bins = np.linspace(0, 10000, 100)
-#plt.hist(X_input[:,1], bins = bins, histtype = 'stepfilled', density = True)
-#ScoresPltName = 'tmp.png'
-#plt.savefig(ScoresPltName)
-#print('Saved ' + ScoresPltName)
-#plt.clf()
-#print(X_input[:,0])
-#print(X_input.mean(axis=0).shape)
-#print(X_input.mean(axis=0))   ### <= this for mean
-#print(X_input.std(axis=0))   ### <= this for stdev
-#end EJS tests, remove up to here
-
 ### Scaling (except for the mass value)
 transformer = ColumnTransformer(transformers = [('name', StandardScaler(), slice(0, X_input.shape[1] - 1))], remainder = 'passthrough')
 X_input = transformer.fit_transform(X_input)
