@@ -115,6 +115,71 @@ def BuildDNN(N_input, width, depth, dropout):
     #model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', metrics = ['accuracy'])
     return model
 
+def SaveArchAndWeights(model, outputDir):
+    arch = model.to_json()
+    outputArch = outputDir + '/architecture.json'
+    with open(outputArch, 'w') as arch_file:
+        arch_file.write(arch)
+    print('Saved architecture in ' + outputArch)
+    outputWeights = outputDir + '/weights.h5'
+    model.save_weights(outputWeights)
+    print('Saved weights in ' + outputWeights)
+
+def SaveVariables(outputDir, X_input, InputFeatures):
+    outputVar = outputDir + '/variables.json'
+    with open(outputVar, 'w') as var_file:
+        var_file.write("{\n")
+        var_file.write("  \"inputs\": [\n")
+        for col in range(X_input.shape[1]):
+            offset = -1. * float(X_input.mean(axis=0)[col])
+            scale = 1. / float(X_input.std(axis=0)[col])
+            var_file.write("    {\n")
+            var_file.write("      \"name\": \"%s\",\n" % InputFeatures[col])
+            var_file.write("      \"offset\": %lf,\n" % offset) # EJS 2021-05-27: I have compelling reasons to believe this should be -mu
+            var_file.write("      \"scale\": %lf\n" % scale) # EJS 2021-05-27: I have compelling reasons to believe this should be 1/sigma
+            var_file.write("    }")
+            if (col < X_input.shape[1]-1):
+                var_file.write(",\n")
+            else:
+                var_file.write("\n")
+        var_file.write("  ],\n")
+        var_file.write("  \"class_labels\": [\"BinaryClassificationOutputName\"]\n")
+        var_file.write("}\n")
+    print('Saved variables in ' + outputVar)
+
+def SaveFeatureScaling(outputDir, X_input, InputFeatures):
+    outputFeatureScaling = outputDir + '/FeatureScaling.dat'
+    with open(outputFeatureScaling, 'w') as scaling_file: # EJS 2021-05-27: check which file name is hardcoded in the CxAODReader
+        scaling_file.write("[")
+        scaling_file.write(', '.join(str(i) for i in InputFeatures))
+        scaling_file.write("]\n")
+        scaling_file.write("Mean\n")
+        scaling_file.write("[")
+        scaling_file.write(' '.join(str(float(i)) for i in X_input.mean(axis=0)))
+        scaling_file.write("]\n")
+        scaling_file.write("minusMean\n")
+        scaling_file.write("[")
+        scaling_file.write(' '.join(str(-float(i)) for i in X_input.mean(axis=0)))
+        scaling_file.write("]\n")
+        scaling_file.write("Var\n")
+        scaling_file.write("[")
+        scaling_file.write(' '.join(str(float(i)) for i in X_input.var(axis=0)))
+        scaling_file.write("]\n")
+        scaling_file.write("sqrtVar\n")
+        scaling_file.write("[")
+        scaling_file.write(' '.join(str(float(i)) for i in X_input.std(axis=0)))
+        scaling_file.write("]\n")
+        scaling_file.write("OneOverStd\n")
+        scaling_file.write("[")
+        scaling_file.write(' '.join(str(1./float(i)) for i in X_input.std(axis=0)))
+        scaling_file.write("]\n")
+    print('Saved features scaling in ' + outputFeatureScaling)
+    
+def SaveModel(model, X_input, InputFeatures, outputDir):
+    SaveArchAndWeights(model, outputDir)
+    SaveVariables(outputDir, X_input, InputFeatures)
+    SaveFeatureScaling(outputDir, X_input, InputFeatures)
+
 import matplotlib
 import matplotlib.pyplot as plt
 plt.rcParams["figure.figsize"] = [7,7]
@@ -129,16 +194,6 @@ def EvaluatePerformance(model, X_test, y_test):
     print(format(Fore.BLUE + 'Test  accuracy: ' + str(testAccuracy)))
     
     return testLoss, testAccuracy
-
-### Saving the model
-def SaveModel(model, outputDir):    
-    model_yaml = model.to_yaml()
-    modelFileName = outputDir + '/Higgs'    
-    with open(modelFileName + '.yaml', 'w') as yaml_file:
-        yaml_file.write(model_yaml)
-    print('Saved ' + modelFileName + '.yaml')
-    model.save_weights(modelFileName + '.h5')
-    print('Saved ' + modelFileName + '.h5')
 
 ### Prediction on signal and background separately
 def PredictionSigBkg(model, X_train_signal, X_train_bkg, X_test_signal, X_test_bkg):

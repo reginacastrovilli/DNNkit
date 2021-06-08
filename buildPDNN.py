@@ -102,56 +102,8 @@ callbacks = [
 
 modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = 2048, validation_split = validationFraction, verbose = 1, shuffle = True, callbacks = callbacks)
 
-### Saving to files: Alessandra, we should put all these files in the canonical output folder. Also, shall we just put everything into a single function ?
-arch = model.to_json()
-with open('architecture.json', 'w') as arch_file:
-    arch_file.write(arch)
-
-model.save_weights('weights.h5')
-
-with open('variables.json', 'w') as var_file:
-    var_file.write("{\n")
-    var_file.write("  \"inputs\": [\n")
-    for col in range(X_input.shape[1]):
-        offset = -1. * float(X_input.mean(axis=0)[col])
-        scale = 1. / float(X_input.std(axis=0)[col])
-        var_file.write("    {\n")
-        var_file.write("      \"name\": \"%s\",\n" % InputFeatures[col])
-        var_file.write("      \"offset\": %lf,\n" % offset) # EJS 2021-05-27: I have compelling reasons to believe this should be -mu
-        var_file.write("      \"scale\": %lf\n" % scale) # EJS 2021-05-27: I have compelling reasons to believe this should be 1/sigma
-        var_file.write("    }")
-        if (col < X_input.shape[1]-1):
-            var_file.write(",\n")
-        else:
-            var_file.write("\n")
-    var_file.write("  ],\n")
-    var_file.write("  \"class_labels\": [\"BinaryClassificationOutputName\"]\n")
-    var_file.write("}\n")
-
-with open('FeatureScaling.dat', 'w') as scaling_file: # EJS 2021-05-27: check which file name is hardcoded in the CxAODReader
-    scaling_file.write("[")
-    scaling_file.write(', '.join(str(i) for i in InputFeatures))
-    scaling_file.write("]\n")
-    scaling_file.write("Mean\n")
-    scaling_file.write("[")
-    scaling_file.write(' '.join(str(float(i)) for i in X_input.mean(axis=0)))
-    scaling_file.write("]\n")
-    scaling_file.write("minusMean\n")
-    scaling_file.write("[")
-    scaling_file.write(' '.join(str(-float(i)) for i in X_input.mean(axis=0)))
-    scaling_file.write("]\n")
-    scaling_file.write("Var\n")
-    scaling_file.write("[")
-    scaling_file.write(' '.join(str(float(i)) for i in X_input.var(axis=0)))
-    scaling_file.write("]\n")
-    scaling_file.write("sqrtVar\n")
-    scaling_file.write("[")
-    scaling_file.write(' '.join(str(float(i)) for i in X_input.std(axis=0)))
-    scaling_file.write("]\n")
-    scaling_file.write("OneOverStd\n")
-    scaling_file.write("[")
-    scaling_file.write(' '.join(str(1./float(i)) for i in X_input.std(axis=0)))
-    scaling_file.write("]\n")
+### Saving to files
+SaveModel(model, X_input, InputFeatures, outputDir)
 
 ### Evaluating the performance of the PDNN
 testLoss, testAccuracy = EvaluatePerformance(model, X_test, y_test)
@@ -160,11 +112,6 @@ logString = '\nTest loss: ' + str(testLoss) + '\nTest accuracy: ' + str(testAccu
 logFile.write(logString)
 logInfo += logString
 
-model = BuildDNN(n_dim, numberOfNodes, numberOfLayers, dropout)
-model.load_weights('model.hdf5')
-
-logString = '\nTest loss: ' + str(testLoss) + '\nTest accuracy: ' + str(testAccuracy)
-
 if plot:
     ### Drawing training history
     DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN)
@@ -172,9 +119,6 @@ if plot:
 
 logFile.close()
 print('Saved ' + logFileName)
-
-### Saving the model
-SaveModel(model, outputDir)
 
 ### Prediction on the full test sample
 counter = 0

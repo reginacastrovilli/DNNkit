@@ -113,9 +113,6 @@ for mass in massPointsList:
         DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, mass)
         DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, mass)
 
-    ### Saving the model
-    SaveModel(model, outputDir)
-
     ### Prediction on the full test sample
     yhat_test = model.predict(X_test_mass, batch_size = 2048)
 
