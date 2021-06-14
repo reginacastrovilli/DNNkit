@@ -53,12 +53,16 @@ logFileName = dfPath + 'buildDataSetLogFile_' + analysis + '_' + channel + '.txt
 logFile = open(logFileName, 'w')
 logFile.write('Analysis: ' + analysis + '\nChannel: ' + channel + '\nPreselection cuts: ' + PreselectionCuts + '\nInput files path: ' + dfPath + '\nrootBranchSubSamples: ' + str(rootBranchSubSample) + '\nInput files: [')
 
+
 for i in inputFiles:
-    inFile = dfPath + i + '_DF.pkl'
-    if os.path.exists(inFile) == False:
-        print(format(Fore.RED + 'File ' + inFile + ' does not exist'))
+    missing_var=np.array([])
+    if str(i+'_DF.pkl') not in os.listdir(dfPath):
+        print(str(i+'_DF.pkl'),'not in ', dfPath)
         counter+=1
         continue
+    print(i)
+    inFile = dfPath + i + '_DF.pkl'
+
     print('Loading ' + inFile)
     logFile.write(i + '_DF.pkl')
     if counter != (len(inputFiles) - 1):
@@ -66,37 +70,64 @@ for i in inputFiles:
     else:
         logFile.write(']')
     newDf = pd.read_pickle(inFile)
+
+    for var in rootBranchSubSample:
+        if var not in newDf.columns:
+            missing_var=np.append(missing_var,var)
+#                print("NO",var)
+    if np.size(missing_var)!=0:
+        print("Found missing variables in ",i)
+        print(missing_var)
+        continue
+
     newDf = newDf[rootBranchSubSample]
-                
+    newDf=newDf.assign(origin=re.search('(.+?)-',i).group(1))
+
     if PreselectionCuts != '':
         newDf = newDf.query(PreselectionCuts)
-    if analysis == 'merged':
-        selection = 'Pass_MergHP_GGF_ZZ_Tag_SR == True or Pass_MergHP_GGF_ZZ_Untag_SR == True or Pass_MergLP_GGF_ZZ_Tag_SR == True or Pass_MergLP_GGF_ZZ_Untag_SR == True or Pass_MergHP_GGF_ZZ_Tag_ZCR == True or Pass_MergHP_GGF_ZZ_Untag_ZCR == True or Pass_MergLP_GGF_ZZ_Tag_ZCR == True or Pass_MergLP_GGF_ZZ_Untag_ZCR == True'
-        newDf = newDf.query(selection)
-    elif analysis == 'resolved':
-        selection = 'Pass_MergHP_GGF_ZZ_Tag_SR == False and Pass_MergHP_GGF_ZZ_Untag_SR == False and Pass_MergLP_GGF_ZZ_Tag_SR == False and Pass_MergLP_GGF_ZZ_Untag_SR == False and Pass_MergHP_GGF_ZZ_Tag_ZCR == False and Pass_MergHP_GGF_ZZ_Untag_ZCR == False and Pass_MergLP_GGF_ZZ_Tag_ZCR == False and Pass_MergLP_GGF_ZZ_Untag_ZCR == False'
-        newDf = newDf.query(selection)
     if channel == 'ggF':
         newDf = newDf.query('Pass_isVBF == False')
+        if analysis == 'merged':
+            selection = 'Pass_MergHP_GGF_ZZ_Tag_SR == True or Pass_MergHP_GGF_ZZ_Untag_SR == True or Pass_MergHP_GGF_WZ_SR == True or Pass_MergLP_GGF_ZZ_Tag_SR == True or Pass_MergLP_GGF_ZZ_Untag_SR == True or Pass_MergHP_GGF_ZZ_Tag_ZCR == True or Pass_MergHP_GGF_WZ_ZCR == True or Pass_MergHP_GGF_ZZ_Untag_ZCR == True or Pass_MergLP_GGF_ZZ_Tag_ZCR == True or Pass_MergLP_GGF_ZZ_Untag_ZCR == True or Pass_MergLP_GGF_WZ_SR == True or Pass_MergLP_GGF_WZ_ZCR == True'
+        elif analysis == 'resolved':
+            selection = 'Pass_Res_GGF_WZ_SR == True or Pass_Res_GGF_WZ_ZCR == True or Pass_Res_GGF_ZZ_Tag_SR == True or Pass_Res_GGF_ZZ_Untag_SR == True or Pass_Res_GGF_ZZ_Tag_ZCR == True or Pass_Res_GGF_ZZ_Untag_ZCR == True'
+        newDf = newDf.query(selection)
     elif channel == 'VBF':
-        newDf = newDf.query('Pass_isVBF == True')
-    newDf.insert(len(newDf.columns), "mass", np.zeros(newDf.shape[0]), True)
+        newDf = newDf.query('Pass_isVBF == True')        
+        if analysis == 'merged':
+            selection = 'Pass_MergHP_VBF_WZ_SR == True or Pass_MergHP_VBF_ZZ_SR == True or Pass_MergHP_VBF_WZ_ZCR == True or Pass_MergHP_VBF_ZZ_ZCR == True or Pass_MergLP_VBF_WZ_SR == True or Pass_MergLP_VBF_ZZ_SR == True or Pass_MergLP_VBF_WZ_ZCR == True or Pass_MergLP_VBF_ZZ_ZCR == True' 
+        elif analysis == 'resolved':
+            selection = 'Pass_Res_VBF_WZ_SR == True or Pass_Res_VBF_WZ_ZCR == True or Pass_Res_VBF_ZZ_SR == True or Pass_Res_VBF_ZZ_ZCR'
+        newDf = newDf.query(selection)
+
+    print('done analysis')
+    if (dataType[counter] == 'bkg'):
+        newDf.insert(len(newDf.columns), 'isSignal', np.zeros(newDf.shape[0]), True)
+        newDf.insert(len(newDf.columns), 'mass', np.random.choice(mass,newDf.shape[0]), True)
+
     if (dataType[counter] == 'sig'):
-        newDf.insert(len(newDf.columns), "isSignal", np.ones(newDf.shape[0]), True)
-        for k in range(newDf.shape[0]):
+        newDf.insert(len(newDf.columns), 'isSignal', np.ones(newDf.shape[0]), True)
+
+        masses=np.zeros(len(newDf['DSID']))
+        DSID_values=set(newDf['DSID'])
+        print('DSID values:',DSID_values)
+        for x in DSID_values:
             found = False
+            print('searching for ', x,' DSID')
             for j in range(len(DSID)):
-                if (newDf.iat[k, 0] == int(DSID[j])):               #if iat -> at we can address the column by name, so the order of the variables won't
-                    newDf.iat[k, newDf.shape[1] - 2] = int(mass[j]) #matter anymore. However, the code will really be slower
-                    found = True
-            if (found == False):
-                print(format(Fore.RED + 'WARNING !!! missing mass value for DSID ' + str(newDf.iat[k,0])))
-    else:
-        newDf.insert(len(newDf.columns), "isSignal", np.zeros(newDf.shape[0]), True)
-        ### Assigning to background events a random signal mass
-        for event in range(newDf.shape[0]):
-            newDf.iat[event, newDf.shape[1] - 2] = random.choice(mass)
-    print(newDf[0:20])
+                if (x == int(DSID[j])):
+                    found=True
+                    print('found mass:',int(mass[j]))
+                    masses[np.where(newDf['DSID']==x)]=mass[j]
+                    continue
+            if found==False:
+                print('mass related to',x,'not found')
+                masses[np.where(newDf['DSID']==x)]=0
+
+        print('found masses:',set(masses))
+        newDf.insert(len(newDf.columns), 'mass', masses, True)
+
+    print(newDf[0:5])
     df.append(newDf)
     counter+=1
 
@@ -107,10 +138,23 @@ for i in range(len(df)):
 ### Shuffling data
 df_pd = ShufflingData(df_pd)
 
-logFile.write('\nNumber of events: ' + str(df_pd.shape[0]))                                                                                  
+logFile.write('\nNumber of events: ' + str(df_pd.shape[0]))
+
+print('Number of events:',str(df_pd.shape[0]))
 print('Saved ' + logFileName)
 logFile.close()
 
 ### Saving pkl files
-df_pd.to_pickle(dfPath + 'MixData_PD_' + analysis + '_' + channel + '.pkl')
-print('Saved to ' + dfPath + 'MixData_PD_' + analysis + '_' + channel + '.pkl')
+#df_pd.to_pickle(dfPath + 'MixData_PD_' + analysis + '_' + channel + '.pkl')
+import pickle
+with open(dfPath + 'MixData_PD_' + analysis + '_' + channel + '_p4.pkl', 'wb') as output_file:
+    pickle.dump(df_pd, output_file, protocol=4)
+print('Saved to ' + dfPath + 'MixData_PD_' + analysis + '_' + channel + '_p4.pkl')
+
+#cut=[var+str('!=-99 and') for var in dataVariables ]
+#flatten_cut=' '.join(cut)
+#flatten_cut=flatten_cut[:(len(flatten_cut)-4)]
+
+#df_pd_cut=df_pd.query(flatten_cut)
+
+#df_pd_cut.to_pickle(dfPath + 'MixData_PD_' + analysis + '_' + channel + 'cut.pkl')
