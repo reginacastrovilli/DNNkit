@@ -122,7 +122,6 @@ for i in inputFiles:
                     continue
             if found==False:
                 print('mass related to',x,'not found')
-                masses[np.where(newDf['DSID']==x)]=0
 
         print('found masses:',set(masses))
         newDf.insert(len(newDf.columns), 'mass', masses, True)
@@ -145,12 +144,13 @@ print('Saved ' + logFileName)
 logFile.close()
 
 ### Saving pkl files
-#df_pd.to_pickle(dfPath + 'MixData_PD_' + analysis + '_' + channel + '.pkl')
+df_pd.to_pickle(dfPath + 'MixData_PD_' + analysis + '_' + channel + '.pkl')
+'''
 import pickle
 with open(dfPath + 'MixData_PD_' + analysis + '_' + channel + '_p4.pkl', 'wb') as output_file:
     pickle.dump(df_pd, output_file, protocol=4)
 print('Saved to ' + dfPath + 'MixData_PD_' + analysis + '_' + channel + '_p4.pkl')
-
+'''
 #cut=[var+str('!=-99 and') for var in dataVariables ]
 #flatten_cut=' '.join(cut)
 #flatten_cut=flatten_cut[:(len(flatten_cut)-4)]
