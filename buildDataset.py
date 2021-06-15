@@ -33,6 +33,10 @@ config.read('Configuration.txt')
 inputFiles = ast.literal_eval(config.get('config', 'inputFiles'))
 dataType = ast.literal_eval(config.get('config', 'dataType'))
 rootBranchSubSample = ast.literal_eval(config.get('config', 'rootBranchSubSample'))
+if analysis == 'merged':
+    InputFeatures = ast.literal_eval(config.get('config', 'InputFeaturesMerged'))
+elif analysis == 'resolved':
+    InputFeatures = ast.literal_eval(config.get('config', 'InputFeaturesResolved'))
 dfPath = config.get('config', 'dfPath')
 print (format('Output directory: ' + Fore.GREEN + dfPath), checkCreateDir(dfPath))
 
@@ -60,7 +64,6 @@ for i in inputFiles:
         print(str(i+'_DF.pkl'),'not in ', dfPath)
         counter+=1
         continue
-    print(i)
     inFile = dfPath + i + '_DF.pkl'
 
     print('Loading ' + inFile)
@@ -100,7 +103,6 @@ for i in inputFiles:
             selection = 'Pass_Res_VBF_WZ_SR == True or Pass_Res_VBF_WZ_ZCR == True or Pass_Res_VBF_ZZ_SR == True or Pass_Res_VBF_ZZ_ZCR'
         newDf = newDf.query(selection)
 
-    print('done analysis')
     if (dataType[counter] == 'bkg'):
         newDf.insert(len(newDf.columns), 'isSignal', np.zeros(newDf.shape[0]), True)
         newDf.insert(len(newDf.columns), 'mass', np.random.choice(mass,newDf.shape[0]), True)
@@ -126,6 +128,7 @@ for i in inputFiles:
         print('found masses:',set(masses))
         newDf.insert(len(newDf.columns), 'mass', masses, True)
 
+    newDf = newDf[InputFeatures]
     print(newDf[0:5])
     df.append(newDf)
     counter+=1
@@ -145,6 +148,7 @@ logFile.close()
 
 ### Saving pkl files
 df_pd.to_pickle(dfPath + 'MixData_PD_' + analysis + '_' + channel + '.pkl')
+print('Saved ' + dfPath + 'MixData_PD_' + analysis + '_' + channel + '_p4.pkl')
 '''
 import pickle
 with open(dfPath + 'MixData_PD_' + analysis + '_' + channel + '_p4.pkl', 'wb') as output_file:
