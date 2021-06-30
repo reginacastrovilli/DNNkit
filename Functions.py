@@ -108,14 +108,14 @@ def checkCreateDir(dir):
 ### Loading input data
 import pandas as pd
 def LoadData(dfPath, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts):
-    directory = 'OutputDataFrames/' + jetCollection + '/' + signal + '/' + analysis + '/' + channel#dfPath all'inizio
-    fileCommonName = jetCollection + '_' + signal + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + background + '_' + str(trainingFraction) + 't'
-    X_Train = np.genfromtxt(directory + '/X_train_' + fileCommonName + '.csv', delimiter=',') 
-    X_Test = np.genfromtxt(directory + '/X_test_' + fileCommonName + '.csv', delimiter=',') 
-    y_Train = np.genfromtxt(directory + '/y_train_' + fileCommonName + '.csv', delimiter=',') 
-    y_Test = np.genfromtxt(directory + '/y_test_' + fileCommonName + '.csv', delimiter=',') 
-    m_Train_unscaled = np.genfromtxt(directory + '/m_train_unscaled_' + fileCommonName + '.csv', delimiter=',') 
-    m_Test_unscaled = np.genfromtxt(directory + '/m_test_unscaled_' + fileCommonName + '.csv', delimiter=',') 
+    #directory = 'OutputDataFrames/' + jetCollection + '/' + signal + '/' + analysis + '/' + channel#dfPath all'inizio
+    fileCommonName = jetCollection + '_' + analysis + '_' + channel + '_' + signal + '_' + preselectionCuts + '_' + background + '_' + str(trainingFraction) + 't'
+    X_Train = np.genfromtxt(dfPath + '/X_train_' + fileCommonName + '.csv', delimiter=',') 
+    X_Test = np.genfromtxt(dfPath + '/X_test_' + fileCommonName + '.csv', delimiter=',') 
+    y_Train = np.genfromtxt(dfPath + '/y_train_' + fileCommonName + '.csv', delimiter=',') 
+    y_Test = np.genfromtxt(dfPath + '/y_test_' + fileCommonName + '.csv', delimiter=',') 
+    m_Train_unscaled = np.genfromtxt(dfPath + '/m_train_unscaled_' + fileCommonName + '.csv', delimiter=',') 
+    m_Test_unscaled = np.genfromtxt(dfPath + '/m_test_unscaled_' + fileCommonName + '.csv', delimiter=',') 
     X_Input = np.concatenate((X_Train, X_Test), axis = 0)
     return X_Train, X_Test, y_Train, y_Test, m_Train_unscaled, m_Test_unscaled, X_Input
 
@@ -283,10 +283,10 @@ def integral(y,x,bins):
         s=s+y[i]*(bins[i+1]-bins[i])
     return s
 
-### Drawing Scores
+### Drawing scores, ROC and efficiency
 import numpy as np
 
-def DrawScores(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, mass):
+def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, mass):
     bins = np.linspace(0, 1, 40)
     Nbins = len(bins)
     plt.hist(yhat_train_signal, bins = bins, histtype = 'step', lw = 2, color = 'blue', label = [r'Signal Train'], density = True)
@@ -316,9 +316,9 @@ def DrawScores(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bk
         signal_eff=np.append(y_s,signal_eff)
         bkg_eff=np.append(y_n,bkg_eff)
     plt.clf()
-    return bkg_eff, signal_eff
+    #return bkg_eff, signal_eff
 
-def DrawROC(bkg_eff,signal_eff, outputDir, mass):
+#def DrawROC(bkg_eff,signal_eff, outputDir, mass):
     Area=round(1000*abs(integral(signal_eff,0,bkg_eff)))/1000
     lab='Area: '+str(Area)
     plt.plot(bkg_eff,signal_eff,label=lab,color = 'darkorange', lw = 2)
@@ -333,7 +333,7 @@ def DrawROC(bkg_eff,signal_eff, outputDir, mass):
     print('Saved ' + ROCPltName)
     plt.clf()
 
-def DrawEfficiency(bkg_eff, signal_eff, outputDir, mass):
+#def DrawEfficiency(bkg_eff, signal_eff, outputDir, mass):
     WP=[0.90,0.94,0.97,0.99]
     rej=1./bkg_eff
     WP_idx=[np.where(np.abs(signal_eff-WP[i])==np.min(np.abs(signal_eff-WP[i])))[0][0] for i in range(0,len(WP))]

@@ -15,7 +15,7 @@ dfPath += analysis + '/' + channel + '/' + signal + '/'
 
 ### Creating the output directory and the logFile
 #outputDir = modelPath + signal + '/' + analysis + '/' + channel + '/' + NN + '/useWeights' + str(useWeights) ######modificare
-outputDir = dfPath + NN + '/useWeights' + str(useWeights) ######modificare
+outputDir = dfPath + NN + '/useWeights' + str(useWeights)
 print (format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
 logFileName = outputDir + '/logFile.txt'
 logFile = open(logFileName, 'w')
@@ -158,13 +158,15 @@ for mass in scaledTestMassPointsList:
     ### Prediction
     yhat_train_signal_mass, yhat_train_bkg_mass, yhat_test_signal_mass, yhat_test_bkg_mass = PredictionSigBkg(model, X_train_signal_mass, X_train_bkg, X_test_signal_mass, X_test_bkg)
 
-    ### Plotting scores
+    ### Saving plots
     if plot:
-       bkg_eff, signal_eff = DrawScores(yhat_train_signal_mass, yhat_test_signal_mass, yhat_train_bkg_mass, yhat_test_bkg_mass, newOutputDir, NN, unscaledMass)
-       DrawROC(bkg_eff, signal_eff, newOutputDir, unscaledMass)
-       DrawEfficiency(bkg_eff, signal_eff, newOutputDir, unscaledMass)
-       DrawCM(yhat_test_mass, y_test_mass, True, newOutputDir, unscaledMass)
-
+        '''
+        bkg_eff, signal_eff = DrawScores(yhat_train_signal_mass, yhat_test_signal_mass, yhat_train_bkg_mass, yhat_test_bkg_mass, newOutputDir, NN, unscaledMass)
+        DrawROC(bkg_eff, signal_eff, newOutputDir, unscaledMass)
+        DrawEfficiency(bkg_eff, signal_eff, newOutputDir, unscaledMass)
+        DrawCM(yhat_test_mass, y_test_mass, True, newOutputDir, unscaledMass)
+        '''
+        DrawEfficiency(yhat_train_signal_mass, yhat_test_signal_mass, yhat_train_bkg_mass, yhat_test_bkg_mass, newOutputDir, NN, unscaledMass)
     ### Closing the newLogFile
     newLogFile.close()
     print('Saved ' + newLogFileName)
