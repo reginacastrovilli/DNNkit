@@ -287,6 +287,8 @@ def integral(y,x,bins):
 import numpy as np
 
 def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, mass):
+
+    ### Scores
     bins = np.linspace(0, 1, 40)
     Nbins = len(bins)
     plt.hist(yhat_train_signal, bins = bins, histtype = 'step', lw = 2, color = 'blue', label = [r'Signal Train'], density = True)
@@ -316,9 +318,8 @@ def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_tes
         signal_eff=np.append(y_s,signal_eff)
         bkg_eff=np.append(y_n,bkg_eff)
     plt.clf()
-    #return bkg_eff, signal_eff
 
-#def DrawROC(bkg_eff,signal_eff, outputDir, mass):
+    ### ROC
     Area=round(1000*abs(integral(signal_eff,0,bkg_eff)))/1000
     lab='Area: '+str(Area)
     plt.plot(bkg_eff,signal_eff,label=lab,color = 'darkorange', lw = 2)
@@ -333,13 +334,12 @@ def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_tes
     print('Saved ' + ROCPltName)
     plt.clf()
 
-#def DrawEfficiency(bkg_eff, signal_eff, outputDir, mass):
+    ### Efficiency
     WP=[0.90,0.94,0.97,0.99]
     rej=1./bkg_eff
     WP_idx=[np.where(np.abs(signal_eff-WP[i])==np.min(np.abs(signal_eff-WP[i])))[0][0] for i in range(0,len(WP))]
-    #rej[WP_idx]
     WP_rej=[str(round(10*rej[WP_idx[i]])/10) for i in range(0,len(WP))]
-    print(WP_rej)
+    #print(WP_rej)
 
     plt.plot(signal_eff,rej)
     for i in range(0,len(WP)):
@@ -355,24 +355,6 @@ def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_tes
     print('Saved ' + EffPltName)
     plt.clf()
 
-'''
-### Drawing ROC (Receiver Operating Characteristic)
-from sklearn.metrics import roc_curve, auc, roc_auc_score, classification_report
-def DrawROC(fpr, tpr, AUC, outputDir, mass):
-    plt.plot(fpr,  tpr, color = 'darkorange', lw = 2)
-    #plt.plot([0, 0], [1, 1], color = 'navy', lw = 2, linestyle = '--')
-    plt.xlim([-0.05, 1.0])
-    plt.ylim([0.0, 1.05])
-    plt.ylabel('True Positive Rate')
-    plt.xlabel('False Positive Rate')
-    titleROC = 'ROC curves (mass: ' + str(int(mass)) + ' GeV)'
-    plt.title(titleROC)
-    plt.figtext(0.7, 0.25, 'AUC: ' + str(round(AUC, 2)), wrap = True, horizontalalignment = 'center')
-    ROCPltName = outputDir + '/ROC.png'
-    plt.savefig(ROCPltName)
-    print('Saved ' + ROCPltName)
-    plt.clf()
-'''
 from sklearn.metrics import confusion_matrix
 import itertools
 

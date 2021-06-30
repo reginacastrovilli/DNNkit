@@ -123,30 +123,14 @@ for mass in scaledTrainMassPointsList:
 
     ### Prediction on the full test sample
     yhat_test = model.predict(X_test_mass, batch_size = 2048)
-    '''
-    ### Evaluating ROC
-    fpr, tpr, thresholds = roc_curve(y_test_mass, yhat_test)
-    roc_auc = auc(fpr, tpr)
-    print(format(Fore.BLUE + 'AUC: ' + str(roc_auc)))
-    logFile.write('\nAUC: ' + str(roc_auc))
 
-    ### Plotting ROC and confusion matrix
-    if plot:
-        DrawROC(fpr, tpr, roc_auc, outputDir, mass)
-        DrawCM(yhat_test, y_test_mass, True, outputDir, mass)
-    '''
     ### Prediction on signal and background separately
     yhat_train_signal, yhat_train_bkg, yhat_test_signal, yhat_test_bkg = PredictionSigBkg(model, X_train_signal_mass, X_train_bkg, X_test_signal_mass, X_test_bkg)
 
     ### Saving plots
     if plot:
-        '''
-        bkg_eff, signal_eff = DrawScores(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, mass)
-        DrawROC(bkg_eff, signal_eff, OutputDir, mass)
-        DrawEfficiency(bkg_eff, signal_eff, OutputDir, mass)
-        DrawCM(yhat_test_mass, y_test_mass, True, mass)
-        '''
         DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, unscaledMass)
+        DrawCM(yhat_test_mass, y_test_mass, True, mass)
 
     ### Closing the logFile
     logFile.close()
