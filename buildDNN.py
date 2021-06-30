@@ -1,108 +1,116 @@
-### Make sure that 'DSID' is the last input variable
 from Functions import *
-from sklearn.preprocessing import StandardScaler
-from sklearn.compose import ColumnTransformer
 
 plot = True
 NN = 'DNN'
+useWeights = True
+print(Fore.BLUE + '         useWeights = ' + str(useWeights))
 
 ### Reading the command line
-analysis, channel, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, trainingFraction = ReadArgParser()
+analysis, channel, signal, jetCollection, background, trainingFraction, preselectionCuts, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout = ReadArgParser()
 
 ### Reading the configuration file
-dfPath, modelPath, InputFeatures = ReadConfig(analysis)
+dfPath, InputFeatures, massColumnIndex = ReadConfig(analysis, jetCollection)
+dfPath += analysis + '/' + channel + '/' + signal + '/'
 
-### Loading input dataframe
-X_input, y_input, dfInput = LoadData(dfPath, analysis, channel, InputFeatures)
+### Loading input data
+X_train, X_test, y_train, y_test, m_train_unscaled, m_test_unscaled, X_input = LoadData(dfPath, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts)
 
 ### Building the DNN
-n_dim = X_input.shape[1] - 1 # mass won't be given as input to the DNN
-model = BuildDNN(n_dim, numberOfNodes, numberOfLayers, dropout)
-#model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', metrics = ['accuracy'])
-
-### Scaling (except for the mass value)
-transformer = ColumnTransformer(transformers = [('name', StandardScaler(), slice(0, X_input.shape[1] - 1))], remainder = 'passthrough')
-X_input = transformer.fit_transform(X_input)
+model = BuildDNN(X_input.shape[1] - 1 , numberOfNodes, numberOfLayers, dropout) # mass won't be given as input to the DNN
 
 ### Dividing signal from background
-X_signal = X_input[y_input == 1]
-X_bkg = X_input[y_input != 1]
+X_test_signal = X_test[y_test == 1]
+X_test_bkg = X_test[y_test != 1]
+m_test_unscaled_signal = m_test_unscaled[y_test == 1]
+X_train_signal = X_train[y_train == 1]
+X_train_bkg = X_train[y_train != 1]
+m_train_unscaled_signal = m_train_unscaled[y_train == 1]
 
-### Saving (unscaled) signal mass values
-m_signal = X_signal[:, X_signal.shape[1] - 1]
-massPointsList = list(set(m_signal))
-print('Mass points: ' + str(massPointsList))
+### Saving unscaled train signal masses
+unscaledTrainMassPointsList = list(dict.fromkeys(list(m_train_unscaled_signal)))
 
-for mass in massPointsList:
+### Extracting scaled test/train signal masses
+m_test_signal = X_test_signal[:, massColumnIndex]
+m_train_signal = X_train_signal[:, massColumnIndex]
+scaledTrainMassPointsList = list(dict.fromkeys(list(m_train_signal)))
+
+### Deleting mass 
+X_test_signal = np.delete(X_test_signal, massColumnIndex, axis = 1)
+X_train_signal = np.delete(X_train_signal, massColumnIndex, axis = 1)
+X_test_bkg = np.delete(X_test_bkg, massColumnIndex, axis = 1)
+X_train_bkg = np.delete(X_train_bkg, massColumnIndex, axis = 1)
+
+for mass in scaledTrainMassPointsList:
+
+    ### Associating the scaled mass to the unscaled one
+    unscaledMass = unscaledTrainMassPointsList[scaledTrainMassPointsList.index(mass)]
 
     ### Creating the output directory
-    outputDir = modelPath + NN + '/' + analysis + '/' + channel + '/' + str(int(mass))
+    #outputDir = modelPath + NN + '/' + signal + '/' + analysis + '/' + channel + '/' + str(int(unscaledMass))
+    #outputDir = modelPath + signal + '/' + analysis + '/' + channel + '/' + NN + '/useWeights' + str(useWeights) + '/' + str(int(unscaledMass))
+    outputDir = dfPath + NN + '/useWeights' + str(useWeights) + '/' + str(int(unscaledMass))
     print (format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
     
     ### Creating the logFile
     logFileName = outputDir + '/logFile.txt'
     logFile = open(logFileName, 'w')
+    logString = WritingLogFile(dfPath, X_input, X_test, y_test, X_train, y_train, InputFeatures, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, useWeights)
+    logFile.write(logString)
 
-    ### Writing previous information to the logFile
-    logFile.write('Input dataframe: ' + dfInput + '\nNumber of input events: ' + str(X_input.shape[0]) + ' (' + str(X_signal.shape[0]) + ' signal and ' + str(X_bkg.shape[0]) + ' background)' + '\nInputFeatures: ' + str(InputFeatures) + '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of layers: ' + str(numberOfLayers) + '\nNumber of epochs: ' + str(numberOfEpochs) + '\nValidation fraction: ' + str(validationFraction) + '\nDropout: ' + str(dropout) + '\nTraining fraction: ' + str(trainingFraction) + '\nMass points list: ' + str(massPointsList) + '\nMass point analyzed: ' + str(mass))
+    ### Selecting signal event with the same mass
+    X_train_signal_mass = X_train_signal[m_train_signal == mass]
+    X_test_signal_mass = X_test_signal[m_test_signal == mass] 
 
-    ### Selecting only signal events with the same mass value 
-    X_signal_mass = X_signal[m_signal == mass]
-    logFile.write('\nNumber of signal events with the analyzed mass: ' + str(X_signal_mass.shape[0]))
-
-    ### Creating new extended arrays by adding 1 for signal events and 0 for background events
-    X_signal_mass_ext = np.insert(X_signal_mass, X_signal_mass.shape[1], 1, axis = 1)
-    X_bkg_ext = np.insert(X_bkg, X_bkg.shape[1], 0, axis = 1)
+    ### Creating new extended arrays by adding value 1 (0) to signal (background) events (this information is needed in order to shuffle data properly)
+    X_train_signal_mass_ext = np.insert(X_train_signal_mass, X_train_signal_mass.shape[1], 1, axis = 1)
+    X_train_bkg_ext = np.insert(X_train_bkg, X_train_bkg.shape[1], 0, axis = 1)
+    X_test_signal_mass_ext = np.insert(X_test_signal_mass, X_test_signal_mass.shape[1], 1, axis = 1)
+    X_test_bkg_ext = np.insert(X_test_bkg, X_test_bkg.shape[1], 0, axis = 1)
 
     ### Putting signal and background events back together
-    X_mass_ext = np.concatenate((X_signal_mass_ext, X_bkg_ext), axis = 0)
+    X_train_mass_ext = np.concatenate((X_train_signal_mass_ext, X_train_bkg_ext), axis = 0)
+    X_test_mass_ext = np.concatenate((X_test_signal_mass_ext, X_test_bkg_ext), axis = 0)
+
+    logFile.write('\nNumber of test events with mass ' + str(unscaledMass) + ' GeV: ' + str(X_test_mass_ext.shape[0]) + ' (' + str(X_test_signal_mass.shape[0]) + ' signal)\nNumber of train events with mass ' + str(unscaledMass) + ' GeV: ' + str(X_train_mass_ext.shape[0]) + ' (' + str(X_train_signal_mass.shape[0]) + ' signal)')
 
     ### Shuffling data
-    X_mass_ext = ShufflingData(X_mass_ext)
-
-    ### Splitting into test/train samples
-    Ntrain_stop = int(round(X_mass_ext.shape[0] * trainingFraction))
-    X_train_mass_ext = X_mass_ext[:Ntrain_stop]
-    X_test_mass_ext = X_mass_ext[Ntrain_stop:]    
-
-    logFile.write('\nNumber of train events: ' + str(X_train_mass_ext.shape[0]) + '\nNumber of test events: ' + str(X_test_mass_ext.shape[0]))
+    X_train_mass_ext = ShufflingData(X_train_mass_ext)
+    X_test_mass_ext = ShufflingData(X_test_mass_ext)
 
     ### Extracting y_mass from X_mass_ext
     y_train_mass = X_train_mass_ext[:, X_train_mass_ext.shape[1] - 1]
     y_test_mass = X_test_mass_ext[:, X_test_mass_ext.shape[1] - 1]
 
-    ### Deleting y_mass and mass
-    X_train_mass = np.delete(X_train_mass_ext, [X_train_mass_ext.shape[1] - 2, X_train_mass_ext.shape[1] - 1], axis = 1)
-    X_test_mass = np.delete(X_test_mass_ext, [X_test_mass_ext.shape[1] - 2, X_test_mass_ext.shape[1] - 1], axis = 1)
+    ### Deleting y_mass
+    X_train_mass = np.delete(X_train_mass_ext, X_train_mass_ext.shape[1] - 1, axis = 1)
+    X_test_mass = np.delete(X_test_mass_ext, X_test_mass_ext.shape[1] - 1, axis = 1)
 
-    ### Dividing signal from background
-    X_train_signal_mass = X_train_mass[y_train_mass == 1]
-    X_train_bkg = X_train_mass[y_train_mass != 1]
-    X_test_signal_mass = X_test_mass[y_test_mass == 1]
-    X_test_bkg = X_test_mass[y_test_mass != 1]
+    ### Creating the validation dataset
+    stop  = int(validationFraction * X_train_mass.shape[0])
+    X_validation_mass = X_train_mass[:stop]
+    y_validation_mass = y_train_mass[:stop]
+    X_train_mass = X_train_mass[stop:]
+    y_train_mass = y_train_mass[stop:]
+    logFile.write('\nNumber of real train events (without validation set): ' + str(X_train_mass.shape[0]) + ' (' + str(sum(y_train_mass)) + ' signal and ' + str(len(y_train_mass) - sum(y_train_mass)) + ' background)')
 
-    logFile.write('\nNumber of signal train events: ' + str(X_train_signal_mass.shape[0]) + '\nNumber of bkg train events: ' + str(X_train_bkg.shape[0]))
+    ### Weighting train events
+    w_train_mass = None
+    if(useWeights == True):
+        w_train_signal, w_train_bkg, w_train_mass = EventsWeight(y_train_mass)
+        logFile.write('\nWeight for train signal events: ' + str(w_train_signal) + ', for background train events: ' + str(w_train_bkg))
 
-    ### Weighting events
-    W_train_signal_mass, W_train_bkg = EventsWeight(X_train_signal_mass, X_train_bkg)
-    logFile.write('\nWeight for signal train events: ' + str(W_train_signal_mass) + '\nWeight for background train events: ' + str(W_train_bkg))
-
-    ### Creating array of weights
-    w_train_mass = []
-    for event in y_train_mass:
-        if event == 1:
-            w_train_mass.append(W_train_signal_mass)
-        elif event == 0: 
-            w_train_mass.append(W_train_bkg)
-    w_train_mass = np.array(w_train_mass)
-    
     ### Training
     callbacks = [
         # If we don't have a decrease of the loss for 11 epochs, terminate training.
         EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss')
     ]
     model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', metrics = ['accuracy'])
-    modelMetricsHistory = model.fit(X_train_mass, y_train_mass, sample_weight = w_train_mass, epochs = numberOfEpochs, batch_size = 2048, validation_split = validationFraction, verbose = 1, callbacks = callbacks)
+
+    modelMetricsHistory = model.fit(X_train_mass, y_train_mass, sample_weight = w_train_mass, epochs = numberOfEpochs, batch_size = 2048, validation_data = (X_validation_mass, y_validation_mass), verbose = 1, callbacks = callbacks)
+
+    ### Saving to files
+    SaveModel(model, X_input, InputFeatures, outputDir)
+    #model.save(outputDir + '/model/') ### per Martino
 
     ### Evaluating the performance of the DNN
     testLoss, testAccuracy = EvaluatePerformance(model, X_test_mass, y_test_mass)
@@ -110,38 +118,36 @@ for mass in massPointsList:
 
     ### Drawing training history
     if plot:
-        DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, mass)
-        DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, mass)
+        DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, unscaledMass)
+        DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, unscaledMass)
 
     ### Prediction on the full test sample
     yhat_test = model.predict(X_test_mass, batch_size = 2048)
-
-    ### Plotting ROC
+    '''
+    ### Evaluating ROC
     fpr, tpr, thresholds = roc_curve(y_test_mass, yhat_test)
     roc_auc = auc(fpr, tpr)
     print(format(Fore.BLUE + 'AUC: ' + str(roc_auc)))
     logFile.write('\nAUC: ' + str(roc_auc))
 
+    ### Plotting ROC and confusion matrix
     if plot:
         DrawROC(fpr, tpr, roc_auc, outputDir, mass)
-
-        ### Plotting confusion matrix
         DrawCM(yhat_test, y_test_mass, True, outputDir, mass)
-
-    ###### Prediction on signal and background separately
-
-    ### Dividing signal from background
-    X_train_signal_mass = X_train_mass[y_train_mass == 1]
-    X_train_bkg = X_train_mass[y_train_mass != 1]
-    X_test_signal_mass = X_test_mass[y_test_mass == 1]
-    X_test_bkg = X_test_mass[y_test_mass != 1]
-
+    '''
+    ### Prediction on signal and background separately
     yhat_train_signal, yhat_train_bkg, yhat_test_signal, yhat_test_bkg = PredictionSigBkg(model, X_train_signal_mass, X_train_bkg, X_test_signal_mass, X_test_bkg)
 
+    ### Saving plots
     if plot:
-        ### Plotting scores
-        DrawScores(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, mass)
-    
+        '''
+        bkg_eff, signal_eff = DrawScores(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, mass)
+        DrawROC(bkg_eff, signal_eff, OutputDir, mass)
+        DrawEfficiency(bkg_eff, signal_eff, OutputDir, mass)
+        DrawCM(yhat_test_mass, y_test_mass, True, mass)
+        '''
+        DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, unscaledMass)
+
     ### Closing the logFile
     logFile.close()
     print('Saved ' + logFileName)

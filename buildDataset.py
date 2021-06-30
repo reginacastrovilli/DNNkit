@@ -37,7 +37,7 @@ elif args.JetCollection != 'TCC':
 
 ### Reading from config file
 config = configparser.ConfigParser()
-config.read('newConfiguration.ini')
+config.read('Configuration.ini')
 inputFiles = ast.literal_eval(config.get('config', 'inputFiles'))
 dataType = ast.literal_eval(config.get('config', 'dataType'))
 rootBranchSubSample = ast.literal_eval(config.get('config', 'rootBranchSubSample'))
@@ -45,9 +45,10 @@ if analysis == 'merged':
     InputFeatures = ast.literal_eval(config.get('config', 'InputFeaturesMerged'))
 elif analysis == 'resolved':
     InputFeatures = ast.literal_eval(config.get('config', 'InputFeaturesResolved'))
+InputFeatures.append('isSignal')
+InputFeatures.append('origin')
 dfPath = config.get('config', 'dfPath')
-dfPath += jetCollection + '_DataFrames/' ### toglierei _DataFrames
-print (format('Output directory: ' + Fore.GREEN + dfPath), checkCreateDir(dfPath)) ### non ci deve essere per forza? Perché è la directory da cui carico i file
+dfPath += jetCollection + '/'
 
 if len(inputFiles) != len(dataType):
     print(format(Fore.RED + 'Data type array does not match input files array'))
@@ -92,8 +93,8 @@ for i in inputFiles:
         print(str(i+'_DF.pkl'),'not in ', dfPath)
         counter+=1
         continue
+    ### Loading input file
     inFile = dfPath + i + '_DF.pkl'
-
     print('Loading ' + inFile)
     logFile.write(i + '_DF.pkl')
     if counter != (len(inputFiles) - 1):
@@ -102,20 +103,26 @@ for i in inputFiles:
         logFile.write(']')
     newDf = pd.read_pickle(inFile)
 
+    ### Checking that all input variables are in the input file
     for var in rootBranchSubSample:
         if var not in newDf.columns:
             missing_var=np.append(missing_var,var)
-#                print("NO",var)
     if np.size(missing_var)!=0:
         print("Found missing variables in ",i)
         print(missing_var)
         continue
 
+    ### Creating a new dataframe with only the input variables
     newDf = newDf[rootBranchSubSample]
-    newDf=newDf.assign(origin=re.search('(.+?)-',i).group(1)) ###### ?
+    
+    ### Adding a new column in the dataframe with the name of the process for each event
+    newDf = newDf.assign(origin = re.search('(.+?)-', i).group(1))
 
+    ### Applying preselection cuts
     if PreselectionCuts != 'none':
         newDf = newDf.query(PreselectionCuts)
+        
+    ### Selecting events for each type of analysis and channel
     if channel == 'ggF':
         newDf = newDf.query('Pass_isVBF == False')
         if analysis == 'merged':
@@ -133,7 +140,7 @@ for i in inputFiles:
     if (dataType[counter] == 'bkg'):
         ### Inserting new 'isSignal' column with value 0
         newDf.insert(len(newDf.columns), 'isSignal', np.zeros(newDf.shape[0]), True)
-        ### Insertign new 'mass' column with value randomly selected from the mass sublist
+        ### Inserting new 'mass' column with value randomly selected from the mass sublist
         newDf.insert(len(newDf.columns), 'mass', np.random.choice(massList, newDf.shape[0]), True) ###
 
     if (dataType[counter] == 'sig'):
@@ -141,9 +148,10 @@ for i in inputFiles:
         newDf = newDf[newDf['DSID'].isin(DSIDList)]
         ### Inserting new 'isSignal' column with value 1
         newDf.insert(len(newDf.columns), 'isSignal', np.ones(newDf.shape[0]), True)
-        masses=np.zeros(len(newDf['DSID']))
-        DSID_values=set(newDf['DSID'])
-        print('DSID values:',DSID_values)
+        ### Creating an array of mass values corresponding to the values in the 'DSID' column
+        masses = np.zeros(len(newDf['DSID']))
+        DSID_values = set(newDf['DSID'])
+        print('DSID values: ', DSID_values)
         for x in DSID_values:
             found = False
             print('searching for ', x,' DSID')
@@ -155,11 +163,13 @@ for i in inputFiles:
                     continue
             if found==False:
                 print('mass related to',x,'not found')
-
         print('found masses:',set(masses))
+        ### Inserting the new array as a new 'mass' column in the dataframe
         newDf.insert(len(newDf.columns), 'mass', masses, True)
 
+    ### Selecting in the dataframe only the variables that will be given as input to the neural networks
     newDf = newDf[InputFeatures]
+
     print(newDf[0:5])
     df.append(newDf)
     counter+=1
@@ -177,8 +187,8 @@ logFile.close()
 print('Saved ' + logFileName)
 
 ### Saving pkl files
-outputDir = dfPath + jetCollection + '/' + analysis + '/' + channel
+outputDir = dfPath + analysis + '/' + channel
 print (format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
-outputFileName = 'MixData_PD_' + jetCollection + '_' + analysis + '_' + channel + '_' + PreselectionCuts + '.pkl'
+outputFileName = '/MixData_PD_' + jetCollection + '_' + analysis + '_' + channel + '_' + PreselectionCuts + '.pkl'
 df_pd.to_pickle(outputDir + outputFileName)
 print('Saved ' + outputDir + outputFileName)

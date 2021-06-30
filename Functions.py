@@ -82,7 +82,7 @@ import configparser, ast
 
 def ReadConfig(analysis, jetCollection):
     config = configparser.ConfigParser()
-    config.read('newConfiguration.ini')
+    config.read('Configuration.ini')
     dfPath = config.get('config', 'dfPath')
     dfPath += jetCollection + '/'# + '_DataFrames/'
     #modelPath = config.get('config', 'modelPath')
