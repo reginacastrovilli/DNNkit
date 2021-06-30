@@ -1,4 +1,3 @@
-### Make sure that 'mass' is the last input variable and the third to last column in X_test/train_unscaled
 from newFunctions import *
 
 plot = True
@@ -7,24 +6,33 @@ useWeights = False
 print(Fore.BLUE + '         useWeights = ' + str(useWeights))
 
 ### Reading the command line
-analysis, channel, signal, jetCollection, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout = ReadArgParser()
+analysis, channel, signal, jetCollection, background, trainingFraction, preselectionCuts, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout = ReadArgParser()
 
 ### Reading the configuration file
-dfPath, modelPath, InputFeatures = ReadConfig(analysis, jetCollection)
+dfPath, modelPath, InputFeatures, massColumnIndex = ReadConfig(analysis, jetCollection)
 
-### Creating the output directory
-outputDir = modelPath + NN + '/' + signal + '/' + analysis + '/' + channel
+### Creating the output directory and the logFile
+outputDir = modelPath + signal + '/' + analysis + '/' + channel + '/' + NN + '/useWeights' + str(useWeights) ######modificare
 print (format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
-
-### Creating the logFile                                                                                                                                         
 logFileName = outputDir + '/logFile.txt'
 logFile = open(logFileName, 'w')
 
 ### Loading input data
-X_train, X_test, y_train, y_test, y_train_cat, y_test_cat, X_test_unscaled, X_train_unscaled, X_input = newLoadData(dfPath, signal, analysis, channel)
+X_train, X_test, y_train, y_test, m_train_unscaled, m_test_unscaled, X_input = newLoadData(dfPath, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts)
 
 logInfo = ''
 logString = WritingLogFile(dfPath, modelPath, X_input, X_test, y_test, X_train, y_train, InputFeatures, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, useWeights)
+logFile.write(logString)
+logInfo += logString
+
+### Creating the validation dataset
+stop  = int(validationFraction * X_train.shape[0])
+X_validation = X_train[:stop]
+y_validation = y_train[:stop]
+X_train = X_train[stop:]
+y_train = y_train[stop:]
+
+logString = '\nNumber of real train events (without validation set): ' + str(X_train.shape[0]) + ' (' + str(sum(y_train)) + ' signal and ' + str(len(y_train) - sum(y_train)) + ' background)'
 logFile.write(logString)
 logInfo += logString
 
@@ -46,15 +54,15 @@ callbacks = [
     EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss')#, ModelCheckpoint('model.hdf5', save_weights_only = False, monitor = 'val_loss', mode = 'min', verbose = True, save_best_only = True)
 ]
 
-modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = 2048, validation_split = validationFraction, verbose = 1, shuffle = True, callbacks = callbacks)
+#modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = 2048, validation_split = validationFraction, verbose = 1, shuffle = True, callbacks = callbacks)
+modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = 2048,  validation_data = (X_validation, y_validation), verbose = 1, shuffle = True, callbacks = callbacks)
 
 ### Saving to files
 SaveModel(model, X_input, InputFeatures, outputDir)
-model.save(outputDir + '/model/') ###per Martino
+#model.save(outputDir + '/model/') ###per Martino
 
 ### Evaluating the performance of the PDNN
 testLoss, testAccuracy = EvaluatePerformance(model, X_test, y_test)
-
 logString = '\nTest loss: ' + str(testLoss) + '\nTest accuracy: ' + str(testAccuracy)
 logFile.write(logString)
 logInfo += logString
@@ -64,7 +72,7 @@ if plot:
     DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN)
     DrawLoss(modelMetricsHistory, testLoss, outputDir, NN)
 
-logFile.close()
+#logFile.close()
 print('Saved ' + logFileName)
 
 ###### Prediction on the full test sample
@@ -72,21 +80,21 @@ print('Saved ' + logFileName)
 ### Dividing signal from background
 X_test_signal = X_test[y_test == 1]
 X_test_bkg = X_test[y_test != 1]
-X_test_unscaled_signal = X_test_unscaled[y_test == 1]
+m_test_unscaled_signal = m_test_unscaled[y_test == 1]
 X_train_signal = X_train[y_train == 1]
 X_train_bkg = X_train[y_train != 1]
 
 ### Saving unscaled test signal mass values
-m_test_unscaled_signal = list(dict.fromkeys(list(X_test_unscaled_signal[:, X_test_unscaled_signal.shape[1] - 3])))
+unscaledTestMassPointsList = list(dict.fromkeys(list(m_test_unscaled_signal)))
 
 ### Saving scaled signal test masses
-m_test_signal = X_test_signal[:, X_test_signal.shape[1] - 1]
+m_test_signal = X_test_signal[:, massColumnIndex]
 scaledTestMassPointsList = list(dict.fromkeys(list(m_test_signal)))
 
 for mass in scaledTestMassPointsList:
 
     ### Associating the scaled mass to the unscaled one
-    unscaledMass = m_test_unscaled_signal[scaledTestMassPointsList.index(mass)]
+    unscaledMass = unscaledTestMassPointsList[scaledTestMassPointsList.index(mass)]
     
     ### Creating new output directory and log file
     newOutputDir = outputDir + '/' + str(int(unscaledMass))
@@ -100,7 +108,7 @@ for mass in scaledTestMassPointsList:
 
     ### Assigning the same mass value to test background events
     for bkg in X_test_bkg:
-        bkg[X_test_bkg.shape[1] - 1] = mass
+        bkg[massColumnIndex] = mass
 
     ### Creating a new extended test array by adding value 1 (0) to signal (background) events (this information is needed in order to shuffle data properly)
     X_test_signal_mass_ext = np.insert(X_test_signal_mass, X_test_signal_mass.shape[1], 1, axis = 1)
@@ -138,11 +146,11 @@ for mass in scaledTestMassPointsList:
     for trainEvent in X_train_signal:
         m_train_signal.append(trainEvent[-1])
     X_train_signal_mass = X_train_signal[m_train_signal == mass]
-    newLogFile.write('\nNumber of train signal events with mass ' + str(mass) + ' GeV: ' + str(X_train_signal_mass.shape[0]))     
+    newLogFile.write('\nNumber of train signal events with mass ' + str(unscaledMass) + ' GeV: ' + str(X_train_signal_mass.shape[0]))     
 
     ### Assigning the same mass value to train background events
     for bkg in X_train_bkg:
-          bkg[X_train_bkg.shape[1] - 1] = mass
+          bkg[massColumnIndex] = mass
           
     ### Prediction
     yhat_train_signal_mass, yhat_train_bkg_mass, yhat_test_signal_mass, yhat_test_bkg_mass = PredictionSigBkg(model, X_train_signal_mass, X_train_bkg, X_test_signal_mass, X_test_bkg)

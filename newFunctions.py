@@ -9,6 +9,9 @@ def ReadArgParser():
     parser.add_argument('-c', '--Channel', help = 'Channel: \'ggF\' or \'VBF\'', type = str)
     parser.add_argument('-s', '--Signal', help = 'Signal: \'VBFHVTWZ\', \'Radion\', \'RSG\' or \'VBFRadion\'', type = str, default = 'VBFRadion')
     parser.add_argument('-j', '--JetCollection', help = 'Jet collection: \'TCC\'', type = str, default = 'TCC')
+    parser.add_argument('-b', '--Background', help = 'Background: \'Zjets\', \'Wjets\', \'stop\', \'Diboson\', \'ttbar\' or \'all\'', type = str, default = 'all')
+    parser.add_argument('-t', '--TrainingFraction', help = 'Relative size of the training sample, between 0 and 1', default = 0.8)
+    parser.add_argument('-p', '--PreselectionCuts', help = 'Preselection cut', type = str)
     parser.add_argument('-n', '--Nodes', help = 'Number of nodes of the (p)DNN, should always be >= nColumns and strictly positive', default = 32)
     parser.add_argument('-l', '--Layers', help = 'Number of layers of the (p)DNN', default = 2)
     parser.add_argument('-e', '--Epochs', help = 'Number of epochs for the training', default = 150)
@@ -37,15 +40,27 @@ def ReadArgParser():
         parser.error(Fore.RED + 'Requested jet collection (\'TCC\' or )')
     elif args.JetCollection != 'TCC':
         parser.error(Fore.RED + 'Jet collection can be \'TCC\', ')
+    background = args.Background.split()
+    if args.Background is None:
+        parser.error(Fore.RED + 'Requested background (\'Zjets\', \'Wjets\', \'stop\', \'Diboson\', \'ttbar\' or \'all\'')
+    backgroundString = 'all'
+    if args.Background != 'all':
+        backgroundString = '_'.join([str(item) for item in background]) ### altro?
+    trainingFraction = float(args.TrainingFraction) ### altro?
+    if args.TrainingFraction and (trainingFraction < 0. or trainingFraction > 1.):
+        parser.error(Fore.RED + 'Training fraction must be between 0 and 1')
+    preselectionCuts = args.PreselectionCuts
+    if args.PreselectionCuts is None:
+        preselectionCuts = 'none'
     numberOfNodes = int(args.Nodes)
     if args.Nodes and numberOfNodes < 1:
-        parser.error(Fore.RED + 'Number of nodes must be strictly positive')
+        parser.error(Fore.RED + 'Number of nodes must be integer and strictly positive')
     numberOfLayers = int(args.Layers)
     if args.Layers and numberOfLayers < 1:
-        parser.error(Fore.RED + 'Number of layers must be strictly positive')
+        parser.error(Fore.RED + 'Number of layers must be integer and strictly positive')
     numberOfEpochs = int(args.Epochs)
     if args.Epochs and numberOfEpochs < 1:
-        parser.error(Fore.RED + 'Number of epochs must be strictly positive')
+        parser.error(Fore.RED + 'Number of epochs must be integer and strictly positive')
     validationFraction = float(args.Validation)
     if args.Validation and (validationFraction < 0. or validationFraction > 1.):
         parser.error(Fore.RED + 'Validation fraction must be between 0 and 1')
@@ -53,13 +68,14 @@ def ReadArgParser():
     if args.Dropout and (dropout < 0. or dropout > 1.):
         parser.error(Fore.RED + 'Dropout must be between 0 and 1')
 
+    print(Fore.BLUE + '  training fraction = ' + str(trainingFraction))
     print(Fore.BLUE + '              nodes = ' + str(numberOfNodes))
     print(Fore.BLUE + '             layers = ' + str(numberOfLayers))
     print(Fore.BLUE + '             epochs = ' + str(numberOfEpochs))
     print(Fore.BLUE + 'validation fraction = ' + str(validationFraction))
     print(Fore.BLUE + '            dropout = ' + str(dropout))
 
-    return analysis, channel, signal, jetCollection, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, trainingFraction
+    return analysis, channel, signal, jetCollection, backgroundString, trainingFraction, preselectionCuts, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout
 
 ### Reading from the configuration file
 import configparser, ast
@@ -75,7 +91,8 @@ def ReadConfig(analysis, jetCollection):
         InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesMerged'))
     elif analysis == 'resolved':
         InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesResolved'))
-    return dfPath, modelPath, InputFeatures
+    massColumnIndex = InputFeatures.index('mass')
+    return dfPath, modelPath, InputFeatures, massColumnIndex
 
 ### Checking if the output directory exists. If not, creating it
 import os
@@ -97,21 +114,21 @@ def LoadData(dfPath, analysis, channel, InputFeatures):
     y = df['isSignal']
     return X, y, dfInput
 
-def newLoadData(dfPath, signal, analysis, channel):
-    X_Train = np.genfromtxt(dfPath + '/outDF/' + signal + '_' + analysis + '_' + channel + '_/X_train_scaled.csv', delimiter=',')
-    X_Test = np.genfromtxt(dfPath + '/outDF/' + signal + '_' + analysis + '_' + channel + '_/X_test_scaled.csv', delimiter=',')
-    y_Train = np.genfromtxt(dfPath + '/outDF/' + signal + '_' + analysis + '_' + channel + '_/y_train.csv')
-    y_Test = np.genfromtxt(dfPath + '/outDF/' + signal + '_' + analysis + '_' + channel + '_/y_test.csv')
-    y_Train_cat = np.genfromtxt(dfPath + '/outDF/' + signal + '_' + analysis + '_' + channel + '_/y_train_cat.csv', delimiter=',')
-    y_Test_cat = np.genfromtxt(dfPath + '/outDF/' + signal + '_' + analysis + '_' + channel + '_/y_test.csv', delimiter=',')
-    X_Test_unscaled = np.genfromtxt(dfPath + '/outDF/' + signal + '_' + analysis + '_' + channel + '_/X_test.csv', delimiter=',')
-    X_Train_unscaled = np.genfromtxt(dfPath + '/outDF/' + signal + '_' + analysis + '_' + channel + '_/X_train.csv', delimiter=',')
+def newLoadData(dfPath, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts):
+    directory = 'OutputDataFrames/' + jetCollection + '/' + signal + '/' + analysis + '/' + channel#dfPath all'inizio
+    fileCommonName = jetCollection + '_' + signal + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + background + '_' + str(trainingFraction) + 't'
+    X_Train = np.genfromtxt(directory + '/X_train_' + fileCommonName + '.csv', delimiter=',') 
+    X_Test = np.genfromtxt(directory + '/X_test_' + fileCommonName + '.csv', delimiter=',') 
+    y_Train = np.genfromtxt(directory + '/y_train_' + fileCommonName + '.csv', delimiter=',') 
+    y_Test = np.genfromtxt(directory + '/y_test_' + fileCommonName + '.csv', delimiter=',') 
+    m_Train_unscaled = np.genfromtxt(directory + '/m_train_unscaled_' + fileCommonName + '.csv', delimiter=',') 
+    m_Test_unscaled = np.genfromtxt(directory + '/m_test_unscaled_' + fileCommonName + '.csv', delimiter=',') 
     X_Input = np.concatenate((X_Train, X_Test), axis = 0)
-    return X_Train, X_Test, y_Train, y_Test, y_Train_cat, y_Test_cat, X_Test_unscaled, X_Train_unscaled, X_Input
+    return X_Train, X_Test, y_Train, y_Test, m_Train_unscaled, m_Test_unscaled, X_Input
 
 ### Writing in the log file
-def WritingLogFile(dfPath, modelPath, X_input, X_test, y_test, X_train, y_train, InputFeatures, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, trainingFraction, useWeights):
-    logString = 'dfPath: ' + dfPath + '\nModelPath: ' + modelPath + '\nNumber of input events: ' + str(X_input.shape[0]) + '\nNumber of test events: ' + str(int(X_test.shape[0])) + ' (' + str(sum(y_test)) + ' signal and ' + str(len(y_test) - sum(y_test)) + ' background)' + '\nNumber of train events: ' + str(X_train.shape[0]) + ' (' + str(sum(y_train)) + ' signal and ' + str(len(y_train) - sum(y_train)) + ' background)' + '\nInputFeatures: ' + str(InputFeatures) + '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of layers: ' + str(numberOfLayers) + '\nNumber of epochs: ' + str(numberOfEpochs) + '\nValidation fraction: ' + str(validationFraction) + '\nDropout: ' + str(dropout) + '\nTraining fraction: ' + str(trainingFraction) + '\nuseWeights: ' + str(useWeights)
+def WritingLogFile(dfPath, modelPath, X_input, X_test, y_test, X_train, y_train, InputFeatures, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, useWeights):
+    logString = 'dfPath: ' + dfPath + '\nModelPath: ' + modelPath + '\nNumber of input events: ' + str(X_input.shape[0]) + '\nNumber of test events: ' + str(int(X_test.shape[0])) + ' (' + str(sum(y_test)) + ' signal and ' + str(len(y_test) - sum(y_test)) + ' background)' + '\nNumber of train events: ' + str(X_train.shape[0]) + ' (' + str(sum(y_train)) + ' signal and ' + str(len(y_train) - sum(y_train)) + ' background)' + '\nInputFeatures: ' + str(InputFeatures) + '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of layers: ' + str(numberOfLayers) + '\nNumber of epochs: ' + str(numberOfEpochs) + '\nValidation fraction: ' + str(validationFraction) + '\nDropout: ' + str(dropout) + '\nuseWeights: ' + str(useWeights)
     return logString
 
 ### Shuffling data
@@ -356,9 +373,9 @@ def NewEventsWeight(y_train):
     w_train = []
     for event in y_train:
         if event == 0:
-            w_train.append(WTrainSignal)
-        else:
             w_train.append(WTrainBkg)
+        else:
+            w_train.append(WTrainSignal)
     w_train = np.array(w_train)
 
     return WTrainSignal, WTrainBkg, w_train
