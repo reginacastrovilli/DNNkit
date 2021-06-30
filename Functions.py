@@ -7,12 +7,16 @@ def ReadArgParser():
     parser = ArgumentParser()
     parser.add_argument('-a', '--Analysis', help = 'Type of analysis: \'merged\' or \'resolved\'', type = str)
     parser.add_argument('-c', '--Channel', help = 'Channel: \'ggF\' or \'VBF\'', type = str)
+    parser.add_argument('-s', '--Signal', help = 'Signal: \'VBFHVTWZ\', \'Radion\', \'RSG\' or \'VBFRadion\'', type = str, default = 'VBFRadion')
+    parser.add_argument('-j', '--JetCollection', help = 'Jet collection: \'TCC\'', type = str, default = 'TCC')
+    parser.add_argument('-b', '--Background', help = 'Background: \'Zjets\', \'Wjets\', \'stop\', \'Diboson\', \'ttbar\' or \'all\'', type = str, default = 'all')
+    parser.add_argument('-t', '--TrainingFraction', help = 'Relative size of the training sample, between 0 and 1', default = 0.8)
+    parser.add_argument('-p', '--PreselectionCuts', help = 'Preselection cut', type = str)
     parser.add_argument('-n', '--Nodes', help = 'Number of nodes of the (p)DNN, should always be >= nColumns and strictly positive', default = 32)
     parser.add_argument('-l', '--Layers', help = 'Number of layers of the (p)DNN', default = 2)
     parser.add_argument('-e', '--Epochs', help = 'Number of epochs for the training', default = 150)
     parser.add_argument('-v', '--Validation', help = 'Fraction of the training data that will actually be used for validation', default = 0.2)
     parser.add_argument('-d', '--Dropout', help = 'Fraction of the neurons to drop during the training', default = 0.2)
-    parser.add_argument('-t', '--Training', help = 'Relative size of the training sample, between 0 and 1', default = 0.7)
     
     args = parser.parse_args()
     
@@ -26,47 +30,70 @@ def ReadArgParser():
         parser.error(Fore.RED + 'Requested channel (either \'ggF\' or \'VBF\')')
     elif args.Channel != 'ggF' and args.Channel != 'VBF':
         parser.error(Fore.RED + 'Channel can be either \'ggF\' or \'VBF\'')
+    signal = args.Signal
+    if args.Signal is None:
+        parser.error(Fore.RED + 'Requested signal (\'VBFHVTWZ\', \'Radion\', \'RSG\' or \'VBFRadion\')')
+    elif args.Signal != 'VBFHVTWZ' and args.Signal != 'Radion' and args.Signal != 'RSG' and args.Signal != 'VBFRadion':
+        parser.error(Fore.RED + 'Signal can be \'VBFHVTWZ\', \'Radion\', \'RSG\' or \'VBFRadion\'')
+    jetCollection = args.JetCollection
+    if args.JetCollection is None:
+        parser.error(Fore.RED + 'Requested jet collection (\'TCC\' or )')
+    elif args.JetCollection != 'TCC':
+        parser.error(Fore.RED + 'Jet collection can be \'TCC\', ')
+    background = args.Background.split()
+    if args.Background is None:
+        parser.error(Fore.RED + 'Requested background (\'Zjets\', \'Wjets\', \'stop\', \'Diboson\', \'ttbar\' or \'all\'')
+    backgroundString = 'all'
+    if args.Background != 'all':
+        backgroundString = '_'.join([str(item) for item in background]) ### altro?
+    trainingFraction = float(args.TrainingFraction) ### altro?
+    if args.TrainingFraction and (trainingFraction < 0. or trainingFraction > 1.):
+        parser.error(Fore.RED + 'Training fraction must be between 0 and 1')
+    preselectionCuts = args.PreselectionCuts
+    if args.PreselectionCuts is None:
+        preselectionCuts = 'none'
     numberOfNodes = int(args.Nodes)
     if args.Nodes and numberOfNodes < 1:
-        parser.error(Fore.RED + 'Number of nodes must be strictly positive')
+        parser.error(Fore.RED + 'Number of nodes must be integer and strictly positive')
     numberOfLayers = int(args.Layers)
     if args.Layers and numberOfLayers < 1:
-        parser.error(Fore.RED + 'Number of layers must be strictly positive')
+        parser.error(Fore.RED + 'Number of layers must be integer and strictly positive')
     numberOfEpochs = int(args.Epochs)
     if args.Epochs and numberOfEpochs < 1:
-        parser.error(Fore.RED + 'Number of epochs must be strictly positive')
+        parser.error(Fore.RED + 'Number of epochs must be integer and strictly positive')
     validationFraction = float(args.Validation)
     if args.Validation and (validationFraction < 0. or validationFraction > 1.):
         parser.error(Fore.RED + 'Validation fraction must be between 0 and 1')
     dropout = float(args.Dropout)
     if args.Dropout and (dropout < 0. or dropout > 1.):
         parser.error(Fore.RED + 'Dropout must be between 0 and 1')
-    trainingFraction = float(args.Training)
-    if args.Training and (trainingFraction < 0. or trainingFraction > 1.):
-        parser.error(Fore.RED + 'Training fraction must be between 0 and 1')
 
+    print(Fore.BLUE + '  training fraction = ' + str(trainingFraction))
     print(Fore.BLUE + '              nodes = ' + str(numberOfNodes))
     print(Fore.BLUE + '             layers = ' + str(numberOfLayers))
     print(Fore.BLUE + '             epochs = ' + str(numberOfEpochs))
     print(Fore.BLUE + 'validation fraction = ' + str(validationFraction))
     print(Fore.BLUE + '            dropout = ' + str(dropout))
-    print(Fore.BLUE + '  training fraction = ' + str(trainingFraction))
 
-    return analysis, channel, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, trainingFraction
+    return analysis, channel, signal, jetCollection, backgroundString, trainingFraction, preselectionCuts, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout
 
 ### Reading from the configuration file
 import configparser, ast
 
-def ReadConfig(analysis):
+def ReadConfig(analysis, jetCollection):
     config = configparser.ConfigParser()
-    config.read('Configuration.txt')
+    config.read('newConfiguration.ini')
     dfPath = config.get('config', 'dfPath')
-    modelPath = config.get('config', 'modelPath')
+    dfPath += jetCollection + '/'# + '_DataFrames/'
+    #modelPath = config.get('config', 'modelPath')
+    #modelPath += jetCollection + '/'
     if analysis == 'merged':
         InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesMerged'))
     elif analysis == 'resolved':
         InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesResolved'))
-    return dfPath, modelPath, InputFeatures
+    massColumnIndex = InputFeatures.index('mass')
+    #return dfPath, modelPath, InputFeatures, massColumnIndex
+    return dfPath, InputFeatures, massColumnIndex
 
 ### Checking if the output directory exists. If not, creating it
 import os
@@ -80,13 +107,22 @@ def checkCreateDir(dir):
 
 ### Loading input data
 import pandas as pd
+def LoadData(dfPath, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts):
+    directory = 'OutputDataFrames/' + jetCollection + '/' + signal + '/' + analysis + '/' + channel#dfPath all'inizio
+    fileCommonName = jetCollection + '_' + signal + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + background + '_' + str(trainingFraction) + 't'
+    X_Train = np.genfromtxt(directory + '/X_train_' + fileCommonName + '.csv', delimiter=',') 
+    X_Test = np.genfromtxt(directory + '/X_test_' + fileCommonName + '.csv', delimiter=',') 
+    y_Train = np.genfromtxt(directory + '/y_train_' + fileCommonName + '.csv', delimiter=',') 
+    y_Test = np.genfromtxt(directory + '/y_test_' + fileCommonName + '.csv', delimiter=',') 
+    m_Train_unscaled = np.genfromtxt(directory + '/m_train_unscaled_' + fileCommonName + '.csv', delimiter=',') 
+    m_Test_unscaled = np.genfromtxt(directory + '/m_test_unscaled_' + fileCommonName + '.csv', delimiter=',') 
+    X_Input = np.concatenate((X_Train, X_Test), axis = 0)
+    return X_Train, X_Test, y_Train, y_Test, m_Train_unscaled, m_Test_unscaled, X_Input
 
-def LoadData(dfPath, analysis, channel, InputFeatures):
-    dfInput = dfPath + 'MixData_PD_' + analysis + '_' + channel + '.pkl'
-    df = pd.read_pickle(dfInput)
-    X = df[InputFeatures].values
-    y = df['isSignal']
-    return X, y, dfInput
+### Writing in the log file
+def WritingLogFile(dfPath, X_input, X_test, y_test, X_train, y_train, InputFeatures, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, useWeights):
+    logString = 'dfPath: ' + dfPath + '\nNumber of input events: ' + str(X_input.shape[0]) + '\nNumber of test events: ' + str(int(X_test.shape[0])) + ' (' + str(sum(y_test)) + ' signal and ' + str(len(y_test) - sum(y_test)) + ' background)' + '\nNumber of train events: ' + str(X_train.shape[0]) + ' (' + str(sum(y_train)) + ' signal and ' + str(len(y_train) - sum(y_train)) + ' background)' + '\nInputFeatures: ' + str(InputFeatures) + '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of layers: ' + str(numberOfLayers) + '\nNumber of epochs: ' + str(numberOfEpochs) + '\nValidation fraction: ' + str(validationFraction) + '\nDropout: ' + str(dropout) + '\nuseWeights: ' + str(useWeights)
+    return logString
 
 ### Shuffling data
 import sklearn.utils
@@ -238,6 +274,88 @@ def DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, mass = 0):
     print('Saved ' + LossPltName)
     plt.clf()
 
+def integral(y,x,bins):
+    x_min=x
+    s=0
+    for i in np.where(bins>x)[0][:-1]:
+#        s=s+y[i]*(bins[i+1]-bins[i])
+#        print(i,s)
+        s=s+y[i]*(bins[i+1]-bins[i])
+    return s
+
+### Drawing Scores
+import numpy as np
+
+def DrawScores(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, mass):
+    bins = np.linspace(0, 1, 40)
+    Nbins = len(bins)
+    plt.hist(yhat_train_signal, bins = bins, histtype = 'step', lw = 2, color = 'blue', label = [r'Signal Train'], density = True)
+    y_signal, bins_1, _ = plt.hist(yhat_test_signal, bins = bins, histtype = 'stepfilled', lw = 2, color = 'cyan', alpha = 0.5, label = [r'Signal Test'], density = True)
+    plt.hist(yhat_train_bkg, bins = bins, histtype = 'step', lw = 2, color = 'red', label = [r'Background Train'], density = True)
+    y_bkg, bins_0, _ = plt.hist(yhat_test_bkg, bins = bins, histtype = 'stepfilled', lw = 2, color = 'orange', alpha = 0.5, label = [r'Background Test'], density = True)
+    plt.ylabel('Norm. Entries')
+    plt.xlabel(NN + ' score')
+    plt.yscale("log")
+    titleScores = 'Scores (mass: ' + str(int(mass)) + ' GeV)'
+    plt.title(titleScores)
+    plt.legend(loc = 'upper center')
+    ScoresPltName = outputDir + '/Scores.png'
+    plt.savefig(ScoresPltName)
+    print('Saved ' + ScoresPltName)
+
+    Nsignal=integral(y_signal,0,bins_1)
+    Nbkg=integral(y_bkg,0,bins_0)
+    signal_eff=np.array([])
+    bkg_eff=np.array([])
+    y_s=0
+    y_n=0
+    for i in range(0,Nbins+1):
+        x=i/Nbins
+        y_s=integral(y_signal,x,bins_1)/Nsignal
+        y_n=integral(y_bkg,x,bins_0)/Nbkg
+        signal_eff=np.append(y_s,signal_eff)
+        bkg_eff=np.append(y_n,bkg_eff)
+    plt.clf()
+    return bkg_eff, signal_eff
+
+def DrawROC(bkg_eff,signal_eff, outputDir, mass):
+    Area=round(1000*abs(integral(signal_eff,0,bkg_eff)))/1000
+    lab='Area: '+str(Area)
+    plt.plot(bkg_eff,signal_eff,label=lab,color = 'darkorange', lw = 2)
+    #plt.plot([0,1],[0,1])
+    plt.ylabel('True Positive Rate')
+    plt.xlabel('False Positive Rate')
+    titleROC = 'ROC curves (mass: ' + str(int(mass)) + ' GeV)'
+    plt.title(titleROC)
+    plt.figtext(0.7, 0.25, 'AUC: ' + str(round(Area, 2)), wrap = True, horizontalalignment = 'center')
+    ROCPltName = outputDir + '/ROC.png'
+    plt.savefig(ROCPltName)
+    print('Saved ' + ROCPltName)
+    plt.clf()
+
+def DrawEfficiency(bkg_eff, signal_eff, outputDir, mass):
+    WP=[0.90,0.94,0.97,0.99]
+    rej=1./bkg_eff
+    WP_idx=[np.where(np.abs(signal_eff-WP[i])==np.min(np.abs(signal_eff-WP[i])))[0][0] for i in range(0,len(WP))]
+    #rej[WP_idx]
+    WP_rej=[str(round(10*rej[WP_idx[i]])/10) for i in range(0,len(WP))]
+    print(WP_rej)
+
+    plt.plot(signal_eff,rej)
+    for i in range(0,len(WP)):
+        plt.axvline(x=WP[i],color='Red',linestyle='dashed',label='Bkg Rejection @ '+str(WP[i])+' WP: '+WP_rej[i])
+    plt.xlabel('Signal efficiency')
+    plt.ylabel('Background rejection')
+    plt.xlim([0.85,1])
+    plt.yscale('log')
+    plt.title('ROC curve, mass: ' + str(mass) + ' GeV')
+    plt.legend()
+    EffPltName = outputDir + '/Efficiency.png'
+    plt.savefig(EffPltName)
+    print('Saved ' + EffPltName)
+    plt.clf()
+
+'''
 ### Drawing ROC (Receiver Operating Characteristic)
 from sklearn.metrics import roc_curve, auc, roc_auc_score, classification_report
 def DrawROC(fpr, tpr, AUC, outputDir, mass):
@@ -254,28 +372,7 @@ def DrawROC(fpr, tpr, AUC, outputDir, mass):
     plt.savefig(ROCPltName)
     print('Saved ' + ROCPltName)
     plt.clf()
-
-### Drawing Scores
-import numpy as np
-
-def DrawScores(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, mass):
-    bins = np.linspace(0, 1, 40)
-    plt.hist(yhat_train_signal, bins = bins, histtype = 'step', lw = 2, color = 'blue', label = [r'Signal Train'], density = True)
-    plt.hist(yhat_test_signal, bins = bins, histtype = 'stepfilled', lw = 2, color = 'cyan', alpha = 0.5, label = [r'Signal Test'], density = True)
-    plt.hist(yhat_train_bkg, bins = bins, histtype = 'step', lw = 2, color = 'red', label = [r'Background Train'], density = True)
-    plt.hist(yhat_test_bkg, bins = bins, histtype = 'stepfilled', lw = 2, color = 'orange', alpha = 0.5, label = [r'Background Test'], density = True)
-    plt.ylabel('Norm. Entries')
-    plt.xlabel(NN + ' score')
-    plt.yscale("log")
-    titleScores = 'Scores (mass: ' + str(int(mass)) + ' GeV)'
-    plt.title(titleScores)
-    plt.legend(loc = 'upper center')
-    ScoresPltName = outputDir + '/Scores.png'
-    plt.savefig(ScoresPltName)
-    print('Saved ' + ScoresPltName)
-    plt.clf()
-
-### Confusion matrix
+'''
 from sklearn.metrics import confusion_matrix
 import itertools
 
@@ -306,13 +403,22 @@ def DrawCM(yhat_test, y_test, normalize, outputDir, mass):
     print('Saved ' + CMPltName)
     plt.clf()    
 
-def EventsWeight(XTrainSignal, XTrainBkg):
-
-    if XTrainSignal.shape[0] > XTrainBkg.shape[0]:
-        WTrainSignal = XTrainBkg.shape[0] / XTrainSignal.shape[0]       
+def EventsWeight(y_train):
+    signalNum = sum(y_train)
+    bkgNum = len(y_train) - signalNum
+    if signalNum > bkgNum:
+        WTrainSignal = bkgNum / signalNum       
         WTrainBkg = 1
     else:
-        WTrainBkg = XTrainSignal.shape[0] / XTrainBkg.shape[0]       
+        WTrainBkg = signalNum / bkgNum       
         WTrainSignal = 1
+    w_train = []
+    for event in y_train:
+        if event == 0:
+            w_train.append(WTrainBkg)
+        else:
+            w_train.append(WTrainSignal)
+    w_train = np.array(w_train)
 
-    return WTrainSignal, WTrainBkg
+    return WTrainSignal, WTrainBkg, w_train
+
