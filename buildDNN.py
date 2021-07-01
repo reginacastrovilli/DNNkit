@@ -1,13 +1,12 @@
 from Functions import *
 
-plot = True
+savePlot = True
 NN = 'DNN'
 useWeights = True
 print(Fore.BLUE + '         useWeights = ' + str(useWeights))
 
 ### Reading the command line
 analysis, channel, signal, jetCollection, background, trainingFraction, preselectionCuts, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, testMass = ReadArgParser()
-print(testMass)
 
 ### Reading the configuration file
 dfPath, InputFeatures, massColumnIndex = ReadConfig(analysis, jetCollection)
@@ -29,16 +28,7 @@ m_train_unscaled_signal = m_train_unscaled[y_train == 1]
 
 ### Saving unscaled train signal masses
 unscaledTrainMassPointsList = list(dict.fromkeys(list(m_train_unscaled_signal)))
-'''
-testMassList = []
-if testMass == 'allMasses':
-    testMassList = unscaledTrainMassPointsList
-else:
-    testMassList = testMass.split() 
-    #testMassList.append(testMassElement for testMassElement in testMassList)
-print(testMassList)
-exit()
-'''
+
 ### Extracting scaled test/train signal masses
 m_test_signal = X_test_signal[:, massColumnIndex]
 m_train_signal = X_train_signal[:, massColumnIndex]
@@ -50,23 +40,16 @@ X_train_signal = np.delete(X_train_signal, massColumnIndex, axis = 1)
 X_test_bkg = np.delete(X_test_bkg, massColumnIndex, axis = 1)
 X_train_bkg = np.delete(X_train_bkg, massColumnIndex, axis = 1)
 
-#foundTestMass = False
+foundTestMass = False
 for mass in scaledTrainMassPointsList:
 
     ### Associating the scaled mass to the unscaled one
     unscaledMass = unscaledTrainMassPointsList[scaledTrainMassPointsList.index(mass)]
-    print(int(unscaledMass))
-    print(testMass)
     if unscaledMass != testMass:
-    #if str(unscaledMass) not in float(testMass):
         continue
-    else:
-        print('found mass')
-    #foundTestMass = True
+    foundTestMass = True
 
     ### Creating the output directory
-    #outputDir = modelPath + NN + '/' + signal + '/' + analysis + '/' + channel + '/' + str(int(unscaledMass))
-    #outputDir = modelPath + signal + '/' + analysis + '/' + channel + '/' + NN + '/useWeights' + str(useWeights) + '/' + str(int(unscaledMass))
     outputDir = dfPath + NN + '/useWeights' + str(useWeights) + '/' + str(int(unscaledMass))
     print (format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
     
@@ -136,7 +119,7 @@ for mass in scaledTrainMassPointsList:
     logFile.write('\nTestLoss: ' + str(testLoss) + '\nTestAccuracy: ' + str(testAccuracy))
 
     ### Drawing training history
-    if plot:
+    if savePlot:
         DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background, unscaledMass)
         DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background, unscaledMass)
 
@@ -146,15 +129,12 @@ for mass in scaledTrainMassPointsList:
     ### Prediction on signal and background separately
     yhat_train_signal, yhat_train_bkg, yhat_test_signal, yhat_test_bkg = PredictionSigBkg(model, X_train_signal_mass, X_train_bkg, X_test_signal_mass, X_test_bkg)
 
-    ### Saving plots
-    if plot:
-        DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background)
+    ### Calculating area under ROC curve (AUC), background rejection and saving plots
+    AUC, WP, WP_rej = DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background, savePlot)
+    logFile.write('AUC: ' + str(AUC) + '\nWorking points: ' + str(WP) + '\nBackground rejection at each working point: ' + str(WP_rej))
+    if savePlot:
         DrawCM(yhat_test, y_test_mass, True, outputDir, unscaledMass)
 
     ### Closing the logFile
     logFile.close()
     print('Saved ' + logFileName)
-'''
-if foundTestMass == False:
-    print(Fore.RED + 'No signal events with the selected mass.\nSignal masses are ' + str(unscaledTrainMassPointsList))
-'''

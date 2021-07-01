@@ -11,7 +11,6 @@ from sklearn.model_selection import train_test_split
 from Functions import checkCreateDir, ReadConfig
 from colorama import init, Fore
 init(autoreset = True)
-#import makeplots as mkplots
 
 def find(str_jets,df):
     n=0
@@ -79,7 +78,6 @@ if args.TrainingFraction and (trainingFraction < 0. or trainingFraction > 1.):
     parser.error(Fore.RED + 'Training fraction must be between 0 and 1')
 
 ### Reading from configuration file
-#dfPath, modelPath, InputFeatures = ReadConfig(analysis, jetCollection)
 dfPath, InputFeatures, _ = ReadConfig(analysis, jetCollection)
 dfPath += analysis + '/' + channel
 
@@ -99,11 +97,7 @@ bkg = ['Zjets', 'Wjets', 'stop', 'Diboson', 'ttbar']
 for signal in signals:
 
     ### Creating output directory
-    #outputDir = 'OutputDataFrames/' + jetCollection + '/' + signal + '/' + analysis + '/' + channel
-    #outputDir = dfPath + jetCollection + '/' + signal + '/' + analysis + '/' + channel
     outputDir = dfPath + '/' + signal
-    print(outputDir) 
-    exit()
     print (format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
 
     ### Creating the list of backgrounds and signal processes to select

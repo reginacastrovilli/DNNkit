@@ -299,7 +299,7 @@ def integral(y,x,bins):
 ### Drawing scores, ROC and efficiency
 import numpy as np
 
-def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, mass, jetCollection, analysis, channel, PreselectionCuts, signal, bkg):
+def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, mass, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, savePlot):
 
     ### Scores
     Nbins = 1000
@@ -307,16 +307,18 @@ def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_tes
     y_signal, bins_1, _ = plt.hist(yhat_test_signal, bins = Nbins, histtype = 'stepfilled', lw = 2, color = 'cyan', alpha = 0.5, label = [r'Signal test'], density = True)
     plt.hist(yhat_train_bkg, bins = Nbins, histtype = 'step', lw = 2, color = 'red', label = [r'Background train'], density = True)
     y_bkg, bins_0, _ = plt.hist(yhat_test_bkg, bins = Nbins, histtype = 'stepfilled', lw = 2, color = 'orange', alpha = 0.5, label = [r'Background test'], density = True)
-    plt.ylabel('Norm. entries')
-    plt.xlabel('Score')
-    plt.yscale('log')
-    titleScores = NN + ' scores (mass: ' + str(int(mass)) + ' GeV)'
-    plt.title(titleScores)
-    plt.legend(loc = 'upper center')
-    ScoresPltName = outputDir + '/Scores.png'
-    plt.savefig(ScoresPltName)
-    print('Saved ' + ScoresPltName)
-    plt.clf()
+
+    if savePlot:
+        plt.ylabel('Norm. entries')
+        plt.xlabel('Score')
+        plt.yscale('log')
+        titleScores = NN + ' scores (mass: ' + str(int(mass)) + ' GeV)'
+        plt.title(titleScores)
+        plt.legend(loc = 'upper center')
+        ScoresPltName = outputDir + '/Scores.png'
+        plt.savefig(ScoresPltName)
+        print('Saved ' + ScoresPltName)
+        plt.clf()
 
     ### ROC
     Nsignal = integral(y_signal, 0, bins_1)
@@ -333,42 +335,45 @@ def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_tes
         bkg_eff = np.append(y_n, bkg_eff)
 
     Area=round(1000*abs(integral(signal_eff,0,bkg_eff)))/1000
-    lab='Area: '+str(Area)
-    plt.plot(bkg_eff,signal_eff,label=lab,color = 'darkorange', lw = 2)
-    #plt.plot([0,1],[0,1])
-    plt.ylabel('True Positive Rate')
-    plt.xlabel('False Positive Rate')
-    titleROC = NN + ' ROC curve (mass: ' + str(int(mass)) + ' GeV)'
-    plt.title(titleROC)
-    legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg)
-    if (PreselectionCuts != 'none'):
-        legendText += '\npreselection cuts: ' + PreselectionCuts
-    plt.figtext(0.5, 0.4, legendText, wrap = True, horizontalalignment = 'left')
-    plt.figtext(0.5, 0.25, 'AUC: ' + str(round(Area, 2)), wrap = True, horizontalalignment = 'center')
-    ROCPltName = outputDir + '/ROC.png'
-    plt.savefig(ROCPltName)
-    print('Saved ' + ROCPltName)
-    plt.clf()
+    if savePlot:
+        lab='Area: '+str(Area)
+        plt.plot(bkg_eff,signal_eff,label=lab,color = 'darkorange', lw = 2)
+        #plt.plot([0,1],[0,1])
+        plt.ylabel('True Positive Rate')
+        plt.xlabel('False Positive Rate')
+        titleROC = NN + ' ROC curve (mass: ' + str(int(mass)) + ' GeV)'
+        plt.title(titleROC)
+        legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg)
+        if (PreselectionCuts != 'none'):
+            legendText += '\npreselection cuts: ' + PreselectionCuts
+        plt.figtext(0.5, 0.4, legendText, wrap = True, horizontalalignment = 'left')
+        plt.figtext(0.5, 0.25, 'AUC: ' + str(round(Area, 2)), wrap = True, horizontalalignment = 'center')
+        ROCPltName = outputDir + '/ROC.png'
+        plt.savefig(ROCPltName)
+        print('Saved ' + ROCPltName)
+        plt.clf()
 
-    ### Efficiency
+    ### Background rejection vs efficiency
     WP=[0.90,0.94,0.97,0.99]
     rej=1./bkg_eff
     WP_idx=[np.where(np.abs(signal_eff-WP[i])==np.min(np.abs(signal_eff-WP[i])))[0][0] for i in range(0,len(WP))]
     WP_rej=[str(round(10*rej[WP_idx[i]])/10) for i in range(0,len(WP))]
-    #print(WP_rej)
 
-    plt.plot(signal_eff,rej)
-    for i in range(0,len(WP)):
-        plt.axvline(x=WP[i],color='Red',linestyle='dashed',label='Bkg Rejection @ '+str(WP[i])+' WP: '+WP_rej[i])
-    plt.xlabel('Signal efficiency')
-    plt.ylabel('Background rejection')
-    plt.xlim([0.85,1])
-    plt.yscale('log')
-    plt.title(NN + ' efficiency curve (mass: ' + str(mass) + ' GeV)')
-    EffPltName = outputDir + '/Efficiency.png'
-    plt.savefig(EffPltName)
-    print('Saved ' + EffPltName)
-    plt.clf()
+    if savePlot:
+        plt.plot(signal_eff,rej)
+        for i in range(0,len(WP)):
+            plt.axvline(x=WP[i],color='Red',linestyle='dashed',label='Bkg Rejection @ '+str(WP[i])+' WP: '+WP_rej[i])
+        plt.xlabel('Signal efficiency')
+        plt.ylabel('Background rejection')
+        plt.xlim([0.85,1])
+        plt.yscale('log')
+        plt.title(NN + ' background rejection curve (mass: ' + str(mass) + ' GeV)')
+        EffPltName = outputDir + '/BkgRejection.png'
+        plt.savefig(EffPltName)
+        print('Saved ' + EffPltName)
+        plt.clf()
+
+    return Area, WP, WP_rej 
 
 from sklearn.metrics import confusion_matrix
 import itertools

@@ -1,6 +1,6 @@
 from Functions import *
 
-plot = True
+savePlot = True
 NN = 'PDNN'
 useWeights = True
 print(Fore.BLUE + '         useWeights = ' + str(useWeights))
@@ -71,7 +71,7 @@ logFile.write(logString)
 logInfo += logString
 
 ### Drawing training history
-if plot:
+if savePlot:
     DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background)
     DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background)
 
@@ -147,9 +147,10 @@ for mass in scaledTestMassPointsList:
     ### Prediction
     yhat_train_signal_mass, yhat_train_bkg_mass, yhat_test_signal_mass, yhat_test_bkg_mass = PredictionSigBkg(model, X_train_signal_mass, X_train_bkg, X_test_signal_mass, X_test_bkg)
 
-    ### Saving plots
-    if plot:
-        DrawEfficiency(yhat_train_signal_mass, yhat_test_signal_mass, yhat_train_bkg_mass, yhat_test_bkg_mass, newOutputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background)
+    ### Calculating area under ROC curve (AUC), background rejection and saving plots 
+    DrawEfficiency(yhat_train_signal_mass, yhat_test_signal_mass, yhat_train_bkg_mass, yhat_test_bkg_mass, newOutputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background, savePlot)
+    logFile.write('AUC: ' + str(AUC) + '\nWorking points: ' + str(WP) + '\nBackground rejection at each working point: ' + str(WP_rej))
+    if savePlot:
         DrawCM(yhat_test_mass, y_test_mass, True, newOutputDir, unscaledMass)
 
     ### Closing the newLogFile
