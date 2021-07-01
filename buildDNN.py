@@ -6,7 +6,8 @@ useWeights = True
 print(Fore.BLUE + '         useWeights = ' + str(useWeights))
 
 ### Reading the command line
-analysis, channel, signal, jetCollection, background, trainingFraction, preselectionCuts, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout = ReadArgParser()
+analysis, channel, signal, jetCollection, background, trainingFraction, preselectionCuts, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, testMass = ReadArgParser()
+print(testMass)
 
 ### Reading the configuration file
 dfPath, InputFeatures, massColumnIndex = ReadConfig(analysis, jetCollection)
@@ -28,7 +29,16 @@ m_train_unscaled_signal = m_train_unscaled[y_train == 1]
 
 ### Saving unscaled train signal masses
 unscaledTrainMassPointsList = list(dict.fromkeys(list(m_train_unscaled_signal)))
-
+'''
+testMassList = []
+if testMass == 'allMasses':
+    testMassList = unscaledTrainMassPointsList
+else:
+    testMassList = testMass.split() 
+    #testMassList.append(testMassElement for testMassElement in testMassList)
+print(testMassList)
+exit()
+'''
 ### Extracting scaled test/train signal masses
 m_test_signal = X_test_signal[:, massColumnIndex]
 m_train_signal = X_train_signal[:, massColumnIndex]
@@ -40,10 +50,19 @@ X_train_signal = np.delete(X_train_signal, massColumnIndex, axis = 1)
 X_test_bkg = np.delete(X_test_bkg, massColumnIndex, axis = 1)
 X_train_bkg = np.delete(X_train_bkg, massColumnIndex, axis = 1)
 
+#foundTestMass = False
 for mass in scaledTrainMassPointsList:
 
     ### Associating the scaled mass to the unscaled one
     unscaledMass = unscaledTrainMassPointsList[scaledTrainMassPointsList.index(mass)]
+    print(int(unscaledMass))
+    print(testMass)
+    if unscaledMass != testMass:
+    #if str(unscaledMass) not in float(testMass):
+        continue
+    else:
+        print('found mass')
+    #foundTestMass = True
 
     ### Creating the output directory
     #outputDir = modelPath + NN + '/' + signal + '/' + analysis + '/' + channel + '/' + str(int(unscaledMass))
@@ -118,8 +137,8 @@ for mass in scaledTrainMassPointsList:
 
     ### Drawing training history
     if plot:
-        DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, unscaledMass)
-        DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, unscaledMass)
+        DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background, unscaledMass)
+        DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background, unscaledMass)
 
     ### Prediction on the full test sample
     yhat_test = model.predict(X_test_mass, batch_size = 2048)
@@ -129,9 +148,13 @@ for mass in scaledTrainMassPointsList:
 
     ### Saving plots
     if plot:
-        DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, unscaledMass)
-        DrawCM(yhat_test_mass, y_test_mass, True, mass)
+        DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background)
+        DrawCM(yhat_test, y_test_mass, True, outputDir, unscaledMass)
 
     ### Closing the logFile
     logFile.close()
     print('Saved ' + logFileName)
+'''
+if foundTestMass == False:
+    print(Fore.RED + 'No signal events with the selected mass.\nSignal masses are ' + str(unscaledTrainMassPointsList))
+'''

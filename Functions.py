@@ -17,6 +17,7 @@ def ReadArgParser():
     parser.add_argument('-e', '--Epochs', help = 'Number of epochs for the training', default = 150)
     parser.add_argument('-v', '--Validation', help = 'Fraction of the training data that will actually be used for validation', default = 0.2)
     parser.add_argument('-d', '--Dropout', help = 'Fraction of the neurons to drop during the training', default = 0.2)
+    parser.add_argument('-m', '--Mass', help = 'Mass to analyze in the DNN')
     
     args = parser.parse_args()
     
@@ -67,6 +68,10 @@ def ReadArgParser():
     dropout = float(args.Dropout)
     if args.Dropout and (dropout < 0. or dropout > 1.):
         parser.error(Fore.RED + 'Dropout must be between 0 and 1')
+    mass = float(args.Mass)
+
+    #if args.Dropout and (dropout < 0. or dropout > 1.):
+    #    parser.error(Fore.RED + 'Dropout must be between 0 and 1')
 
     print(Fore.BLUE + '  training fraction = ' + str(trainingFraction))
     print(Fore.BLUE + '              nodes = ' + str(numberOfNodes))
@@ -75,7 +80,7 @@ def ReadArgParser():
     print(Fore.BLUE + 'validation fraction = ' + str(validationFraction))
     print(Fore.BLUE + '            dropout = ' + str(dropout))
 
-    return analysis, channel, signal, jetCollection, backgroundString, trainingFraction, preselectionCuts, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout
+    return analysis, channel, signal, jetCollection, backgroundString, trainingFraction, preselectionCuts, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, mass
 
 ### Reading from the configuration file
 import configparser, ast
@@ -241,16 +246,20 @@ def PredictionSigBkg(model, X_train_signal, X_train_bkg, X_test_signal, X_test_b
     return yhat_train_signal, yhat_train_bkg, yhat_test_signal, yhat_test_bkg
 
 ### Drawing Accuracy
-def DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, mass = 0):
+def DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, mass = 0):
     plt.plot(modelMetricsHistory.history['accuracy'])
     plt.plot(modelMetricsHistory.history['val_accuracy'])
-    titleAccuracy = 'Model accuracy'
+    titleAccuracy = NN + ' model accuracy'
     if NN == 'DNN':
-        titleAccuracy = 'Model accuracy (mass: ' + str(int(mass)) + ' GeV)'
+        titleAccuracy += ' (mass: ' + str(int(mass)) + ' GeV)'
     plt.title(titleAccuracy)
     plt.ylabel('Accuracy')
     plt.xlabel('Epoch')
     plt.legend(['Training', 'Validation'], loc = 'lower right')
+    legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg)
+    if (PreselectionCuts != 'none'):
+        legendText += '\npreselection cuts: ' + PreselectionCuts
+    plt.figtext(0.5, 0.3, legendText, wrap = True, horizontalalignment = 'left')
     #plt.figtext(0.69, 0.28, 'Test accuracy: ' + str(round(testAccuracy, 3)), wrap = True, horizontalalignment = 'center')#, fontsize = 10)
     AccuracyPltName = outputDir + '/Accuracy.png'
     plt.savefig(AccuracyPltName)
@@ -258,16 +267,20 @@ def DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, mass = 0):
     plt.clf()
 
 ### Drawing Loss
-def DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, mass = 0):
+def DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, mass = 0):
     plt.plot(modelMetricsHistory.history['loss'])
     plt.plot(modelMetricsHistory.history['val_loss'])
-    titleLoss = 'Model loss'
+    titleLoss = NN + ' model loss'
     if NN == 'DNN':
-        titleLoss = 'Model loss (mass: ' + str(int(mass)) + ' GeV)'
+        titleLoss += ' (mass: ' + str(int(mass)) + ' GeV)'
     plt.title(titleLoss)
     plt.ylabel('Loss')
     plt.xlabel('Epoch')
     plt.legend(['Training', 'Validation'], loc = 'upper right')
+    legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\npreselection cuts: ' + PreselectionCuts + '\nsignal: ' + signal + '\nbackground: ' + str(bkg)
+    if (PreselectionCuts != 'none'):
+        legendText += '\npreselection cuts: ' + PreselectionCuts
+    plt.figtext(0.5, 0.5, legendText, wrap = True, horizontalalignment = 'left')
     #plt.figtext(0.7, 0.7, 'Test loss: ' + str(round(testLoss, 3)), wrap = True, horizontalalignment = 'center')#, fontsize = 10)
     LossPltName = outputDir + '/Loss.png'
     plt.savefig(LossPltName)
@@ -286,49 +299,52 @@ def integral(y,x,bins):
 ### Drawing scores, ROC and efficiency
 import numpy as np
 
-def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, mass):
+def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, mass, jetCollection, analysis, channel, PreselectionCuts, signal, bkg):
 
     ### Scores
-    bins = np.linspace(0, 1, 40)
-    Nbins = len(bins)
-    plt.hist(yhat_train_signal, bins = bins, histtype = 'step', lw = 2, color = 'blue', label = [r'Signal Train'], density = True)
-    y_signal, bins_1, _ = plt.hist(yhat_test_signal, bins = bins, histtype = 'stepfilled', lw = 2, color = 'cyan', alpha = 0.5, label = [r'Signal Test'], density = True)
-    plt.hist(yhat_train_bkg, bins = bins, histtype = 'step', lw = 2, color = 'red', label = [r'Background Train'], density = True)
-    y_bkg, bins_0, _ = plt.hist(yhat_test_bkg, bins = bins, histtype = 'stepfilled', lw = 2, color = 'orange', alpha = 0.5, label = [r'Background Test'], density = True)
-    plt.ylabel('Norm. Entries')
-    plt.xlabel(NN + ' score')
-    plt.yscale("log")
-    titleScores = 'Scores (mass: ' + str(int(mass)) + ' GeV)'
+    Nbins = 1000
+    plt.hist(yhat_train_signal, bins = Nbins, histtype = 'step', lw = 2, color = 'blue', label = [r'Signal train'], density = True)
+    y_signal, bins_1, _ = plt.hist(yhat_test_signal, bins = Nbins, histtype = 'stepfilled', lw = 2, color = 'cyan', alpha = 0.5, label = [r'Signal test'], density = True)
+    plt.hist(yhat_train_bkg, bins = Nbins, histtype = 'step', lw = 2, color = 'red', label = [r'Background train'], density = True)
+    y_bkg, bins_0, _ = plt.hist(yhat_test_bkg, bins = Nbins, histtype = 'stepfilled', lw = 2, color = 'orange', alpha = 0.5, label = [r'Background test'], density = True)
+    plt.ylabel('Norm. entries')
+    plt.xlabel('Score')
+    plt.yscale('log')
+    titleScores = NN + ' scores (mass: ' + str(int(mass)) + ' GeV)'
     plt.title(titleScores)
     plt.legend(loc = 'upper center')
     ScoresPltName = outputDir + '/Scores.png'
     plt.savefig(ScoresPltName)
     print('Saved ' + ScoresPltName)
-
-    Nsignal=integral(y_signal,0,bins_1)
-    Nbkg=integral(y_bkg,0,bins_0)
-    signal_eff=np.array([])
-    bkg_eff=np.array([])
-    y_s=0
-    y_n=0
-    for i in range(0,Nbins+1):
-        x=i/Nbins
-        y_s=integral(y_signal,x,bins_1)/Nsignal
-        y_n=integral(y_bkg,x,bins_0)/Nbkg
-        signal_eff=np.append(y_s,signal_eff)
-        bkg_eff=np.append(y_n,bkg_eff)
     plt.clf()
 
     ### ROC
+    Nsignal = integral(y_signal, 0, bins_1)
+    Nbkg = integral(y_bkg, 0, bins_0)
+    signal_eff = np.array([])
+    bkg_eff = np.array([])
+    y_s = 0
+    y_n = 0
+    for i in range(0, Nbins + 1):
+        x = i/Nbins
+        y_s = integral(y_signal, x, bins_1) / Nsignal
+        y_n = integral(y_bkg, x, bins_0) / Nbkg
+        signal_eff = np.append(y_s, signal_eff)
+        bkg_eff = np.append(y_n, bkg_eff)
+
     Area=round(1000*abs(integral(signal_eff,0,bkg_eff)))/1000
     lab='Area: '+str(Area)
     plt.plot(bkg_eff,signal_eff,label=lab,color = 'darkorange', lw = 2)
     #plt.plot([0,1],[0,1])
     plt.ylabel('True Positive Rate')
     plt.xlabel('False Positive Rate')
-    titleROC = 'ROC curves (mass: ' + str(int(mass)) + ' GeV)'
+    titleROC = NN + ' ROC curve (mass: ' + str(int(mass)) + ' GeV)'
     plt.title(titleROC)
-    plt.figtext(0.7, 0.25, 'AUC: ' + str(round(Area, 2)), wrap = True, horizontalalignment = 'center')
+    legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg)
+    if (PreselectionCuts != 'none'):
+        legendText += '\npreselection cuts: ' + PreselectionCuts
+    plt.figtext(0.5, 0.4, legendText, wrap = True, horizontalalignment = 'left')
+    plt.figtext(0.5, 0.25, 'AUC: ' + str(round(Area, 2)), wrap = True, horizontalalignment = 'center')
     ROCPltName = outputDir + '/ROC.png'
     plt.savefig(ROCPltName)
     print('Saved ' + ROCPltName)
@@ -348,8 +364,7 @@ def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_tes
     plt.ylabel('Background rejection')
     plt.xlim([0.85,1])
     plt.yscale('log')
-    plt.title('ROC curve, mass: ' + str(mass) + ' GeV')
-    plt.legend()
+    plt.title(NN + ' efficiency curve (mass: ' + str(mass) + ' GeV)')
     EffPltName = outputDir + '/Efficiency.png'
     plt.savefig(EffPltName)
     print('Saved ' + EffPltName)
@@ -367,7 +382,7 @@ def DrawCM(yhat_test, y_test, normalize, outputDir, mass):
         cm = cm.astype('float') / cm.sum(axis = 1)[:, np.newaxis]
     cmap = plt.cm.Oranges#Blues
     plt.imshow(cm, interpolation = 'nearest', cmap = cmap)
-    titleCM = 'Confusion matrix (Mass: ' + str(int(mass)) + ' GeV)'
+    titleCM = 'Confusion matrix (mass: ' + str(int(mass)) + ' GeV)'
     plt.title(titleCM)
     plt.colorbar()
     tick_marks = np.arange(len(classes))

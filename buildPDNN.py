@@ -2,11 +2,11 @@ from Functions import *
 
 plot = True
 NN = 'PDNN'
-useWeights = False
+useWeights = True
 print(Fore.BLUE + '         useWeights = ' + str(useWeights))
 
 ### Reading the command line
-analysis, channel, signal, jetCollection, background, trainingFraction, preselectionCuts, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout = ReadArgParser()
+analysis, channel, signal, jetCollection, background, trainingFraction, preselectionCuts, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, _ = ReadArgParser()
 
 ### Reading the configuration file
 #dfPath, modelPath, InputFeatures, massColumnIndex = ReadConfig(analysis, jetCollection)
@@ -72,8 +72,8 @@ logInfo += logString
 
 ### Drawing training history
 if plot:
-    DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN)
-    DrawLoss(modelMetricsHistory, testLoss, outputDir, NN)
+    DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background)
+    DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background)
 
 #logFile.close()
 print('Saved ' + logFileName)
@@ -149,7 +149,7 @@ for mass in scaledTestMassPointsList:
 
     ### Saving plots
     if plot:
-        DrawEfficiency(yhat_train_signal_mass, yhat_test_signal_mass, yhat_train_bkg_mass, yhat_test_bkg_mass, newOutputDir, NN, unscaledMass)
+        DrawEfficiency(yhat_train_signal_mass, yhat_test_signal_mass, yhat_train_bkg_mass, yhat_test_bkg_mass, newOutputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background)
         DrawCM(yhat_test_mass, y_test_mass, True, newOutputDir, unscaledMass)
 
     ### Closing the newLogFile
