@@ -2,8 +2,10 @@ from Functions import *
 
 savePlot = True
 NN = 'DNN'
-useWeights = True
+useWeights = False
+cutTrainEvents = True
 print(Fore.BLUE + '         useWeights = ' + str(useWeights))
+print(Fore.BLUE + '     cutTrainEvents = ' + str(cutTrainEvents))
 
 ### Reading the command line
 analysis, channel, signal, jetCollection, background, trainingFraction, preselectionCuts, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, testMass = ReadArgParser()
@@ -36,7 +38,7 @@ scaledTrainMassPointsList = list(dict.fromkeys(list(m_train_signal)))
 
 ### Deleting mass 
 X_test_signal = np.delete(X_test_signal, massColumnIndex, axis = 1)
-X_train_signal = np.delete(X_train_signal, massColumnIndex, axis = 1)
+X_train_signal = np.delete(X_train_signal, massColumnIndex, axis = 1) 
 X_test_bkg = np.delete(X_test_bkg, massColumnIndex, axis = 1)
 X_train_bkg = np.delete(X_train_bkg, massColumnIndex, axis = 1)
 
@@ -50,7 +52,7 @@ for mass in scaledTrainMassPointsList:
     foundTestMass = True
 
     ### Creating the output directory
-    outputDir = dfPath + NN + '/useWeights' + str(useWeights) + '/' + str(int(unscaledMass))
+    outputDir = dfPath + NN + '/useWeights' + str(useWeights) + '/cutTrainEvents' + str(cutTrainEvents) + '/' + str(int(unscaledMass))
     print (format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
     
     ### Creating the logFile
@@ -59,7 +61,7 @@ for mass in scaledTrainMassPointsList:
     logString = WritingLogFile(dfPath, X_input, X_test, y_test, X_train, y_train, InputFeatures, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, useWeights)
     logFile.write(logString)
 
-    ### Selecting signal event with the same mass
+    ### Selecting signal events with the same mass
     X_train_signal_mass = X_train_signal[m_train_signal == mass]
     X_test_signal_mass = X_test_signal[m_test_signal == mass] 
 
@@ -93,7 +95,18 @@ for mass in scaledTrainMassPointsList:
     y_validation_mass = y_train_mass[:stop]
     X_train_mass = X_train_mass[stop:]
     y_train_mass = y_train_mass[stop:]
+
+    if cutTrainEvents == True:
+        X_train_mass, y_train_mass = cutEvents(X_train_mass, y_train_mass)
+
     logFile.write('\nNumber of real train events (without validation set): ' + str(X_train_mass.shape[0]) + ' (' + str(sum(y_train_mass)) + ' signal and ' + str(len(y_train_mass) - sum(y_train_mass)) + ' background)')
+
+    for ivar in range (0, X_train_mass.shape[1]):
+        plt.hist(X_train_mass[:, ivar], bins = 50, histtype = 'step', lw = 2, color = 'blue', density = False)
+        plt.title('X_train_mass column #: ' + str(ivar))
+        #plt.show()
+        plt.savefig(outputDir + '/Column' + str(ivar) + '.png')
+        plt.clf()
 
     ### Weighting train events
     w_train_mass = None
@@ -116,22 +129,31 @@ for mass in scaledTrainMassPointsList:
 
     ### Evaluating the performance of the DNN
     testLoss, testAccuracy = EvaluatePerformance(model, X_test_mass, y_test_mass)
-    logFile.write('\nTestLoss: ' + str(testLoss) + '\nTestAccuracy: ' + str(testAccuracy))
-
-    ### Drawing training history
+    
+    logFile.write('\nTest Loss: ' + str(testLoss) + '\nTest Accuracy: ' + str(testAccuracy))
     if savePlot:
-        DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background, unscaledMass)
-        DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background, unscaledMass)
+        DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background, useWeights, cutTrainEvents, unscaledMass)
+        DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background, useWeights, cutTrainEvents, unscaledMass)
 
     ### Prediction on the full test sample
-    yhat_test = model.predict(X_test_mass, batch_size = 2048)
+    yhat_test = model.predict(X_test_mass, batch_size = 2048) 
+    
+    ### Evaluating ROC
+    fpr, tpr, thresholds = roc_curve(y_test_mass, yhat_test)
+    roc_auc = auc(fpr, tpr)
+    print(format(Fore.BLUE + 'old ROC_AUC: ' + str(roc_auc)))
+    logFile.write('\nold ROC_AUC: ' + str(roc_auc))
+
+    if savePlot:
+        DrawROC(fpr, tpr, roc_auc, outputDir, unscaledMass)
 
     ### Prediction on signal and background separately
     yhat_train_signal, yhat_train_bkg, yhat_test_signal, yhat_test_bkg = PredictionSigBkg(model, X_train_signal_mass, X_train_bkg, X_test_signal_mass, X_test_bkg)
 
     ### Calculating area under ROC curve (AUC), background rejection and saving plots
-    AUC, WP, WP_rej = DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background, savePlot)
-    logFile.write('AUC: ' + str(AUC) + '\nWorking points: ' + str(WP) + '\nBackground rejection at each working point: ' + str(WP_rej))
+    AUC, WP, WP_rej = DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background, savePlot, useWeights, cutTrainEvents)
+    print(Fore.BLUE + 'AUC: ' + str(AUC))
+    logFile.write('\nAUC: ' + str(AUC) + '\nWorking points: ' + str(WP) + '\nBackground rejection at each working point: ' + str(WP_rej))
     if savePlot:
         DrawCM(yhat_test, y_test_mass, True, outputDir, unscaledMass)
 

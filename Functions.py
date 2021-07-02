@@ -246,7 +246,7 @@ def PredictionSigBkg(model, X_train_signal, X_train_bkg, X_test_signal, X_test_b
     return yhat_train_signal, yhat_train_bkg, yhat_test_signal, yhat_test_bkg
 
 ### Drawing Accuracy
-def DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, mass = 0):
+def DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, useWeights, cutTrainEvents, mass = 0):
     plt.plot(modelMetricsHistory.history['accuracy'])
     plt.plot(modelMetricsHistory.history['val_accuracy'])
     titleAccuracy = NN + ' model accuracy'
@@ -256,18 +256,19 @@ def DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection
     plt.ylabel('Accuracy')
     plt.xlabel('Epoch')
     plt.legend(['Training', 'Validation'], loc = 'lower right')
-    legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg)
+    legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg) + '\nuseWeights: ' + str(useWeights) + '\ncutTrainEvents: ' + str(cutTrainEvents)
     if (PreselectionCuts != 'none'):
         legendText += '\npreselection cuts: ' + PreselectionCuts
+    legendText += '\nTest accuracy: ' + str(round(testAccuracy, 2))
     plt.figtext(0.5, 0.3, legendText, wrap = True, horizontalalignment = 'left')
-    #plt.figtext(0.69, 0.28, 'Test accuracy: ' + str(round(testAccuracy, 3)), wrap = True, horizontalalignment = 'center')#, fontsize = 10)
+    #plt.figtext(0.69, 0.28, 'Test accuracy: ' + str(round(testAccuracy, 2)), wrap = True, horizontalalignment = 'left')#, fontsize = 10)
     AccuracyPltName = outputDir + '/Accuracy.png'
     plt.savefig(AccuracyPltName)
     print('Saved ' + AccuracyPltName)
     plt.clf()
-
+        
 ### Drawing Loss
-def DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, mass = 0):
+def DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, useWeights, cutTrainEvents, mass = 0):
     plt.plot(modelMetricsHistory.history['loss'])
     plt.plot(modelMetricsHistory.history['val_loss'])
     titleLoss = NN + ' model loss'
@@ -277,16 +278,32 @@ def DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, jetCollection, analys
     plt.ylabel('Loss')
     plt.xlabel('Epoch')
     plt.legend(['Training', 'Validation'], loc = 'upper right')
-    legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\npreselection cuts: ' + PreselectionCuts + '\nsignal: ' + signal + '\nbackground: ' + str(bkg)
+    legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\npreselection cuts: ' + PreselectionCuts + '\nsignal: ' + signal + '\nbackground: ' + str(bkg) + '\nuseWeights: ' + str(useWeights) + '\ncutTrainEvents: ' + str(cutTrainEvents)
     if (PreselectionCuts != 'none'):
         legendText += '\npreselection cuts: ' + PreselectionCuts
+    legendText += '\nTest loss: ' + str(round(testLoss, 2))
     plt.figtext(0.5, 0.5, legendText, wrap = True, horizontalalignment = 'left')
-    #plt.figtext(0.7, 0.7, 'Test loss: ' + str(round(testLoss, 3)), wrap = True, horizontalalignment = 'center')#, fontsize = 10)
+    #plt.figtext(0.7, 0.7, 'Test loss: ' + str(round(testLoss, 2)), wrap = True, horizontalalignment = 'center')#, fontsize = 10)
     LossPltName = outputDir + '/Loss.png'
     plt.savefig(LossPltName)
     print('Saved ' + LossPltName)
     plt.clf()
 
+from sklearn.metrics import roc_curve, auc, roc_auc_score, classification_report
+def DrawROC(fpr, tpr, AUC, outputDir, mass):
+    plt.plot(fpr,  tpr, color = 'darkorange', lw = 2)
+    plt.xlim([-0.05, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.ylabel('True Positive Rate')
+    plt.xlabel('False Positive Rate')
+    titleROC = 'ROC curves (mass: ' + str(int(mass)) + ' GeV)'
+    plt.title(titleROC)
+    plt.figtext(0.7, 0.25, 'AUC: ' + str(round(AUC, 2)), wrap = True, horizontalalignment = 'center')
+    ROCPltName = outputDir + '/oldROC.png'
+    plt.savefig(ROCPltName)
+    print('Saved ' + ROCPltName)
+    plt.clf()
+    
 def integral(y,x,bins):
     x_min=x
     s=0
@@ -299,7 +316,7 @@ def integral(y,x,bins):
 ### Drawing scores, ROC and efficiency
 import numpy as np
 
-def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, mass, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, savePlot):
+def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, mass, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, savePlot, useWeights, cutTrainEvents):
 
     ### Scores
     Nbins = 1000
@@ -315,6 +332,10 @@ def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_tes
         titleScores = NN + ' scores (mass: ' + str(int(mass)) + ' GeV)'
         plt.title(titleScores)
         plt.legend(loc = 'upper center')
+        legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg) + '\nuseWeights: ' + str(useWeights) + '\ncutTrainEvents: ' + str(cutTrainEvents)
+        if (PreselectionCuts != 'none'):
+            legendText += '\npreselection cuts: ' + PreselectionCuts
+        plt.figtext(0.35, 0.5, legendText, wrap = True, horizontalalignment = 'left')
         ScoresPltName = outputDir + '/Scores.png'
         plt.savefig(ScoresPltName)
         print('Saved ' + ScoresPltName)
@@ -343,7 +364,7 @@ def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_tes
         plt.xlabel('False Positive Rate')
         titleROC = NN + ' ROC curve (mass: ' + str(int(mass)) + ' GeV)'
         plt.title(titleROC)
-        legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg)
+        legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg) + '\nuseWeights: ' + str(useWeights) + '\ncutTrainEvents: ' + str(cutTrainEvents)
         if (PreselectionCuts != 'none'):
             legendText += '\npreselection cuts: ' + PreselectionCuts
         plt.figtext(0.5, 0.4, legendText, wrap = True, horizontalalignment = 'left')
@@ -358,6 +379,8 @@ def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_tes
     rej=1./bkg_eff
     WP_idx=[np.where(np.abs(signal_eff-WP[i])==np.min(np.abs(signal_eff-WP[i])))[0][0] for i in range(0,len(WP))]
     WP_rej=[str(round(10*rej[WP_idx[i]])/10) for i in range(0,len(WP))]
+    print(bins_0[WP_idx])
+    print(WP_rej)
 
     if savePlot:
         plt.plot(signal_eff,rej)
@@ -424,3 +447,18 @@ def EventsWeight(y_train):
 
     return WTrainSignal, WTrainBkg, w_train
 
+def cutEvents(X_train_mass, y_train_mass):
+    X_train_mass_ext = np.insert(X_train_mass, X_train_mass.shape[1], y_train_mass, axis = 1)
+    X_train_signal_mass_ext = X_train_mass_ext[y_train_mass == 1]
+    X_train_bkg_mass_ext = X_train_mass_ext[y_train_mass == 0]
+    signalNum = 2 * X_train_signal_mass_ext.shape[0]
+    bkgNum = 2 * X_train_bkg_mass_ext.shape[0]
+    if signalNum < bkgNum:
+        X_train_bkg_mass_ext = X_train_bkg_mass_ext[:signalNum]
+    else:
+        X_train_signal_mass_ext = X_train_signal_mass_ext[:bkgNum]
+    X_train_mass_ext = np.concatenate((X_train_signal_mass_ext, X_train_bkg_mass_ext), axis = 0)
+    X_train_mass_ext = ShufflingData(X_train_mass_ext)
+    y_train_mass = X_train_mass_ext[:, X_train_mass_ext.shape[1] - 1]
+    X_train_mass = np.delete(X_train_mass_ext, X_train_mass_ext.shape[1] - 1, axis = 1)
+    return X_train_mass, y_train_mass
