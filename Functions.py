@@ -391,6 +391,7 @@ def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_tes
         plt.xlim([0.85,1])
         plt.yscale('log')
         plt.title(NN + ' background rejection curve (mass: ' + str(mass) + ' GeV)')
+        plt.legend()
         EffPltName = outputDir + '/BkgRejection.png'
         plt.savefig(EffPltName)
         print('Saved ' + EffPltName)
@@ -451,8 +452,8 @@ def cutEvents(X_train_mass, y_train_mass):
     X_train_mass_ext = np.insert(X_train_mass, X_train_mass.shape[1], y_train_mass, axis = 1)
     X_train_signal_mass_ext = X_train_mass_ext[y_train_mass == 1]
     X_train_bkg_mass_ext = X_train_mass_ext[y_train_mass == 0]
-    signalNum = 2 * X_train_signal_mass_ext.shape[0]
-    bkgNum = 2 * X_train_bkg_mass_ext.shape[0]
+    signalNum = X_train_signal_mass_ext.shape[0]
+    bkgNum = X_train_bkg_mass_ext.shape[0]
     if signalNum < bkgNum:
         X_train_bkg_mass_ext = X_train_bkg_mass_ext[:signalNum]
     else:
