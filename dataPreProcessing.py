@@ -1,6 +1,4 @@
-import argparse, configparser
-from argparse import ArgumentParser
-import ast
+from Functions import ReadArgParser, checkCreateDir, ReadConfig
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -8,7 +6,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 #from tensorflow.keras.utils import to_categorical
 
-from Functions import checkCreateDir, ReadConfig
 from colorama import init, Fore
 init(autoreset = True)
 
@@ -40,45 +37,11 @@ def composition_plot(df, directory, signal, jetCollection, analysis, channel, Pr
     return x,samples
 
 ### Reading from command line
-parser = ArgumentParser()
-parser.add_argument('-a', '--Analysis', help = 'Type of analysis: \'merged\' or \'resolved\'', type = str)
-parser.add_argument('-c', '--Channel', help = 'Channel: \'ggF\' or \'VBF\'', type = str)
-parser.add_argument('-j', '--JetCollection', help = 'Jet collection: \'TCC\'', type = str, default = 'TCC')
-parser.add_argument('-b', '--Background', help = 'Background: \'Zjets\', \'Wjets\', \'stop\', \'Diboson\', \'ttbar\' or \'all\'', type = str, default = 'all')
-parser.add_argument('-p', '--PreselectionCuts', help = 'Preselection cut', type = str)
-parser.add_argument('-t', '--TrainingFraction', help = 'Relative size of the training sample, between 0 and 1', default = 0.8)
-
-args = parser.parse_args()
-
-analysis = args.Analysis
-if args.Analysis is None:
-    parser.error(Fore.RED + 'Requested type of analysis (either \'mergered\' or \'resolved\')')
-elif args.Analysis != 'resolved' and args.Analysis != 'merged':
-    parser.error(Fore.RED + 'Analysis can be either \'merged\' or \'resolved\'')
-channel = args.Channel
-if args.Channel is None:
-    parser.error(Fore.RED + 'Requested channel (either \'ggF\' or \'VBF\')')
-elif args.Channel != 'ggF' and args.Channel != 'VBF':
-    parser.error(Fore.RED + 'Channel can be either \'ggF\' or \'VBF\'')
-jetCollection = args.JetCollection
-if args.JetCollection is None:
-    parser.error(Fore.RED + 'Requested jet collection (\'TCC\' or )')
-elif args.JetCollection != 'TCC':
-    parser.error(Fore.RED + 'Jet collection can be \'TCC\', ')
-background = args.Background
-if args.Background is None:
-    parser.error(Fore.RED + 'Requested background (\'Zjets\', \'Wjets\', \'stop\', \'Diboson\', \'ttbar\' or \'all\'')
-#elif args.Background != 'Zjets' and args.Background != 'Wjets' and args.Background != 'stop' and args.Background != 'Diboson' and args.Background != 'ttbar' and args.Background != 'all':
-#    parser.error(Fore.RED + 'Background can be \'Zjets\', \'Wjets\', \'stop\', \'Diboson\', \'ttbar\' or \'all\'')
-preselectionCuts = args.PreselectionCuts
-if args.PreselectionCuts is None:
-    preselectionCuts = 'none'
-trainingFraction = float(args.TrainingFraction)
-if args.TrainingFraction and (trainingFraction < 0. or trainingFraction > 1.):
-    parser.error(Fore.RED + 'Training fraction must be between 0 and 1')
+jetCollection, analysis, channel, preselectionCuts, background, trainingFraction = ReadArgParser()
+print(background)
 
 ### Reading from configuration file
-dfPath, InputFeatures, _ = ReadConfig(analysis, jetCollection)
+dfPath, InputFeatures, signalsList, backgroundsList = ReadConfig(analysis, jetCollection)
 dfPath += analysis + '/' + channel
 
 ### Adding useful variables to the list of input variables
@@ -90,11 +53,7 @@ extendedInputFeatures.append('origin')
 data = pd.read_pickle(dfPath + '/MixData_PD_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '.pkl') 
 data = data[extendedInputFeatures]
 
-### Creating lists of signal and background processes
-signals = ['Radion', 'VBFRSG', 'RSG', 'VBFRadion', 'VBFHVTWZ']
-bkg = ['Zjets', 'Wjets', 'stop', 'Diboson', 'ttbar']
-
-for signal in signals:
+for signal in signalsList:
 
     ### Creating output directory
     outputDir = dfPath + '/' + signal
@@ -102,11 +61,11 @@ for signal in signals:
 
     ### Creating the list of backgrounds and signal processes to select
     if background == 'all':
-        inputOrigin = bkg.copy()
+        inputOrigin = backgroundsList.copy()
     else:
-        inputOrigin = args.Background.split().copy()
-        background = '_'.join([str(item) for item in inputOrigin])
+        inputOrigin = list(background.split('_'))
     inputOrigin.append(signal)
+    print(inputOrigin)
 
     ### Selecting events according to their origin 
     data_set = data[data['origin'].isin(inputOrigin)]

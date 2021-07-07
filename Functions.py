@@ -1,5 +1,13 @@
-### Reading from command line
+### Assigning script name to variable
+fileName1 = 'saveToPkl.py'
+fileName2 = 'buildDataset.py'
+fileName3 = 'dataPreProcessing.py'
+fileName4 = 'buildPDNN.py'
+fileName5 = 'buildDNN.py'
+
+### Reading the command line
 from argparse import ArgumentParser
+import sys
 from colorama import init, Fore
 init(autoreset = True)
 
@@ -7,7 +15,7 @@ def ReadArgParser():
     parser = ArgumentParser()
     parser.add_argument('-a', '--Analysis', help = 'Type of analysis: \'merged\' or \'resolved\'', type = str)
     parser.add_argument('-c', '--Channel', help = 'Channel: \'ggF\' or \'VBF\'', type = str)
-    parser.add_argument('-s', '--Signal', help = 'Signal: \'VBFHVTWZ\', \'Radion\', \'RSG\' or \'VBFRadion\'', type = str, default = 'VBFRadion')
+    parser.add_argument('-s', '--Signal', help = 'Signal: \'VBFHVTWZ\', \'Radion\', \'RSG\' or \'VBFRadion\'', type = str)
     parser.add_argument('-j', '--JetCollection', help = 'Jet collection: \'TCC\'', type = str, default = 'TCC')
     parser.add_argument('-b', '--Background', help = 'Background: \'Zjets\', \'Wjets\', \'stop\', \'Diboson\', \'ttbar\' or \'all\'', type = str, default = 'all')
     parser.add_argument('-t', '--TrainingFraction', help = 'Relative size of the training sample, between 0 and 1', default = 0.8)
@@ -17,33 +25,34 @@ def ReadArgParser():
     parser.add_argument('-e', '--Epochs', help = 'Number of epochs for the training', default = 150)
     parser.add_argument('-v', '--Validation', help = 'Fraction of the training data that will actually be used for validation', default = 0.2)
     parser.add_argument('-d', '--Dropout', help = 'Fraction of the neurons to drop during the training', default = 0.2)
-    parser.add_argument('-m', '--Mass', help = 'Mass to analyze in the DNN')
+    parser.add_argument('-m', '--Mass', help = 'Mass to analyze in the DNN', default = 1000)
     
     args = parser.parse_args()
-    
+
     analysis = args.Analysis
-    if args.Analysis is None:
+    if args.Analysis is None and sys.argv[0] != fileName1:
         parser.error(Fore.RED + 'Requested type of analysis (either \'mergered\' or \'resolved\')')
-    elif args.Analysis != 'resolved' and args.Analysis != 'merged':
+    elif args.Analysis != 'resolved' and args.Analysis != 'merged' and sys.argv[0] != fileName1:
         parser.error(Fore.RED + 'Analysis can be either \'merged\' or \'resolved\'')
     channel = args.Channel
-    if args.Channel is None:
+    if args.Channel is None and sys.argv[0] != fileName1:
         parser.error(Fore.RED + 'Requested channel (either \'ggF\' or \'VBF\')')
-    elif args.Channel != 'ggF' and args.Channel != 'VBF':
+    elif args.Channel != 'ggF' and args.Channel != 'VBF' and sys.argv[0] != fileName1:
         parser.error(Fore.RED + 'Channel can be either \'ggF\' or \'VBF\'')
     signal = args.Signal
-    if args.Signal is None:
+    if args.Signal is None and (sys.argv[0] == fileName2 or sys.argv[0] == fileName3):
         parser.error(Fore.RED + 'Requested signal (\'VBFHVTWZ\', \'Radion\', \'RSG\' or \'VBFRadion\')')
-    elif args.Signal != 'VBFHVTWZ' and args.Signal != 'Radion' and args.Signal != 'RSG' and args.Signal != 'VBFRadion':
-        parser.error(Fore.RED + 'Signal can be \'VBFHVTWZ\', \'Radion\', \'RSG\' or \'VBFRadion\'')
+    #elif args.Signal != 'VBFHVTWZ' and args.Signal != 'Radion' and args.Signal != 'RSG' and args.Signal != 'VBFRadion':
+        #parser.error(Fore.RED + 'Signal can be \'VBFHVTWZ\', \'Radion\', \'RSG\' or \'VBFRadion\'')
     jetCollection = args.JetCollection
     if args.JetCollection is None:
         parser.error(Fore.RED + 'Requested jet collection (\'TCC\' or )')
     elif args.JetCollection != 'TCC':
         parser.error(Fore.RED + 'Jet collection can be \'TCC\', ')
     background = args.Background.split()
-    if args.Background is None:
-        parser.error(Fore.RED + 'Requested background (\'Zjets\', \'Wjets\', \'stop\', \'Diboson\', \'ttbar\' or \'all\'')
+    for bkg in background:
+        if (bkg !=  'Zjets' and bkg != 'Wjets' and bkg != 'stop' and bkg != 'Diboson' and bkg != 'ttbat' and bkg != 'all'):
+            parser.error(Fore.RED + 'Background can be \'Zjets\', \'Wjets\', \'stop\', \'Diboson\', \'ttbar\' or \'all\'')
     backgroundString = 'all'
     if args.Background != 'all':
         backgroundString = '_'.join([str(item) for item in background]) ### altro?
@@ -70,24 +79,50 @@ def ReadArgParser():
         parser.error(Fore.RED + 'Dropout must be between 0 and 1')
     mass = float(args.Mass)
 
-    #if args.Dropout and (dropout < 0. or dropout > 1.):
-    #    parser.error(Fore.RED + 'Dropout must be between 0 and 1')
+    if sys.argv[0] == fileName3:
+        print(Fore.BLUE + '         background = ' + str(backgroundString))
+        print(Fore.BLUE + '  training fraction = ' + str(trainingFraction))
+        return jetCollection, analysis, channel, preselectionCuts, backgroundString, trainingFraction
 
-    print(Fore.BLUE + '  training fraction = ' + str(trainingFraction))
-    print(Fore.BLUE + '              nodes = ' + str(numberOfNodes))
-    print(Fore.BLUE + '             layers = ' + str(numberOfLayers))
-    print(Fore.BLUE + '             epochs = ' + str(numberOfEpochs))
-    print(Fore.BLUE + 'validation fraction = ' + str(validationFraction))
-    print(Fore.BLUE + '            dropout = ' + str(dropout))
+    if(sys.argv[0] == fileName2 or sys.argv[0] == fileName3):
+        print(Fore.BLUE + '         background = ' + str(backgroundString))
+        print(Fore.BLUE + '  training fraction = ' + str(trainingFraction))
+        print(Fore.BLUE + '              nodes = ' + str(numberOfNodes))
+        print(Fore.BLUE + '             layers = ' + str(numberOfLayers))
+        print(Fore.BLUE + '             epochs = ' + str(numberOfEpochs))
+        print(Fore.BLUE + 'validation fraction = ' + str(validationFraction))
+        print(Fore.BLUE + '            dropout = ' + str(dropout))
+        return jetCollection, analysis, channel, preselectionCuts, backgroundString, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, mass
 
-    return analysis, channel, signal, jetCollection, backgroundString, trainingFraction, preselectionCuts, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, mass
+    if sys.argv[0] == fileName2:
+        return jetCollection, analysis, channel, preselectionCuts
+
+    if sys.argv[0] == fileName1:
+        return jetCollection
 
 ### Reading from the configuration file
 import configparser, ast
 
+configurationFile = 'Configuration.ini'
+
+def ReadConfigSaveToPkl(jetCollection):
+    config = configparser.ConfigParser()
+    config.read(configurationFile)
+    ntuplePath = config.get('config', 'ntuplePath')
+    inputFiles = ast.literal_eval(config.get('config', 'inputFiles'))
+    dfPath = config.get('config', 'dfPath')
+    dfPath += jetCollection + '/'
+    print (format('Output directory: ' + Fore.GREEN + dfPath), checkCreateDir(dfPath))
+    return ntuplePath, inputFiles, dfPath
+
 def ReadConfig(analysis, jetCollection):
     config = configparser.ConfigParser()
-    config.read('Configuration.ini')
+    config.read(configurationFile)
+    inputFiles = ast.literal_eval(config.get('config', 'inputFiles'))
+    dataType = ast.literal_eval(config.get('config', 'dataType'))
+    rootBranchSubSample = ast.literal_eval(config.get('config', 'rootBranchSubSample'))
+    signalsList = ast.literal_eval(config.get('config', 'signals'))
+    backgroundsList = ast.literal_eval(config.get('config', 'backgrounds'))
     dfPath = config.get('config', 'dfPath')
     dfPath += jetCollection + '/'# + '_DataFrames/'
     #modelPath = config.get('config', 'modelPath')
@@ -97,8 +132,13 @@ def ReadConfig(analysis, jetCollection):
     elif analysis == 'resolved':
         InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesResolved'))
     massColumnIndex = InputFeatures.index('mass')
-    #return dfPath, modelPath, InputFeatures, massColumnIndex
-    return dfPath, InputFeatures, massColumnIndex
+
+    if sys.argv[0] == fileName2:
+        return inputFiles, dataType, rootBranchSubSample, dfPath, InputFeatures
+    if sys.argv[0] == fileName3:
+        return dfPath, InputFeatures, signalsList, backgroundsList
+    else:
+        return dfPath, InputFeatures, massColumnIndex
 
 ### Checking if the output directory exists. If not, creating it
 import os
@@ -113,7 +153,6 @@ def checkCreateDir(dir):
 ### Loading input data
 import pandas as pd
 def LoadData(dfPath, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts):
-    #directory = 'OutputDataFrames/' + jetCollection + '/' + signal + '/' + analysis + '/' + channel#dfPath all'inizio
     fileCommonName = jetCollection + '_' + analysis + '_' + channel + '_' + signal + '_' + preselectionCuts + '_' + background + '_' + str(trainingFraction) + 't'
     X_Train = np.genfromtxt(dfPath + '/X_train_' + fileCommonName + '.csv', delimiter=',') 
     X_Test = np.genfromtxt(dfPath + '/X_test_' + fileCommonName + '.csv', delimiter=',') 
@@ -248,7 +287,7 @@ def PredictionSigBkg(model, X_train_signal, X_train_bkg, X_test_signal, X_test_b
 ### Drawing Accuracy
 def DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, useWeights, cutTrainEvents, mass = 0):
     plt.plot(modelMetricsHistory.history['accuracy'])
-    plt.plot(modelMetricsHistory.history['val_accuracy'])
+    #plt.plot(modelMetricsHistory.history['val_accuracy'])
     titleAccuracy = NN + ' model accuracy'
     if NN == 'DNN':
         titleAccuracy += ' (mass: ' + str(int(mass)) + ' GeV)'
@@ -270,7 +309,7 @@ def DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection
 ### Drawing Loss
 def DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, useWeights, cutTrainEvents, mass = 0):
     plt.plot(modelMetricsHistory.history['loss'])
-    plt.plot(modelMetricsHistory.history['val_loss'])
+    #plt.plot(modelMetricsHistory.history['val_loss'])
     titleLoss = NN + ' model loss'
     if NN == 'DNN':
         titleLoss += ' (mass: ' + str(int(mass)) + ' GeV)'
@@ -282,7 +321,7 @@ def DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, jetCollection, analys
     if (PreselectionCuts != 'none'):
         legendText += '\npreselection cuts: ' + PreselectionCuts
     legendText += '\nTest loss: ' + str(round(testLoss, 2))
-    plt.figtext(0.5, 0.5, legendText, wrap = True, horizontalalignment = 'left')
+    plt.figtext(0.5, 0.4, legendText, wrap = True, horizontalalignment = 'left')
     #plt.figtext(0.7, 0.7, 'Test loss: ' + str(round(testLoss, 2)), wrap = True, horizontalalignment = 'center')#, fontsize = 10)
     LossPltName = outputDir + '/Loss.png'
     plt.savefig(LossPltName)
@@ -308,8 +347,6 @@ def integral(y,x,bins):
     x_min=x
     s=0
     for i in np.where(bins>x)[0][:-1]:
-#        s=s+y[i]*(bins[i+1]-bins[i])
-#        print(i,s)
         s=s+y[i]*(bins[i+1]-bins[i])
     return s
 
@@ -324,7 +361,6 @@ def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_tes
     y_signal, bins_1, _ = plt.hist(yhat_test_signal, bins = Nbins, histtype = 'stepfilled', lw = 2, color = 'cyan', alpha = 0.5, label = [r'Signal test'], density = True)
     plt.hist(yhat_train_bkg, bins = Nbins, histtype = 'step', lw = 2, color = 'red', label = [r'Background train'], density = True)
     y_bkg, bins_0, _ = plt.hist(yhat_test_bkg, bins = Nbins, histtype = 'stepfilled', lw = 2, color = 'orange', alpha = 0.5, label = [r'Background test'], density = True)
-
     if savePlot:
         plt.ylabel('Norm. entries')
         plt.xlabel('Score')
@@ -335,7 +371,7 @@ def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_tes
         legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg) + '\nuseWeights: ' + str(useWeights) + '\ncutTrainEvents: ' + str(cutTrainEvents)
         if (PreselectionCuts != 'none'):
             legendText += '\npreselection cuts: ' + PreselectionCuts
-        plt.figtext(0.35, 0.5, legendText, wrap = True, horizontalalignment = 'left')
+        plt.figtext(0.35, 0.45, legendText, wrap = True, horizontalalignment = 'left')
         ScoresPltName = outputDir + '/Scores.png'
         plt.savefig(ScoresPltName)
         print('Saved ' + ScoresPltName)
@@ -425,7 +461,6 @@ def DrawCM(yhat_test, y_test, normalize, outputDir, mass):
     plt.xlabel('Predicted label')
     CMPltName = outputDir + '/ConfusionMatrix.png'
     plt.savefig(CMPltName)
-    #plt.show()
     print('Saved ' + CMPltName)
     plt.clf()    
 

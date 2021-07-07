@@ -8,7 +8,7 @@ print(Fore.BLUE + '         useWeights = ' + str(useWeights))
 print(Fore.BLUE + '     cutTrainEvents = ' + str(cutTrainEvents))
 
 ### Reading the command line
-analysis, channel, signal, jetCollection, background, trainingFraction, preselectionCuts, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, testMass = ReadArgParser()
+jetCollection, analysis, channel, preselectionCuts, background, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, testMass = ReadArgParser()
 
 ### Reading the configuration file
 dfPath, InputFeatures, massColumnIndex = ReadConfig(analysis, jetCollection)
@@ -52,7 +52,7 @@ for mass in scaledTrainMassPointsList:
     foundTestMass = True
 
     ### Creating the output directory
-    outputDir = dfPath + NN + '/useWeights' + str(useWeights) + '/cutTrainEvents' + str(cutTrainEvents) + '/' + str(int(unscaledMass))
+    outputDir = dfPath + background + '/' + NN + '/useWeights' + str(useWeights) + '/cutTrainEvents' + str(cutTrainEvents) + '/' + str(int(unscaledMass)) ### sposterei il bkg in dfPath e quindi nell'output di datapreprocessing
     print (format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
     
     ### Creating the logFile

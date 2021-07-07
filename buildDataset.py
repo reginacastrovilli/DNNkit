@@ -4,51 +4,18 @@ import argparse, configparser
 import re
 import ast
 import random
-from Functions import checkCreateDir, ShufflingData
+from Functions import ReadArgParser, ReadConfig, checkCreateDir, ShufflingData
 import os.path
 from colorama import init, Fore
 init(autoreset = True)
 
-parser = argparse.ArgumentParser(description = 'Deep Neural Network Training and testing Framework')
-parser.add_argument('-p', '--PreselectionCuts', help = 'String which will be translated to python command to filter the initial PDs according to it. E.g. \'lep1_pt > 0 and lep1_eta > 0\'', type = str, default = 'none') ### cambiare?
-parser.add_argument('-a', '--Analysis', help = 'Type of analysis: \'merged\' or \'resolved\'', type = str)
-parser.add_argument('-c', '--Channel', help = 'Channel: \'ggF\' or \'VBF\'')
-parser.add_argument('-j', '--JetCollection', help = 'Jet collection: \'TCC\'', type = str, default = 'TCC')
-args = parser.parse_args()
-
-analysis = args.Analysis
-if args.Analysis is None:
-    parser.error(Fore.RED + 'Requested type of analysis (either \'mergered\' or \'resolved\')')
-elif args.Analysis != 'resolved' and args.Analysis != 'merged':
-    parser.error(Fore.RED + 'Analysis can be either \'merged\' or \'resolved\'')
-channel = args.Channel
-if args.Channel is None:
-    parser.error(Fore.RED + 'Requested channel (either \'ggF\' or \'VBF\')')
-elif args.Channel != 'ggF' and args.Channel != 'VBF':
-    parser.error(Fore.RED + 'Channel can be either \'ggF\' or \'VBF\'')
-PreselectionCuts = args.PreselectionCuts
-if args.PreselectionCuts == 'none': 
-    print(Fore.BLUE + 'Preselection cuts not specified, applying: ' + str(PreselectionCuts))
-jetCollection = args.JetCollection
-if args.JetCollection is None:
-    parser.error(Fore.RED + 'Requested jet collection (\'TCC\' or )')
-elif args.JetCollection != 'TCC':
-    parser.error(Fore.RED + 'Jet collection can be \'TCC\', ')
+### Reading the command line
+jetCollection, analysis, channel, preselectionCuts = ReadArgParser()
 
 ### Reading from config file
-config = configparser.ConfigParser()
-config.read('Configuration.ini')
-inputFiles = ast.literal_eval(config.get('config', 'inputFiles'))
-dataType = ast.literal_eval(config.get('config', 'dataType'))
-rootBranchSubSample = ast.literal_eval(config.get('config', 'rootBranchSubSample'))
-if analysis == 'merged':
-    InputFeatures = ast.literal_eval(config.get('config', 'InputFeaturesMerged'))
-elif analysis == 'resolved':
-    InputFeatures = ast.literal_eval(config.get('config', 'InputFeaturesResolved'))
+inputFiles, dataType, rootBranchSubSample, dfPath, InputFeatures = ReadConfig(analysis, jetCollection)
 InputFeatures.append('isSignal')
 InputFeatures.append('origin')
-dfPath = config.get('config', 'dfPath')
-dfPath += jetCollection + '/'
 
 if len(inputFiles) != len(dataType):
     print(format(Fore.RED + 'Data type array does not match input files array'))
@@ -85,7 +52,7 @@ df = []
 counter = 0
 logFileName = dfPath + 'buildDataSetLogFile_' + analysis + '_' + channel + '.txt' ### cambiare
 logFile = open(logFileName, 'w')
-logFile.write('Analysis: ' + analysis + '\nChannel: ' + channel + '\nPreselection cuts: ' + PreselectionCuts + '\nInput files path: ' + dfPath + '\nrootBranchSubSamples: ' + str(rootBranchSubSample) + '\nInput files: [')
+logFile.write('Analysis: ' + analysis + '\nChannel: ' + channel + '\nPreselection cuts: ' + preselectionCuts + '\nInput files path: ' + dfPath + '\nrootBranchSubSamples: ' + str(rootBranchSubSample) + '\nInput files: [')
 
 for i in inputFiles:
     missing_var=np.array([])
@@ -114,13 +81,13 @@ for i in inputFiles:
 
     ### Creating a new dataframe with only the input variables
     newDf = newDf[rootBranchSubSample]
-    
+
     ### Adding a new column in the dataframe with the name of the process for each event
     newDf = newDf.assign(origin = re.search('(.+?)-', i).group(1))
 
     ### Applying preselection cuts
-    if PreselectionCuts != 'none':
-        newDf = newDf.query(PreselectionCuts)
+    if preselectionCuts != 'none':
+        newDf = newDf.query(preselectionCuts)
         
     ### Selecting events for each type of analysis and channel
     if channel == 'ggF':
@@ -177,7 +144,6 @@ for i in inputFiles:
 df_pd = pd.DataFrame()
 for i in range(len(df)):
     df_pd = pd.concat([df_pd, df[i]], ignore_index = True)
-print(df_pd.shape[0])
 
 ### Shuffling data
 df_pd = ShufflingData(df_pd)
@@ -189,6 +155,6 @@ print('Saved ' + logFileName)
 ### Saving pkl files
 outputDir = dfPath + analysis + '/' + channel
 print (format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
-outputFileName = '/MixData_PD_' + jetCollection + '_' + analysis + '_' + channel + '_' + PreselectionCuts + '.pkl'
+outputFileName = '/MixData_PD_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '.pkl'
 df_pd.to_pickle(outputDir + outputFileName)
 print('Saved ' + outputDir + outputFileName)

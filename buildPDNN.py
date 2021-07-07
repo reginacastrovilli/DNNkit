@@ -2,11 +2,13 @@ from Functions import *
 
 savePlot = True
 NN = 'PDNN'
-useWeights = True
+useWeights = False
+cutTrainEvents = False
 print(Fore.BLUE + '         useWeights = ' + str(useWeights))
 
 ### Reading the command line
-analysis, channel, signal, jetCollection, background, trainingFraction, preselectionCuts, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, _ = ReadArgParser()
+jetCollection, analysis, channel, preselectionCuts, background, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, _ = ReadArgParser()
+#analysis, channel, signal, jetCollection, background, trainingFraction, preselectionCuts, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, _ = ReadArgParser()
 
 ### Reading the configuration file
 #dfPath, modelPath, InputFeatures, massColumnIndex = ReadConfig(analysis, jetCollection)
@@ -15,7 +17,7 @@ dfPath += analysis + '/' + channel + '/' + signal + '/'
 
 ### Creating the output directory and the logFile
 #outputDir = modelPath + signal + '/' + analysis + '/' + channel + '/' + NN + '/useWeights' + str(useWeights) ######modificare
-outputDir = dfPath + NN + '/useWeights' + str(useWeights)
+outputDir = dfPath + NN + '/useWeights' + str(useWeights) + '/cutTrainEvents' + str(cutTrainEvents)
 print (format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
 logFileName = outputDir + '/logFile.txt'
 logFile = open(logFileName, 'w')
@@ -30,6 +32,7 @@ logInfo += logString
 
 ### Creating the validation dataset
 stop  = int(validationFraction * X_train.shape[0])
+'''
 X_validation = X_train[:stop]
 y_validation = y_train[:stop]
 X_train = X_train[stop:]
@@ -38,7 +41,7 @@ y_train = y_train[stop:]
 logString = '\nNumber of real train events (without validation set): ' + str(X_train.shape[0]) + ' (' + str(sum(y_train)) + ' signal and ' + str(len(y_train) - sum(y_train)) + ' background)'
 logFile.write(logString)
 logInfo += logString
-
+'''
 ### Weighting train events
 w_train = None
 if(useWeights == True): 
@@ -54,11 +57,12 @@ model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', metrics = ['a
 ### Training
 callbacks = [
     # If we don't have a decrease of the loss for 11 epochs, terminate training.
-    EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss')#, ModelCheckpoint('model.hdf5', save_weights_only = False, monitor = 'val_loss', mode = 'min', verbose = True, save_best_only = True)
+    EarlyStopping(verbose = True, patience = 10, monitor = 'loss')#, ModelCheckpoint('model.hdf5', save_weights_only = False, monitor = 'val_loss', mode = 'min', verbose = True, save_best_only = True) VAL_
 ]
 
 #modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = 2048, validation_split = validationFraction, verbose = 1, shuffle = True, callbacks = callbacks)
-modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = 2048,  validation_data = (X_validation, y_validation), verbose = 1, shuffle = True, callbacks = callbacks)
+#modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = 2048,  validation_data = (X_validation, y_validation), verbose = 1, shuffle = True, callbacks = callbacks)
+modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = 2048, verbose = 1, shuffle = True, callbacks = callbacks)
 
 ### Saving to files
 SaveModel(model, X_input, InputFeatures, outputDir)
@@ -72,10 +76,10 @@ logInfo += logString
 
 ### Drawing training history
 if savePlot:
-    DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background)
-    DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background)
+    DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, useWeights, cutTrainEvents, background)
+    DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, useWeights, cutTrainEvents, background)
 
-#logFile.close()
+logFile.close()
 print('Saved ' + logFileName)
 
 ###### Prediction on the full test sample
@@ -143,13 +147,37 @@ for mass in scaledTestMassPointsList:
     ### Assigning the same mass value to train background events
     for bkg in X_train_bkg:
           bkg[massColumnIndex] = mass
-          
+
+
+
+
+
+    X_all = np.concatenate((X_test_signal_mass, X_test_bkg), axis = 0)
+    X_all = np.concatenate((X_all, X_train_signal_mass), axis = 0)
+    X_all = np.concatenate((X_all, X_train_bkg), axis = 0)
+    yhat_all = model.predict(X_all, batch_size = 2048)
+    scoresFile = open(newOutputDir + '/Scores.txt', 'w')
+    for score in yhat_all:
+        scoresFile.write(str(score) + '\n')
+    scoresFile.close()
+    plt.hist(yhat_all, bins = 100, histtype = 'step', lw = 2, color = 'blue', density = True)
+    plt.ylabel('Norm. entries')
+    plt.xlabel('Score')
+    plt.yscale('log')
+    titleScore = NN + ' scores (mass: ' + str(int(unscaledMass)) + ' GeV)'
+    plt.title(titleScore)
+    legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg) + '\nuseWeights: ' + str(useWeights) + '\ncutTrainEvents: ' + str(cutTrainEvents)
+    ScoresPltName = newOutputDir + '/TotalScores.png'
+    plt.savefig(ScoresPltName)
+    plt.clf()    
+
     ### Prediction
     yhat_train_signal_mass, yhat_train_bkg_mass, yhat_test_signal_mass, yhat_test_bkg_mass = PredictionSigBkg(model, X_train_signal_mass, X_train_bkg, X_test_signal_mass, X_test_bkg)
 
     ### Calculating area under ROC curve (AUC), background rejection and saving plots 
-    DrawEfficiency(yhat_train_signal_mass, yhat_test_signal_mass, yhat_train_bkg_mass, yhat_test_bkg_mass, newOutputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background, savePlot)
-    logFile.write('AUC: ' + str(AUC) + '\nWorking points: ' + str(WP) + '\nBackground rejection at each working point: ' + str(WP_rej))
+    AUC, WP, WP_rej = DrawEfficiency(yhat_train_signal_mass, yhat_test_signal_mass, yhat_train_bkg_mass, yhat_test_bkg_mass, newOutputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background, savePlot, useWeights, cutTrainEvents)
+    print(Fore.BLUE + 'AUC: ' + str(AUC))
+    newLogFile.write('\nAUC: ' + str(AUC) + '\nWorking points: ' + str(WP) + '\nBackground rejection at each working point: ' + str(WP_rej))
     if savePlot:
         DrawCM(yhat_test_mass, y_test_mass, True, newOutputDir, unscaledMass)
 
