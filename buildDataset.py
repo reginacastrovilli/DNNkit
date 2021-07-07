@@ -83,7 +83,11 @@ for i in inputFiles:
     newDf = newDf[rootBranchSubSample]
 
     ### Adding a new column in the dataframe with the name of the process for each event
-    newDf = newDf.assign(origin = re.search('(.+?)-', i).group(1))
+    if (re.search('(.+?)-', i) == None):
+        originName = i
+    else:
+        originName = re.search('(.+?)-', i).group(1)
+    newDf = newDf.assign(origin = originName)
 
     ### Applying preselection cuts
     if preselectionCuts != 'none':
