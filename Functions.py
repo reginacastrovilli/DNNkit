@@ -1,7 +1,7 @@
 ### Assigning script name to variable
 fileName1 = 'saveToPkl.py'
 fileName2 = 'buildDataset.py'
-fileName3 = 'dataPreProcessing.py'
+fileName3 = 'splitDataset.py'
 fileName4 = 'buildPDNN.py'
 fileName5 = 'buildDNN.py'
 
@@ -47,16 +47,16 @@ def ReadArgParser():
     jetCollection = args.JetCollection
     if args.JetCollection is None:
         parser.error(Fore.RED + 'Requested jet collection (\'TCC\' or )')
-    elif args.JetCollection != 'TCC':
+    #elif args.JetCollection != 'TCC':
         parser.error(Fore.RED + 'Jet collection can be \'TCC\', ')
     background = args.Background.split()
     for bkg in background:
-        if (bkg !=  'Zjets' and bkg != 'Wjets' and bkg != 'stop' and bkg != 'Diboson' and bkg != 'ttbat' and bkg != 'all'):
+        if (bkg !=  'Zjets' and bkg != 'Wjets' and bkg != 'stop' and bkg != 'Diboson' and bkg != 'ttbar' and bkg != 'all'):
             parser.error(Fore.RED + 'Background can be \'Zjets\', \'Wjets\', \'stop\', \'Diboson\', \'ttbar\' or \'all\'')
     backgroundString = 'all'
     if args.Background != 'all':
-        backgroundString = '_'.join([str(item) for item in background]) ### altro?
-    trainingFraction = float(args.TrainingFraction) ### altro?
+        backgroundString = '_'.join([str(item) for item in background])
+    trainingFraction = float(args.TrainingFraction)
     if args.TrainingFraction and (trainingFraction < 0. or trainingFraction > 1.):
         parser.error(Fore.RED + 'Training fraction must be between 0 and 1')
     preselectionCuts = args.PreselectionCuts
@@ -79,6 +79,12 @@ def ReadArgParser():
         parser.error(Fore.RED + 'Dropout must be between 0 and 1')
     mass = args.Mass.split()
 
+    if sys.argv[0] == fileName1:
+        return jetCollection
+
+    if sys.argv[0] == fileName2:
+        return jetCollection, analysis, channel, preselectionCuts
+
     if sys.argv[0] == fileName3:
         print(Fore.BLUE + '         background = ' + str(backgroundString))
         print(Fore.BLUE + '  training fraction = ' + str(trainingFraction))
@@ -94,12 +100,6 @@ def ReadArgParser():
         print(Fore.BLUE + 'validation fraction = ' + str(validationFraction))
         print(Fore.BLUE + '            dropout = ' + str(dropout))
         return jetCollection, analysis, channel, preselectionCuts, backgroundString, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, mass
-
-    if sys.argv[0] == fileName2:
-        return jetCollection, analysis, channel, preselectionCuts
-
-    if sys.argv[0] == fileName1:
-        return jetCollection
 
 ### Reading from the configuration file
 import configparser, ast
@@ -138,7 +138,6 @@ def ReadConfig(analysis, jetCollection):
         return inputFiles, dataType, rootBranchSubSample, dfPath, InputFeatures
     if sys.argv[0] == fileName3:
         return dfPath, InputFeatures, signalsList, backgroundsList
-    #else:
     if sys.argv[0] == fileName4 or sys.argv[0] == fileName5:
         return dfPath, InputFeatures, massColumnIndex
 
