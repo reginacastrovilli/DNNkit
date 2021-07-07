@@ -287,7 +287,7 @@ def PredictionSigBkg(model, X_train_signal, X_train_bkg, X_test_signal, X_test_b
 ### Drawing Accuracy
 def DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, useWeights, cutTrainEvents, mass = 0):
     plt.plot(modelMetricsHistory.history['accuracy'])
-    #plt.plot(modelMetricsHistory.history['val_accuracy'])
+    plt.plot(modelMetricsHistory.history['val_accuracy'])
     titleAccuracy = NN + ' model accuracy'
     if NN == 'DNN':
         titleAccuracy += ' (mass: ' + str(int(mass)) + ' GeV)'
@@ -309,7 +309,7 @@ def DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection
 ### Drawing Loss
 def DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, useWeights, cutTrainEvents, mass = 0):
     plt.plot(modelMetricsHistory.history['loss'])
-    #plt.plot(modelMetricsHistory.history['val_loss'])
+    plt.plot(modelMetricsHistory.history['val_loss'])
     titleLoss = NN + ' model loss'
     if NN == 'DNN':
         titleLoss += ' (mass: ' + str(int(mass)) + ' GeV)'

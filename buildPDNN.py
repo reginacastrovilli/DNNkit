@@ -32,7 +32,6 @@ logInfo += logString
 
 ### Creating the validation dataset
 stop  = int(validationFraction * X_train.shape[0])
-'''
 X_validation = X_train[:stop]
 y_validation = y_train[:stop]
 X_train = X_train[stop:]
@@ -41,7 +40,7 @@ y_train = y_train[stop:]
 logString = '\nNumber of real train events (without validation set): ' + str(X_train.shape[0]) + ' (' + str(sum(y_train)) + ' signal and ' + str(len(y_train) - sum(y_train)) + ' background)'
 logFile.write(logString)
 logInfo += logString
-'''
+
 ### Weighting train events
 w_train = None
 if(useWeights == True): 
@@ -57,12 +56,11 @@ model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', metrics = ['a
 ### Training
 callbacks = [
     # If we don't have a decrease of the loss for 11 epochs, terminate training.
-    EarlyStopping(verbose = True, patience = 10, monitor = 'loss')#, ModelCheckpoint('model.hdf5', save_weights_only = False, monitor = 'val_loss', mode = 'min', verbose = True, save_best_only = True) VAL_
+    EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss')#, ModelCheckpoint('model.hdf5', save_weights_only = False, monitor = 'val_loss', mode = 'min', verbose = True, save_best_only = True) 
 ]
 
 #modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = 2048, validation_split = validationFraction, verbose = 1, shuffle = True, callbacks = callbacks)
-#modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = 2048,  validation_data = (X_validation, y_validation), verbose = 1, shuffle = True, callbacks = callbacks)
-modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = 2048, verbose = 1, shuffle = True, callbacks = callbacks)
+modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = 2048,  validation_data = (X_validation, y_validation), verbose = 1, shuffle = True, callbacks = callbacks)
 
 ### Saving to files
 SaveModel(model, X_input, InputFeatures, outputDir)
@@ -147,29 +145,6 @@ for mass in scaledTestMassPointsList:
     ### Assigning the same mass value to train background events
     for bkg in X_train_bkg:
           bkg[massColumnIndex] = mass
-
-
-
-
-
-    X_all = np.concatenate((X_test_signal_mass, X_test_bkg), axis = 0)
-    X_all = np.concatenate((X_all, X_train_signal_mass), axis = 0)
-    X_all = np.concatenate((X_all, X_train_bkg), axis = 0)
-    yhat_all = model.predict(X_all, batch_size = 2048)
-    scoresFile = open(newOutputDir + '/Scores.txt', 'w')
-    for score in yhat_all:
-        scoresFile.write(str(score) + '\n')
-    scoresFile.close()
-    plt.hist(yhat_all, bins = 100, histtype = 'step', lw = 2, color = 'blue', density = True)
-    plt.ylabel('Norm. entries')
-    plt.xlabel('Score')
-    plt.yscale('log')
-    titleScore = NN + ' scores (mass: ' + str(int(unscaledMass)) + ' GeV)'
-    plt.title(titleScore)
-    legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg) + '\nuseWeights: ' + str(useWeights) + '\ncutTrainEvents: ' + str(cutTrainEvents)
-    ScoresPltName = newOutputDir + '/TotalScores.png'
-    plt.savefig(ScoresPltName)
-    plt.clf()    
 
     ### Prediction
     yhat_train_signal_mass, yhat_train_bkg_mass, yhat_test_signal_mass, yhat_test_bkg_mass = PredictionSigBkg(model, X_train_signal_mass, X_train_bkg, X_test_signal_mass, X_test_bkg)
