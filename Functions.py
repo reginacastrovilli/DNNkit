@@ -17,7 +17,7 @@ def ReadArgParser():
     parser.add_argument('-c', '--Channel', help = 'Channel: \'ggF\' or \'VBF\'', type = str)
     parser.add_argument('-s', '--Signal', help = 'Signal: \'VBFHVTWZ\', \'Radion\', \'RSG\' or \'VBFRadion\'', type = str)
     parser.add_argument('-j', '--JetCollection', help = 'Jet collection: \'TCC\'', type = str, default = 'TCC')
-    parser.add_argument('-b', '--Background', help = 'Background: \'Zjets\', \'Wjets\', \'stop\', \'Diboson\', \'ttbar\' or \'all\'', type = str, default = 'all')
+    parser.add_argument('-b', '--Background', help = 'Background: \'Zjets\', \'Wjets\', \'stop\', \'Diboson\', \'ttbar\' or \'all\' (in quotation mark separated by a space)', type = str, default = 'all')
     parser.add_argument('-t', '--TrainingFraction', help = 'Relative size of the training sample, between 0 and 1', default = 0.8)
     parser.add_argument('-p', '--PreselectionCuts', help = 'Preselection cut', type = str)
     parser.add_argument('-n', '--Nodes', help = 'Number of nodes of the (p)DNN, should always be >= nColumns and strictly positive', default = 32)
@@ -25,7 +25,7 @@ def ReadArgParser():
     parser.add_argument('-e', '--Epochs', help = 'Number of epochs for the training', default = 150)
     parser.add_argument('-v', '--Validation', help = 'Fraction of the training data that will actually be used for validation', default = 0.2)
     parser.add_argument('-d', '--Dropout', help = 'Fraction of the neurons to drop during the training', default = 0.2)
-    parser.add_argument('-m', '--Mass', help = 'Mass to analyze in the DNN', default = 1000)
+    parser.add_argument('-m', '--Mass', help = 'Masses for the (P)DNN test (in quotation mark separated by a space)', default = 'all')
     
     args = parser.parse_args()
 
@@ -40,7 +40,7 @@ def ReadArgParser():
     elif args.Channel != 'ggF' and args.Channel != 'VBF' and sys.argv[0] != fileName1:
         parser.error(Fore.RED + 'Channel can be either \'ggF\' or \'VBF\'')
     signal = args.Signal
-    if args.Signal is None and (sys.argv[0] == fileName2 or sys.argv[0] == fileName3):
+    if args.Signal is None and (sys.argv[0] == fileName4 or sys.argv[0] == fileName5):
         parser.error(Fore.RED + 'Requested signal (\'VBFHVTWZ\', \'Radion\', \'RSG\' or \'VBFRadion\')')
     #elif args.Signal != 'VBFHVTWZ' and args.Signal != 'Radion' and args.Signal != 'RSG' and args.Signal != 'VBFRadion':
         #parser.error(Fore.RED + 'Signal can be \'VBFHVTWZ\', \'Radion\', \'RSG\' or \'VBFRadion\'')
@@ -77,15 +77,16 @@ def ReadArgParser():
     dropout = float(args.Dropout)
     if args.Dropout and (dropout < 0. or dropout > 1.):
         parser.error(Fore.RED + 'Dropout must be between 0 and 1')
-    mass = float(args.Mass)
+    mass = args.Mass.split()
 
     if sys.argv[0] == fileName3:
         print(Fore.BLUE + '         background = ' + str(backgroundString))
         print(Fore.BLUE + '  training fraction = ' + str(trainingFraction))
         return jetCollection, analysis, channel, preselectionCuts, backgroundString, trainingFraction
 
-    if(sys.argv[0] == fileName2 or sys.argv[0] == fileName3):
+    if(sys.argv[0] == fileName4 or sys.argv[0] == fileName5):
         print(Fore.BLUE + '         background = ' + str(backgroundString))
+        print(Fore.BLUE + '        test masses = ' + str(mass))
         print(Fore.BLUE + '  training fraction = ' + str(trainingFraction))
         print(Fore.BLUE + '              nodes = ' + str(numberOfNodes))
         print(Fore.BLUE + '             layers = ' + str(numberOfLayers))
@@ -137,7 +138,8 @@ def ReadConfig(analysis, jetCollection):
         return inputFiles, dataType, rootBranchSubSample, dfPath, InputFeatures
     if sys.argv[0] == fileName3:
         return dfPath, InputFeatures, signalsList, backgroundsList
-    else:
+    #else:
+    if sys.argv[0] == fileName4 or sys.argv[0] == fileName5:
         return dfPath, InputFeatures, massColumnIndex
 
 ### Checking if the output directory exists. If not, creating it

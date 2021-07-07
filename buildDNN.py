@@ -42,19 +42,25 @@ X_train_signal = np.delete(X_train_signal, massColumnIndex, axis = 1)
 X_test_bkg = np.delete(X_test_bkg, massColumnIndex, axis = 1)
 X_train_bkg = np.delete(X_train_bkg, massColumnIndex, axis = 1)
 
-foundTestMass = False
+if testMass == ['all']:
+    testMass = []
+    testMass = list(str(int(item)) for item in set(list(m_test_unscaled_signal)))
+
+foundTestMass = 0
 for mass in scaledTrainMassPointsList:
 
     ### Associating the scaled mass to the unscaled one
     unscaledMass = unscaledTrainMassPointsList[scaledTrainMassPointsList.index(mass)]
-    if unscaledMass != testMass:
+
+    if str(int(unscaledMass)) not in testMass:
         continue
-    foundTestMass = True
+
+    foundTestMass += 1
 
     ### Creating the output directory
     outputDir = dfPath + background + '/' + NN + '/useWeights' + str(useWeights) + '/cutTrainEvents' + str(cutTrainEvents) + '/' + str(int(unscaledMass)) ### sposterei il bkg in dfPath e quindi nell'output di datapreprocessing
     print (format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
-    
+    '''
     ### Creating the logFile
     logFileName = outputDir + '/logFile.txt'
     logFile = open(logFileName, 'w')
@@ -160,3 +166,6 @@ for mass in scaledTrainMassPointsList:
     ### Closing the logFile
     logFile.close()
     print('Saved ' + logFileName)
+    '''
+if foundTestMass == 0:
+    print(Fore.RED + 'No signal in the sample has the selected mass')

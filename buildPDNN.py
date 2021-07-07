@@ -5,18 +5,16 @@ NN = 'PDNN'
 useWeights = False
 cutTrainEvents = False
 print(Fore.BLUE + '         useWeights = ' + str(useWeights))
+print(Fore.BLUE + '     cutTrainEvents = ' + str(cutTrainEvents))
 
 ### Reading the command line
-jetCollection, analysis, channel, preselectionCuts, background, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, _ = ReadArgParser()
-#analysis, channel, signal, jetCollection, background, trainingFraction, preselectionCuts, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, _ = ReadArgParser()
+jetCollection, analysis, channel, preselectionCuts, background, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, testMass = ReadArgParser()
 
 ### Reading the configuration file
-#dfPath, modelPath, InputFeatures, massColumnIndex = ReadConfig(analysis, jetCollection)
 dfPath, InputFeatures, massColumnIndex = ReadConfig(analysis, jetCollection)
 dfPath += analysis + '/' + channel + '/' + signal + '/'
 
 ### Creating the output directory and the logFile
-#outputDir = modelPath + signal + '/' + analysis + '/' + channel + '/' + NN + '/useWeights' + str(useWeights) ######modificare
 outputDir = dfPath + NN + '/useWeights' + str(useWeights) + '/cutTrainEvents' + str(cutTrainEvents)
 print (format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
 logFileName = outputDir + '/logFile.txt'
@@ -59,7 +57,6 @@ callbacks = [
     EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss')#, ModelCheckpoint('model.hdf5', save_weights_only = False, monitor = 'val_loss', mode = 'min', verbose = True, save_best_only = True) 
 ]
 
-#modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = 2048, validation_split = validationFraction, verbose = 1, shuffle = True, callbacks = callbacks)
 modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = 2048,  validation_data = (X_validation, y_validation), verbose = 1, shuffle = True, callbacks = callbacks)
 
 ### Saving to files
@@ -96,11 +93,21 @@ unscaledTestMassPointsList = list(dict.fromkeys(list(m_test_unscaled_signal)))
 m_test_signal = X_test_signal[:, massColumnIndex]
 scaledTestMassPointsList = list(dict.fromkeys(list(m_test_signal)))
 
+if testMass == ['all']:
+    testMass = []
+    testMass = list(str(int(item)) for item in set(list(m_test_unscaled_signal)))
+    
+foundTestMass = 0
 for mass in scaledTestMassPointsList:
 
     ### Associating the scaled mass to the unscaled one
     unscaledMass = unscaledTestMassPointsList[scaledTestMassPointsList.index(mass)]
     
+    if str(int(unscaledMass)) not in testMass:
+        continue
+
+    foundTestMass += 1
+
     ### Creating new output directory and log file
     newOutputDir = outputDir + '/' + str(int(unscaledMass))
     print (format('Output directory: ' + Fore.GREEN + newOutputDir), checkCreateDir(newOutputDir))
@@ -159,3 +166,6 @@ for mass in scaledTestMassPointsList:
     ### Closing the newLogFile
     newLogFile.close()
     print('Saved ' + newLogFileName)
+
+if foundTestMass == 0:
+    print(Fore.RED + 'No signal in the sample has the selected mass')
