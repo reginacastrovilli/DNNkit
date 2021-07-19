@@ -21,10 +21,10 @@ logFileName = outputDir + '/logFile.txt'
 logFile = open(logFileName, 'w')
 
 ### Loading input data
-X_train, X_test, y_train, y_test, m_train_unscaled, m_test_unscaled, X_input = LoadData(dfPath, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts)
+X_train, X_test, y_train, y_test, m_train_unscaled, m_test_unscaled, X_train_unscaled = LoadData(dfPath, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts)
 
 logInfo = ''
-logString = WritingLogFile(dfPath, X_input, X_test, y_test, X_train, y_train, InputFeatures, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, useWeights)
+logString = WritingLogFile(dfPath, X_test, y_test, X_train, y_train, InputFeatures, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, useWeights)
 logFile.write(logString)
 logInfo += logString
 
@@ -60,9 +60,9 @@ callbacks = [
 modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = 2048,  validation_data = (X_validation, y_validation), verbose = 1, shuffle = True, callbacks = callbacks)
 
 ### Saving to files
-SaveModel(model, X_input, InputFeatures, outputDir)
+SaveModel(model, X_train, InputFeatures, outputDir)
 #model.save(outputDir + '/model/') ###per Martino
-
+exit()
 ### Evaluating the performance of the PDNN
 testLoss, testAccuracy = EvaluatePerformance(model, X_test, y_test)
 logString = '\nTest loss: ' + str(testLoss) + '\nTest accuracy: ' + str(testAccuracy)
