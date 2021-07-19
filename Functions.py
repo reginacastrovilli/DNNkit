@@ -1,8 +1,9 @@
-### Assigning script name to variable
+### Assigning script names to variables
 fileName1 = 'saveToPkl.py'
 fileName2 = 'buildDataset.py'
 fileName3 = 'splitDataset.py'
-fileName4 = 'buildPDNN.py'
+#fileName4 = 'buildPDNNperEnrico.py'
+fileName4 = 'testDNN.py'
 fileName5 = 'buildDNN.py'
 
 ### Reading the command line
@@ -48,7 +49,7 @@ def ReadArgParser():
     if args.JetCollection is None:
         parser.error(Fore.RED + 'Requested jet collection (\'TCC\' or )')
     #elif args.JetCollection != 'TCC':
-        parser.error(Fore.RED + 'Jet collection can be \'TCC\', ')
+        #parser.error(Fore.RED + 'Jet collection can be \'TCC\', ')
     background = args.Background.split()
     for bkg in background:
         if (bkg !=  'Zjets' and bkg != 'Wjets' and bkg != 'stop' and bkg != 'Diboson' and bkg != 'ttbar' and bkg != 'all'):
@@ -152,7 +153,9 @@ def checkCreateDir(dir):
         return Fore.RED + ' (already there)'
 
 ### Loading input data
-import pandas as pd
+#import pandas as pd
+import csv
+import numpy as np
 def LoadData(dfPath, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts):
     fileCommonName = jetCollection + '_' + analysis + '_' + channel + '_' + signal + '_' + preselectionCuts + '_' + background + '_' + str(trainingFraction) + 't'
     X_Train = np.genfromtxt(dfPath + '/X_train_' + fileCommonName + '.csv', delimiter=',') 
@@ -161,12 +164,27 @@ def LoadData(dfPath, jetCollection, signal, analysis, channel, background, train
     y_Test = np.genfromtxt(dfPath + '/y_test_' + fileCommonName + '.csv', delimiter=',') 
     m_Train_unscaled = np.genfromtxt(dfPath + '/m_train_unscaled_' + fileCommonName + '.csv', delimiter=',') 
     m_Test_unscaled = np.genfromtxt(dfPath + '/m_test_unscaled_' + fileCommonName + '.csv', delimiter=',') 
-    X_Input = np.concatenate((X_Train, X_Test), axis = 0)
-    return X_Train, X_Test, y_Train, y_Test, m_Train_unscaled, m_Test_unscaled, X_Input
+    X_Train_unscaled = np.genfromtxt(dfPath + '/X_train_unscaled_' + fileCommonName + '.csv', delimiter=',') 
+    #origin_Train = pd.read_pickle(dfPath + '/origin_train_' + fileCommonName + '.pkl')
+    origin_Train = np.genfromtxt(dfPath + '/origin_train_' + fileCommonName + '.csv', delimiter=',') 
+    origin_Test = np.genfromtxt(dfPath + '/origin_test_' + fileCommonName + '.csv', delimiter=',') 
+    #origin_Train = np.array(origin_Train.values)
+    return X_Train, X_Test, y_Train, y_Test, m_Train_unscaled, m_Test_unscaled, X_Train_unscaled, origin_Train, origin_Test
+    #return X_Train, X_Test, y_Train, y_Test, m_Train_unscaled, m_Test_unscaled, X_Train_unscaled
+
+def LoadData2():
+    X_test_mass = np.genfromtxt('X_test_mass.csv', delimiter=',') 
+    y_test_mass = np.genfromtxt('y_test_mass.csv', delimiter=',') 
+    X_train_signal_mass = np.genfromtxt('X_train_signal_mass.csv', delimiter=',') 
+    X_train_bkg = np.genfromtxt('X_train_bkg.csv', delimiter=',') 
+    X_test_signal_mass = np.genfromtxt('X_test_signal_mass.csv', delimiter=',') 
+    X_test_bkg = np.genfromtxt('X_test_bkg.csv', delimiter=',') 
+
+    return X_test_mass, y_test_mass, X_train_signal_mass, X_train_bkg, X_test_signal_mass, X_test_bkg 
 
 ### Writing in the log file
-def WritingLogFile(dfPath, X_input, X_test, y_test, X_train, y_train, InputFeatures, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, useWeights):
-    logString = 'dfPath: ' + dfPath + '\nNumber of input events: ' + str(X_input.shape[0]) + '\nNumber of test events: ' + str(int(X_test.shape[0])) + ' (' + str(sum(y_test)) + ' signal and ' + str(len(y_test) - sum(y_test)) + ' background)' + '\nNumber of train events: ' + str(X_train.shape[0]) + ' (' + str(sum(y_train)) + ' signal and ' + str(len(y_train) - sum(y_train)) + ' background)' + '\nInputFeatures: ' + str(InputFeatures) + '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of layers: ' + str(numberOfLayers) + '\nNumber of epochs: ' + str(numberOfEpochs) + '\nValidation fraction: ' + str(validationFraction) + '\nDropout: ' + str(dropout) + '\nuseWeights: ' + str(useWeights)
+def WritingLogFile(dfPath, X_test, y_test, X_train, y_train, InputFeatures, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, useWeights):
+    logString = 'dfPath: ' + dfPath + '\nNumber of test events: ' + str(int(X_test.shape[0])) + ' (' + str(sum(y_test)) + ' signal and ' + str(len(y_test) - sum(y_test)) + ' background)' + '\nNumber of train events: ' + str(X_train.shape[0]) + ' (' + str(sum(y_train)) + ' signal and ' + str(len(y_train) - sum(y_train)) + ' background)' + '\nInputFeatures: ' + str(InputFeatures) + '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of layers: ' + str(numberOfLayers) + '\nNumber of epochs: ' + str(numberOfEpochs) + '\nValidation fraction: ' + str(validationFraction) + '\nDropout: ' + str(dropout) + '\nuseWeights: ' + str(useWeights)
     return logString
 
 ### Shuffling data
@@ -287,20 +305,29 @@ def PredictionSigBkg(model, X_train_signal, X_train_bkg, X_test_signal, X_test_b
 
 ### Drawing Accuracy
 def DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, useWeights, cutTrainEvents, mass = 0):
-    plt.plot(modelMetricsHistory.history['accuracy'])
-    plt.plot(modelMetricsHistory.history['val_accuracy'])
+    plt.plot(modelMetricsHistory.history['accuracy'], label = 'Training')
+    lines = plt.plot(modelMetricsHistory.history['val_accuracy'], label = 'Validation')
+    xvalues = lines[0].get_xdata()
+    #print(yvalues[len(yvalues) - 1])    
+    plt.scatter([xvalues[len(xvalues) - 1]], [testAccuracy], label = 'Test', color = 'green')
+    emptyPlot, = plt.plot([0, 0], [1, 1], color = 'white')
     titleAccuracy = NN + ' model accuracy'
     if NN == 'DNN':
         titleAccuracy += ' (mass: ' + str(int(mass)) + ' GeV)'
     plt.title(titleAccuracy)
     plt.ylabel('Accuracy')
     plt.xlabel('Epoch')
-    plt.legend(['Training', 'Validation'], loc = 'lower right')
+    #plt.legend()
+    #legend1 = plt.legend(['Training', 'Validation'], loc = 'lower right')
+    legend1 = plt.legend(loc = 'center right')
     legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg) + '\nuseWeights: ' + str(useWeights) + '\ncutTrainEvents: ' + str(cutTrainEvents)
     if (PreselectionCuts != 'none'):
         legendText += '\npreselection cuts: ' + PreselectionCuts
-    legendText += '\nTest accuracy: ' + str(round(testAccuracy, 2))
-    plt.figtext(0.5, 0.3, legendText, wrap = True, horizontalalignment = 'left')
+    #legendText += '\nTest accuracy: ' + str(round(testAccuracy, 2))
+    #plt.figtext(0.5, 0.3, legendText, wrap = True, horizontalalignment = 'left')
+    #plt.legend(legendText)
+    legend2 = plt.legend([emptyPlot], [legendText], frameon = False)
+    plt.gca().add_artist(legend1)
     #plt.figtext(0.69, 0.28, 'Test accuracy: ' + str(round(testAccuracy, 2)), wrap = True, horizontalalignment = 'left')#, fontsize = 10)
     AccuracyPltName = outputDir + '/Accuracy.png'
     plt.savefig(AccuracyPltName)
@@ -309,26 +336,33 @@ def DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection
         
 ### Drawing Loss
 def DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, useWeights, cutTrainEvents, mass = 0):
-    plt.plot(modelMetricsHistory.history['loss'])
-    plt.plot(modelMetricsHistory.history['val_loss'])
+    plt.plot(modelMetricsHistory.history['loss'], label = 'Training')
+    lines = plt.plot(modelMetricsHistory.history['val_loss'], label = 'Validation')
+    xvalues = lines[0].get_xdata()
+    #print(yvalues[len(yvalues) - 1])    
+    plt.scatter([xvalues[len(xvalues) - 1]], [testLoss], label = 'Test', color = 'green')
+    emptyPlot, = plt.plot([0, 0], [1, 1], color = 'white')
     titleLoss = NN + ' model loss'
     if NN == 'DNN':
         titleLoss += ' (mass: ' + str(int(mass)) + ' GeV)'
     plt.title(titleLoss)
     plt.ylabel('Loss')
     plt.xlabel('Epoch')
-    plt.legend(['Training', 'Validation'], loc = 'upper right')
+    #plt.legend(['Training', 'Validation'], loc = 'upper right')
+    legend1 = plt.legend(loc = 'upper right')
     legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\npreselection cuts: ' + PreselectionCuts + '\nsignal: ' + signal + '\nbackground: ' + str(bkg) + '\nuseWeights: ' + str(useWeights) + '\ncutTrainEvents: ' + str(cutTrainEvents)
     if (PreselectionCuts != 'none'):
         legendText += '\npreselection cuts: ' + PreselectionCuts
-    legendText += '\nTest loss: ' + str(round(testLoss, 2))
-    plt.figtext(0.5, 0.4, legendText, wrap = True, horizontalalignment = 'left')
+    #legendText += '\nTest loss: ' + str(round(testLoss, 2))
+    #plt.figtext(0.5, 0.4, legendText, wrap = True, horizontalalignment = 'left')
     #plt.figtext(0.7, 0.7, 'Test loss: ' + str(round(testLoss, 2)), wrap = True, horizontalalignment = 'center')#, fontsize = 10)
+    legend2 = plt.legend([emptyPlot], [legendText], frameon = False, loc = 'center right')
+    plt.gca().add_artist(legend1)
     LossPltName = outputDir + '/Loss.png'
     plt.savefig(LossPltName)
     print('Saved ' + LossPltName)
     plt.clf()
-
+'''
 from sklearn.metrics import roc_curve, auc, roc_auc_score, classification_report
 def DrawROC(fpr, tpr, AUC, outputDir, mass):
     plt.plot(fpr,  tpr, color = 'darkorange', lw = 2)
@@ -343,7 +377,7 @@ def DrawROC(fpr, tpr, AUC, outputDir, mass):
     plt.savefig(ROCPltName)
     print('Saved ' + ROCPltName)
     plt.clf()
-    
+''' 
 def integral(y,x,bins):
     x_min=x
     s=0
@@ -352,7 +386,7 @@ def integral(y,x,bins):
     return s
 
 ### Drawing scores, ROC and efficiency
-import numpy as np
+#import numpy as np
 
 def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, mass, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, savePlot, useWeights, cutTrainEvents):
 
@@ -365,15 +399,15 @@ def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_tes
     if savePlot:
         plt.ylabel('Norm. entries')
         plt.xlabel('Score')
-        plt.yscale('log')
-        titleScores = NN + ' scores (mass: ' + str(int(mass)) + ' GeV)'
+        #plt.yscale('log')
+        titleScores = NN + ' scores (mass: ' + str(int(mass)) + ' GeV, bkg: ' + bkg + ')'
         plt.title(titleScores)
         plt.legend(loc = 'upper center')
         legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg) + '\nuseWeights: ' + str(useWeights) + '\ncutTrainEvents: ' + str(cutTrainEvents)
         if (PreselectionCuts != 'none'):
             legendText += '\npreselection cuts: ' + PreselectionCuts
-        plt.figtext(0.35, 0.45, legendText, wrap = True, horizontalalignment = 'left')
-        ScoresPltName = outputDir + '/Scores.png'
+        #plt.figtext(0.35, 0.45, legendText, wrap = True, horizontalalignment = 'left')
+        ScoresPltName = outputDir + '/Scores_' + bkg + '.png'
         plt.savefig(ScoresPltName)
         print('Saved ' + ScoresPltName)
         plt.clf()
@@ -399,14 +433,14 @@ def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_tes
         #plt.plot([0,1],[0,1])
         plt.ylabel('True Positive Rate')
         plt.xlabel('False Positive Rate')
-        titleROC = NN + ' ROC curve (mass: ' + str(int(mass)) + ' GeV)'
+        titleROC = NN + ' ROC curve (mass: ' + str(int(mass)) + ' GeV, bkg: ' + bkg + ')'
         plt.title(titleROC)
         legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg) + '\nuseWeights: ' + str(useWeights) + '\ncutTrainEvents: ' + str(cutTrainEvents)
         if (PreselectionCuts != 'none'):
             legendText += '\npreselection cuts: ' + PreselectionCuts
-        plt.figtext(0.5, 0.4, legendText, wrap = True, horizontalalignment = 'left')
+        plt.figtext(0.5, 0.35, legendText, wrap = True, horizontalalignment = 'left')
         plt.figtext(0.5, 0.25, 'AUC: ' + str(round(Area, 2)), wrap = True, horizontalalignment = 'center')
-        ROCPltName = outputDir + '/ROC.png'
+        ROCPltName = outputDir + '/ROC_' + bkg + '.png'
         plt.savefig(ROCPltName)
         print('Saved ' + ROCPltName)
         plt.clf()
@@ -416,7 +450,8 @@ def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_tes
     rej=1./bkg_eff
     WP_idx=[np.where(np.abs(signal_eff-WP[i])==np.min(np.abs(signal_eff-WP[i])))[0][0] for i in range(0,len(WP))]
     WP_rej=[str(round(10*rej[WP_idx[i]])/10) for i in range(0,len(WP))]
-    print(bins_0[WP_idx])
+    #print(bins_0[WP_idx])
+    print(bins_0[Nbins-np.array(WP_idx)])
     print(WP_rej)
 
     if savePlot:
@@ -427,9 +462,9 @@ def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_tes
         plt.ylabel('Background rejection')
         plt.xlim([0.85,1])
         plt.yscale('log')
-        plt.title(NN + ' background rejection curve (mass: ' + str(mass) + ' GeV)')
+        plt.title(NN + ' background rejection curve (mass: ' + str(mass) + ' GeV, bkg: ' + bkg + ')')
         plt.legend()
-        EffPltName = outputDir + '/BkgRejection.png'
+        EffPltName = outputDir + '/BkgRejection_' + bkg +'.png'
         plt.savefig(EffPltName)
         print('Saved ' + EffPltName)
         plt.clf()
@@ -439,7 +474,7 @@ def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_tes
 from sklearn.metrics import confusion_matrix
 import itertools
 
-def DrawCM(yhat_test, y_test, normalize, outputDir, mass):
+def DrawCM(yhat_test, y_test, normalize, outputDir, mass, background):
     yResult_test_cls = np.array([ int(round(x[0])) for x in yhat_test])
     cm = confusion_matrix(y_test, yResult_test_cls)
     classes = ['Background', 'Signal']
@@ -448,9 +483,9 @@ def DrawCM(yhat_test, y_test, normalize, outputDir, mass):
         cm = cm.astype('float') / cm.sum(axis = 1)[:, np.newaxis]
     cmap = plt.cm.Oranges#Blues
     plt.imshow(cm, interpolation = 'nearest', cmap = cmap)
-    titleCM = 'Confusion matrix (mass: ' + str(int(mass)) + ' GeV)'
+    titleCM = 'Confusion matrix (mass: ' + str(int(mass)) + ' GeV, bkg: ' + background + ')'
     plt.title(titleCM)
-    plt.colorbar()
+    #plt.colorbar()
     tick_marks = np.arange(len(classes))
     plt.xticks(tick_marks, classes)
     plt.yticks(tick_marks, classes, rotation = 90)
@@ -460,7 +495,7 @@ def DrawCM(yhat_test, y_test, normalize, outputDir, mass):
         plt.text(j, i, format(cm[i, j], fmt), horizontalalignment = "center", color = "white" if cm[i, j] > thresh else "black")
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
-    CMPltName = outputDir + '/ConfusionMatrix.png'
+    CMPltName = outputDir + '/ConfusionMatrix_' + background + '.png'
     plt.savefig(CMPltName)
     print('Saved ' + CMPltName)
     plt.clf()    
@@ -483,6 +518,46 @@ def EventsWeight(y_train):
     w_train = np.array(w_train)
 
     return WTrainSignal, WTrainBkg, w_train
+
+def EventsWeightNew(origin_train):
+    '''
+    origins = list(set(origin_train.flatten()))
+    print(origins)
+    sum_originList = []
+    for origin in origins:
+        sum_originList.append((origin_train == origin).sum())
+        print((origin_train == origin).sum())
+    minStat = min(sum_originList)
+    print(minStat)
+    w_originList = []
+    for elem in sum_originList:
+        w_originList.append(minStat/elem)
+    w_origin = []
+    for event in origin_train:
+        w_origin.append(w_originList[origins.index(event)])
+    w_origin = np.array(w_origin)
+    print(origin_train)
+    print(w_origin)
+    return w_origin
+    '''
+    originsList = list(set(list(origin_train)))
+    print(originsList)
+    originsNumber = np.array([])
+    for origin in originsList:
+        originsNumber = np.append(originsNumber, list(origin_train).count(origin))
+    print(originsNumber)
+    minNumber = min(originsNumber)
+    print(minNumber)
+    w_originList = np.array([])
+    for originNumber in originsNumber:
+        w_originList = np.append(w_originList, minNumber / originNumber)
+    print(w_originList)
+    w_origin_train = origin_train.copy()
+    for origin in originsList:
+        print(origin)
+        w_origin_train = np.where(w_origin_train == origin, w_originList[np.where(originsList == origin)], w_origin_train)
+    print(origin_train)
+    print(w_origin_train)
 
 def cutEvents(X_train_mass, y_train_mass):
     X_train_mass_ext = np.insert(X_train_mass, X_train_mass.shape[1], y_train_mass, axis = 1)
