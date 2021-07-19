@@ -12,7 +12,7 @@ jetCollection, analysis, channel, preselectionCuts, background, trainingFraction
 
 ### Reading the configuration file
 dfPath, InputFeatures, massColumnIndex = ReadConfig(analysis, jetCollection)
-dfPath += analysis + '/' + channel + '/' + signal + '/'
+dfPath += analysis + '/' + channel + '/' + signal + '/' + background
 
 ### Creating the output directory and the logFile
 outputDir = dfPath + NN + '/useWeights' + str(useWeights) + '/cutTrainEvents' + str(cutTrainEvents)

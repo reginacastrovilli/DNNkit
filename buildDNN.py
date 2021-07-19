@@ -12,7 +12,7 @@ jetCollection, analysis, channel, preselectionCuts, background, trainingFraction
 
 ### Reading the configuration file
 dfPath, InputFeatures, massColumnIndex = ReadConfig(analysis, jetCollection)
-dfPath += analysis + '/' + channel + '/' + signal
+dfPath += analysis + '/' + channel + '/' + signal + '/' + background
 
 ### Loading input data
 X_train, X_test, y_train, y_test, m_train_unscaled, m_test_unscaled, X_train_unscaled, origin_train, origin_test = LoadData(dfPath, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts)
@@ -63,7 +63,7 @@ for mass in scaledTrainMassPointsList:
     foundTestMass += 1
 
     ### Creating the output directory
-    outputDir = dfPath + background + '/' + NN + '/useWeights' + str(useWeights) + '/cutTrainEvents' + str(cutTrainEvents) + '/' + str(int(unscaledMass)) + '/case1' ### sposterei il bkg in dfPath e quindi nell'output di datapreprocessing
+    outputDir = dfPath + '/' + NN + '/useWeights' + str(useWeights) + '/cutTrainEvents' + str(cutTrainEvents) + '/' + str(int(unscaledMass)) + '/case1' ### sposterei il bkg in dfPath e quindi nell'output di datapreprocessing
     print (format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
 
     ### Creating the logFile

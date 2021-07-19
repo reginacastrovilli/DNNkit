@@ -4,7 +4,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-from sklearn.compose import ColumnTransformer
 #from tensorflow.keras.utils import to_categorical
 
 from colorama import init, Fore
@@ -57,7 +56,7 @@ data = data[extendedInputFeatures]
 for signal in signalsList:
 
     ### Creating output directory
-    outputDir = dfPath + '/' + signal
+    outputDir = dfPath + '/' + signal + '/' + background
     print (format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
 
     ### Creating the list of backgrounds and signal processes to select
