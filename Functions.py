@@ -16,7 +16,7 @@ def ReadArgParser():
     parser = ArgumentParser()
     parser.add_argument('-a', '--Analysis', help = 'Type of analysis: \'merged\' or \'resolved\'', type = str)
     parser.add_argument('-c', '--Channel', help = 'Channel: \'ggF\' or \'VBF\'', type = str)
-    parser.add_argument('-s', '--Signal', help = 'Signal: \'VBFHVTWZ\', \'Radion\', \'RSG\' or \'VBFRadion\'', type = str)
+    parser.add_argument('-s', '--Signal', help = 'Signal: \'VBFHVTWZ\', \'Radion\', \'RSG\' or \'VBFRadion\'', type = str, default = 'all')
     parser.add_argument('-j', '--JetCollection', help = 'Jet collection: \'TCC\'', type = str, default = 'TCC')
     parser.add_argument('-b', '--Background', help = 'Background: \'Zjets\', \'Wjets\', \'stop\', \'Diboson\', \'ttbar\' or \'all\' (in quotation mark separated by a space)', type = str, default = 'all')
     parser.add_argument('-t', '--TrainingFraction', help = 'Relative size of the training sample, between 0 and 1', default = 0.8)
@@ -40,11 +40,7 @@ def ReadArgParser():
         parser.error(Fore.RED + 'Requested channel (either \'ggF\' or \'VBF\')')
     elif args.Channel != 'ggF' and args.Channel != 'VBF' and sys.argv[0] != fileName1:
         parser.error(Fore.RED + 'Channel can be either \'ggF\' or \'VBF\'')
-    signal = args.Signal
-    if args.Signal is None and (sys.argv[0] == fileName4 or sys.argv[0] == fileName5):
-        parser.error(Fore.RED + 'Requested signal (\'VBFHVTWZ\', \'Radion\', \'RSG\' or \'VBFRadion\')')
-    #elif args.Signal != 'VBFHVTWZ' and args.Signal != 'Radion' and args.Signal != 'RSG' and args.Signal != 'VBFRadion':
-        #parser.error(Fore.RED + 'Signal can be \'VBFHVTWZ\', \'Radion\', \'RSG\' or \'VBFRadion\'')
+    signal = args.Signal.split()
     jetCollection = args.JetCollection
     if args.JetCollection is None:
         parser.error(Fore.RED + 'Requested jet collection (\'TCC\' or )')
@@ -89,7 +85,7 @@ def ReadArgParser():
     if sys.argv[0] == fileName3:
         print(Fore.BLUE + '         background = ' + str(backgroundString))
         print(Fore.BLUE + '  training fraction = ' + str(trainingFraction))
-        return jetCollection, analysis, channel, preselectionCuts, backgroundString, trainingFraction
+        return jetCollection, analysis, channel, preselectionCuts, backgroundString, signal, trainingFraction
 
     if(sys.argv[0] == fileName4 or sys.argv[0] == fileName5):
         print(Fore.BLUE + '         background = ' + str(backgroundString))

@@ -37,13 +37,17 @@ def composition_plot(df, directory, signal, jetCollection, analysis, channel, Pr
     return x,samples
 
 ### Reading from command line
-jetCollection, analysis, channel, preselectionCuts, background, trainingFraction = ReadArgParser()
+jetCollection, analysis, channel, preselectionCuts, background, testSignal, trainingFraction = ReadArgParser()
 print(background)
 
 ### Reading from configuration file
 dfPath, InputFeatures, signalsList, backgroundsList = ReadConfig(analysis, jetCollection)
 dfPath += analysis + '/' + channel
-#signalsList = ['Radion']
+
+### Creating the list of signals to take
+if testSignal == ['all']:
+    testSignal = signalsList.copy()
+
 ### Adding useful variables to the list of input variables
 extendedInputFeatures = InputFeatures.copy()
 extendedInputFeatures.append('isSignal')
@@ -53,7 +57,13 @@ extendedInputFeatures.append('origin')
 data = pd.read_pickle(dfPath + '/MixData_PD_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '.pkl') 
 data = data[extendedInputFeatures]
 
+foundSignal = 0
+
 for signal in signalsList:
+    print(signal)
+    if signal not in testSignal:
+        continue
+    foundSignal += 1
 
     ### Creating output directory
     outputDir = dfPath + '/' + signal + '/' + background
@@ -102,7 +112,6 @@ for signal in signalsList:
     origin_test = np.where(origin_test == 'Zjets', 1, origin_test)
     origin_test = np.where(origin_test == 'Diboson', 2, origin_test)
 
-
     np.savetxt('/nfs/kloe/einstein4/HDBS/PDNNTest_InputDataFrames/TCC/merged/ggF/Signal/X_train_unscaled.txt', X_train, delimiter = ',', fmt = '%s')
     np.savetxt('/nfs/kloe/einstein4/HDBS/PDNNTest_InputDataFrames/TCC/merged/ggF/Signal/X_test_unscaled.txt', X_test, delimiter = ',', fmt = '%s')
 
@@ -140,3 +149,6 @@ for signal in signalsList:
     print('Saved ' + outputDir + '/origin_test_' + outputFileCommonName + '.csv')
     np.savetxt(outputDir + '/X_train_unscaled_' + outputFileCommonName + '.csv', X_train_unscaled, delimiter = ',', fmt = '%s')
     print('Saved ' + outputDir + '/X_train_unscaled_' + outputFileCommonName + '.csv')
+
+if foundSignal == 0:
+    print(Fore.RED + 'Requested signal not found')
