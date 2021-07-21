@@ -12,10 +12,10 @@ jetCollection, analysis, channel, preselectionCuts, background, trainingFraction
 
 ### Reading the configuration file
 dfPath, InputFeatures, massColumnIndex = ReadConfig(analysis, jetCollection)
-dfPath += analysis + '/' + channel + '/' + signal + '/' + background
+dfPath += analysis + '/' + channel + '/' + str(signal) + '/' + background
 
 ### Loading input data
-X_train, X_test, y_train, y_test, m_train_unscaled, m_test_unscaled, X_train_unscaled, origin_train, origin_test = LoadData(dfPath, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts)
+X_train, X_test, y_train, y_test, m_train_unscaled, m_test_unscaled, X_train_unscaled, origin_train, origin_test = LoadData(dfPath, jetCollection, str(signal), analysis, channel, background, trainingFraction, preselectionCuts)
 originsList = list(set(list(origin_train)))
 
 ### Building the DNN
@@ -48,7 +48,7 @@ X_test_bkg = np.delete(X_test_bkg, massColumnIndex, axis = 1)
 X_train_bkg = np.delete(X_train_bkg, massColumnIndex, axis = 1)
 
 if testMass == ['all']:
-    testMass = []
+    testMass = [] ############################ serve?
     testMass = list(str(int(item)) for item in set(list(m_test_unscaled_signal)))
 
 foundTestMass = 0
@@ -63,7 +63,7 @@ for mass in scaledTrainMassPointsList:
     foundTestMass += 1
 
     ### Creating the output directory
-    outputDir = dfPath + '/' + NN + '/useWeights' + str(useWeights) + '/cutTrainEvents' + str(cutTrainEvents) + '/' + str(int(unscaledMass)) + '/case1' ### sposterei il bkg in dfPath e quindi nell'output di datapreprocessing
+    outputDir = dfPath + '/' + NN + '/useWeights' + str(useWeights) + '/cutTrainEvents' + str(cutTrainEvents) + '/' + str(int(unscaledMass))# + '/case1'
     print (format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
 
     ### Creating the logFile
@@ -124,10 +124,12 @@ for mass in scaledTrainMassPointsList:
     origin_train_mass = origin_train_mass[stop:]
 
     if cutTrainEvents == True:
-        X_train_mass, y_train_mass = cutEvents(X_train_mass, y_train_mass)
-
-    logFile.write('\nNumber of real train events with this mass (without validation set): ' + str(X_train_mass.shape[0]) + ' (' + str(sum(y_train_mass)) + ' signal and ' + str(len(y_train_mass) - sum(y_train_mass)) + ' background, Zjets: ' + str(list(origin_train_mass).count(1)) + ' and ' + str(list(origin_train_mass).count(2)) + ' Diboson)')
+        #X_train_mass, y_train_mass = cutEvents(X_train_mass, y_train_mass)
+        X_train_mass, y_train_mass, origin_train_bkg_mass = cutEventsNew(X_train_mass, origin_train_mass)
+        X_train_bkg = X_train_mass[y_train_mass == 0]
+    logFile.write('\nNumber of real train events with this mass (without validation set): ' + str(X_train_mass.shape[0]) + ' (' + str(sum(y_train_mass)) + ' signal and ' + str(len(y_train_mass) - sum(y_train_mass)) + ' background, Zjets: ' + str(list(origin_train_mass).count(1)) + ' and ' + str(list(origin_train_mass).count(2)) + ' Diboson)') ### origin_train_bkg_mass
     
+
     '''
     for ivar in range (0, X_train_mass.shape[1]):
         plt.hist(X_train_mass[:, ivar], bins = 50, histtype = 'step', lw = 2, color = 'blue', density = False)
@@ -167,7 +169,18 @@ for mass in scaledTrainMassPointsList:
         DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background, useWeights, cutTrainEvents, unscaledMass)
 
     ### Prediction on the full test sample
-    #yhat_test = model.predict(X_test_mass, batch_size = 2048) 
+    yhat_test = model.predict(X_test_mass, batch_size = 2048) 
+
+    yhat_train_signal, yhat_train_bkg, yhat_test_signal, yhat_test_bkg = PredictionSigBkg(model, X_train_signal_mass, X_train_bkg, X_test_signal_mass, X_test_bkg)
+
+    print('yhat_train_bkg: ' + str(len(yhat_train_bkg)))
+
+    AUC, WP, WP_rej = DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background, savePlot, useWeights, cutTrainEvents)
+    print(Fore.BLUE + 'AUC: ' + str(AUC))
+    logFile.write('\nAUC: ' + str(AUC) + '\nWorking points: ' + str(WP) + '\nBackground rejection at each working point: ' + str(WP_rej))
+    if savePlot:
+        DrawCM(yhat_test, y_test_mass, True, outputDir, unscaledMass, background)
+
     '''
     np.savetxt('X_test_mass.csv', X_test_mass, delimiter = ',', fmt = '%s')
     np.savetxt('y_test_mass.csv', y_test_mass, delimiter = ',', fmt = '%s')
@@ -193,12 +206,13 @@ for mass in scaledTrainMassPointsList:
         X_test_mass_origin = X_test_mass[filters == 4]
         y_test_mass_origin = y_test_mass[filters == 4]
         yhat_test_origin = model.predict(X_test_mass_origin, batch_size = 2048) 
-        X_train_bkg_origin = X_train_bkg[origin_train_bkg == origin]
+        X_train_bkg_origin = X_train_bkg[origin_train_bkg_mass == origin]
         X_test_bkg_origin = X_test_bkg[origin_test_bkg == origin]
         logFile.write('\n' + background + ' test events: ' + str(list(origin_test_bkg).count(origin)))
         
         ### Prediction on signal and background separately
         yhat_train_signal, yhat_train_bkg, yhat_test_signal, yhat_test_bkg = PredictionSigBkg(model, X_train_signal_mass, X_train_bkg_origin, X_test_signal_mass, X_test_bkg_origin)
+        print('yhat_train_bkg: ' + str(len(yhat_train_bkg)))
         '''
         np.savetxt('X_train_signal_mass.csv', X_train_signal_mass, delimiter = ',', fmt = '%s')
         np.savetxt('X_train_bkg.csv', X_train_bkg, delimiter = ',', fmt = '%s')
@@ -215,6 +229,9 @@ for mass in scaledTrainMassPointsList:
     ### Closing the logFile
     logFile.close()
     print('Saved ' + logFileName)
+    
+    with open(outputDir + '/BkgRejection.txt', 'a') as BkgRejectionFile:
+        BkgRejectionFile.write(str(WP_rej[0]) + '\n')
 
 if foundTestMass == 0:
     print(Fore.RED + 'No signal in the sample has the selected mass')

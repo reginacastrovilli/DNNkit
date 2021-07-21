@@ -45,9 +45,16 @@ dfPath, InputFeatures, signalsList, backgroundsList = ReadConfig(analysis, jetCo
 dfPath += analysis + '/' + channel
 
 ### Creating the list of signals to take
+if testSignal == 'all':
+    testSignal = signalsList.copy()
+else:
+    testSignal = list(testSignal.split('_'))
+
+print(testSignal)
+'''
 if testSignal == ['all']:
     testSignal = signalsList.copy()
-
+'''
 ### Adding useful variables to the list of input variables
 extendedInputFeatures = InputFeatures.copy()
 extendedInputFeatures.append('isSignal')

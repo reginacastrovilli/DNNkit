@@ -41,6 +41,9 @@ def ReadArgParser():
     elif args.Channel != 'ggF' and args.Channel != 'VBF' and sys.argv[0] != fileName1:
         parser.error(Fore.RED + 'Channel can be either \'ggF\' or \'VBF\'')
     signal = args.Signal.split()
+    signalString = 'all'
+    if args.Signal != 'all':
+        signalString = '_'.join([str(item) for item in signal])
     jetCollection = args.JetCollection
     if args.JetCollection is None:
         parser.error(Fore.RED + 'Requested jet collection (\'TCC\' or )')
@@ -85,7 +88,7 @@ def ReadArgParser():
     if sys.argv[0] == fileName3:
         print(Fore.BLUE + '         background = ' + str(backgroundString))
         print(Fore.BLUE + '  training fraction = ' + str(trainingFraction))
-        return jetCollection, analysis, channel, preselectionCuts, backgroundString, signal, trainingFraction
+        return jetCollection, analysis, channel, preselectionCuts, backgroundString, signalString, trainingFraction
 
     if(sys.argv[0] == fileName4 or sys.argv[0] == fileName5):
         print(Fore.BLUE + '         background = ' + str(backgroundString))
@@ -96,7 +99,7 @@ def ReadArgParser():
         print(Fore.BLUE + '             epochs = ' + str(numberOfEpochs))
         print(Fore.BLUE + 'validation fraction = ' + str(validationFraction))
         print(Fore.BLUE + '            dropout = ' + str(dropout))
-        return jetCollection, analysis, channel, preselectionCuts, backgroundString, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, mass
+        return jetCollection, analysis, channel, preselectionCuts, backgroundString, trainingFraction, signalString, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, mass
 
 ### Reading from the configuration file
 import configparser, ast
@@ -153,7 +156,7 @@ def checkCreateDir(dir):
 import csv
 import numpy as np
 def LoadData(dfPath, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts):
-    fileCommonName = jetCollection + '_' + analysis + '_' + channel + '_' + signal + '_' + preselectionCuts + '_' + background + '_' + str(trainingFraction) + 't'
+    fileCommonName = jetCollection + '_' + analysis + '_' + channel + '_' + str(signal) + '_' + preselectionCuts + '_' + background + '_' + str(trainingFraction) + 't'
     X_Train = np.genfromtxt(dfPath + '/X_train_' + fileCommonName + '.csv', delimiter=',') 
     X_Test = np.genfromtxt(dfPath + '/X_test_' + fileCommonName + '.csv', delimiter=',') 
     y_Train = np.genfromtxt(dfPath + '/y_train_' + fileCommonName + '.csv', delimiter=',') 
@@ -337,7 +340,7 @@ def DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, jetCollection, analys
     xvalues = lines[0].get_xdata()
     #print(yvalues[len(yvalues) - 1])    
     plt.scatter([xvalues[len(xvalues) - 1]], [testLoss], label = 'Test', color = 'green')
-    emptyPlot, = plt.plot([0, 0], [1, 1], color = 'white')
+    #emptyPlot, = plt.plot([0, 0], [1, 1], color = 'white')
     titleLoss = NN + ' model loss'
     if NN == 'DNN':
         titleLoss += ' (mass: ' + str(int(mass)) + ' GeV)'
@@ -350,10 +353,10 @@ def DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, jetCollection, analys
     if (PreselectionCuts != 'none'):
         legendText += '\npreselection cuts: ' + PreselectionCuts
     #legendText += '\nTest loss: ' + str(round(testLoss, 2))
-    #plt.figtext(0.5, 0.4, legendText, wrap = True, horizontalalignment = 'left')
+    plt.figtext(0.4, 0.4, legendText, wrap = True, horizontalalignment = 'left')
     #plt.figtext(0.7, 0.7, 'Test loss: ' + str(round(testLoss, 2)), wrap = True, horizontalalignment = 'center')#, fontsize = 10)
-    legend2 = plt.legend([emptyPlot], [legendText], frameon = False, loc = 'center right')
-    plt.gca().add_artist(legend1)
+    #legend2 = plt.legend([emptyPlot], [legendText], frameon = False, loc = 'center right')
+    #plt.gca().add_artist(legend1)
     LossPltName = outputDir + '/Loss.png'
     plt.savefig(LossPltName)
     print('Saved ' + LossPltName)
@@ -395,7 +398,7 @@ def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_tes
     if savePlot:
         plt.ylabel('Norm. entries')
         plt.xlabel('Score')
-        #plt.yscale('log')
+        plt.yscale('log')
         titleScores = NN + ' scores (mass: ' + str(int(mass)) + ' GeV, bkg: ' + bkg + ')'
         plt.title(titleScores)
         plt.legend(loc = 'upper center')
@@ -434,8 +437,8 @@ def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_tes
         legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg) + '\nuseWeights: ' + str(useWeights) + '\ncutTrainEvents: ' + str(cutTrainEvents)
         if (PreselectionCuts != 'none'):
             legendText += '\npreselection cuts: ' + PreselectionCuts
-        plt.figtext(0.5, 0.35, legendText, wrap = True, horizontalalignment = 'left')
-        plt.figtext(0.5, 0.25, 'AUC: ' + str(round(Area, 2)), wrap = True, horizontalalignment = 'center')
+        plt.figtext(0.5, 0.25, legendText, wrap = True, horizontalalignment = 'left')
+        plt.figtext(0.5, 0.2, 'AUC: ' + str(round(Area, 2)), wrap = True, horizontalalignment = 'center')
         ROCPltName = outputDir + '/ROC_' + bkg + '.png'
         plt.savefig(ROCPltName)
         print('Saved ' + ROCPltName)
@@ -537,17 +540,18 @@ def EventsWeightNew(origin_train):
     return w_origin
     '''
     originsList = list(set(list(origin_train)))
-    print(originsList)
     originsNumber = np.array([])
     for origin in originsList:
         originsNumber = np.append(originsNumber, list(origin_train).count(origin))
-    print(originsNumber)
     minNumber = min(originsNumber)
-    print(minNumber)
     w_originList = np.array([])
     for originNumber in originsNumber:
+        '''
+        if originNumber != minNumber:
+            w_originList = np.append(w_originList, minNumber / (originNumber * 2))
+        else:
+        '''
         w_originList = np.append(w_originList, minNumber / originNumber)
-    print(w_originList)
     w_origin_train = origin_train.copy()
     for origin in originsList:
         print(origin)
@@ -570,3 +574,44 @@ def cutEvents(X_train_mass, y_train_mass):
     y_train_mass = X_train_mass_ext[:, X_train_mass_ext.shape[1] - 1]
     X_train_mass = np.delete(X_train_mass_ext, X_train_mass_ext.shape[1] - 1, axis = 1)
     return X_train_mass, y_train_mass
+
+
+def cutEventsNew(X_train_mass, origin_train_mass):
+    X_train_mass_ext = np.insert(X_train_mass, X_train_mass.shape[1], origin_train_mass, axis = 1)
+    X_train_signal_mass_ext = X_train_mass_ext[origin_train_mass == 0]
+    X_train_signal_mass_ext = np.insert(X_train_signal_mass_ext, X_train_signal_mass_ext.shape[1], 1, axis = 1)
+    '''
+    X_train_bkg_mass_ext = X_train_mass_ext[origin_train_mass != 0]
+    X_train_bkg_mass_ext = np.insert(X_train_bkg_mass_ext, X_train_bkg_mass_ext.shape[1], 0, axis = 1)
+    '''
+    originsList = list(set(list(origin_train_mass)))
+    originsNumber = np.array([])
+    for origin in originsList:
+        originsNumber = np.append(originsNumber, list(origin_train_mass).count(origin))
+    print(originsNumber)
+    minNumber = min(originsNumber)
+    print(minNumber)
+    X_train_mass_origin_ext = X_train_signal_mass_ext
+    for origin in range(1, 3):
+        print('concat')
+        X_train_origin_ext = X_train_mass_ext[origin_train_mass == origin]
+        X_train_origin_ext = X_train_origin_ext[:int(minNumber)]
+        X_train_origin_ext = np.insert(X_train_origin_ext, X_train_origin_ext.shape[1], 0, axis = 1)
+        X_train_mass_origin_ext = np.concatenate((X_train_mass_origin_ext, X_train_origin_ext), axis = 0)
+    '''
+    origin_train_mass = X_train_mass_origin_ext[:, X_train_mass_origin_ext.shape[1] - 1]
+    for origin in origin_train_mass:
+        if origin == 0:
+            X_train_mass_origin_ext = np.insert(X_train_mass_origin_ext, X_train_mass_origin_ext.shape[1], 1, axis = 1)
+        else:
+            X_train_mass_origin_ext = np.insert(X_train_mass_origin_ext, X_train_mass_origin_ext.shape[1], 0, axis = 1)
+    '''
+    X_train_mass_origin_ext = ShufflingData(X_train_mass_origin_ext)
+    print(X_train_mass_origin_ext.shape[0])
+    y_train_mass_origin = X_train_mass_origin_ext[:, X_train_mass_origin_ext.shape[1] - 1]
+    X_train_mass_origin_ext = np.delete(X_train_mass_origin_ext, X_train_mass_origin_ext.shape[1] - 1, axis = 1)
+    origin_train_mass = X_train_mass_origin_ext[:, X_train_mass_origin_ext.shape[1] - 1]
+    X_train_bkg_origin_ext = X_train_mass_origin_ext[origin_train_mass != 0]
+    origin_train_bkg_mass = X_train_bkg_origin_ext[:, X_train_bkg_origin_ext.shape[1] - 1]
+    X_train_mass_origin = np.delete(X_train_mass_origin_ext, X_train_mass_origin_ext.shape[1] - 1, axis = 1)
+    return X_train_mass_origin, y_train_mass_origin, origin_train_bkg_mass    
