@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
+from sklearn.compose import ColumnTransformer
 from sklearn.model_selection import train_test_split
 #from tensorflow.keras.utils import to_categorical
 
@@ -38,10 +39,9 @@ def composition_plot(df, directory, signal, jetCollection, analysis, channel, Pr
 
 ### Reading from command line
 jetCollection, analysis, channel, preselectionCuts, background, testSignal, trainingFraction = ReadArgParser()
-print(background)
 
 ### Reading from configuration file
-dfPath, InputFeatures, signalsList, backgroundsList = ReadConfig(analysis, jetCollection)
+dfPath, InputFeatures, signalsList, backgroundsList = ReadConfig(analysis, jetCollection) ### inputFeatures non serve più! 
 dfPath += analysis + '/' + channel
 
 ### Creating the list of signals to take
@@ -50,24 +50,13 @@ if testSignal == 'all':
 else:
     testSignal = list(testSignal.split('_'))
 
-print(testSignal)
-'''
-if testSignal == ['all']:
-    testSignal = signalsList.copy()
-'''
-### Adding useful variables to the list of input variables
-extendedInputFeatures = InputFeatures.copy()
-extendedInputFeatures.append('isSignal')
-extendedInputFeatures.append('origin')
-
 ### Loading input file
 data = pd.read_pickle(dfPath + '/MixData_PD_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '.pkl') 
-data = data[extendedInputFeatures]
 
 foundSignal = 0
 
 for signal in signalsList:
-    print(signal)
+    ### Selecting only the request signal
     if signal not in testSignal:
         continue
     foundSignal += 1
@@ -82,80 +71,48 @@ for signal in signalsList:
     else:
         inputOrigin = list(background.split('_'))
     inputOrigin.append(signal)
-    print(inputOrigin)
 
     ### Selecting events according to their origin 
     data_set = data[data['origin'].isin(inputOrigin)]
 
     ### Plotting the dataframe composition
     composition = composition_plot(data_set, outputDir, signal, jetCollection, analysis, channel, preselectionCuts, background)
-    
-    ### Saving the dataframe
+
+    ### Splitting data into train and test set
+    data_train, data_test = train_test_split(data_set, train_size = trainingFraction)
+
+    ### Saving unscaled data
     outputFileCommonName = jetCollection + '_' + analysis + '_' + channel + '_' + signal + '_' + preselectionCuts + '_' + background + '_' + str(trainingFraction) + 't'
-    dataSetName = outputDir + '/inputDataSet_' + outputFileCommonName + '.pkl'
-    data_set.to_pickle(dataSetName)
-    print('Saved ' + dataSetName)
+    dataTrainUnscaledName = outputDir + '/data_train_unscaled_' + outputFileCommonName + '.pkl' 
+    data_train.to_pickle(dataTrainUnscaledName)
+    print('Saved ' + dataTrainUnscaledName)
+    m_test_unscaled = data_test['mass']
+    mTestUnscaledName = outputDir + '/m_test_unscaled_' + outputFileCommonName + '.pkl' 
+    m_test_unscaled.to_pickle(mTestUnscaledName)
+    print('Saved ' + mTestUnscaledName)
 
-    ### Creating x and y arrays 
-    X_input = data_set[InputFeatures].values
-    y_input = np.array(data_set['isSignal'])
-    origin_input = np.array(data_set['origin'])
-    massColumnIndex = InputFeatures.index('mass')
+    ### Saving list of columns names
+    columnsNames = data_train.columns
 
-    ### Creating train/test arrays
-    X_train, X_test, y_train, y_test, origin_train, origin_test = train_test_split(X_input, y_input, origin_input, train_size = trainingFraction)
-    #origin_train = pd.DataFrame(origin_train)
-    #origin_test = pd.DataFrame(origin_test)
-
-    origin_train = np.array(origin_train)
-    print(origin_train)
-    origin_train = np.where(origin_train == 'Radion', 0, origin_train)
-    origin_train = np.where(origin_train == 'Zjets', 1, origin_train)
-    origin_train = np.where(origin_train == 'Diboson', 2, origin_train)
-    print(origin_train)
-
-    origin_test = np.array(origin_test)
-    origin_test = np.where(origin_test == 'Radion', 0, origin_test)
-    origin_test = np.where(origin_test == 'Zjets', 1, origin_test)
-    origin_test = np.where(origin_test == 'Diboson', 2, origin_test)
-
-    np.savetxt('/nfs/kloe/einstein4/HDBS/PDNNTest_InputDataFrames/TCC/merged/ggF/Signal/X_train_unscaled.txt', X_train, delimiter = ',', fmt = '%s')
-    np.savetxt('/nfs/kloe/einstein4/HDBS/PDNNTest_InputDataFrames/TCC/merged/ggF/Signal/X_test_unscaled.txt', X_test, delimiter = ',', fmt = '%s')
-
-    ### Saving unscaled mass values and train sample
-    m_train_unscaled = X_train[:, massColumnIndex]
-    m_test_unscaled = X_test[:, massColumnIndex]
-    X_train_unscaled = X_train.copy()
-
-    ### Scaling train/test arrays
-    scaler_train = StandardScaler().fit(X_train)
+    ### Scaling InputFeatures of train and test set
+    ct = ColumnTransformer([('scaler', StandardScaler(), InputFeatures)], remainder='passthrough')
+    scaler_train = ct.fit(data_train)
+    data_train = scaler_train.transform(data_train)
+    data_test = scaler_train.transform(data_test)
     #print(scaler_train.mean_)
     #print(scaler_train.var_)
-    X_train = np.array(scaler_train.transform(X_train), dtype=object)
-    X_test = np.array(scaler_train.transform(X_test), dtype=object)
 
-    np.savetxt('/nfs/kloe/einstein4/HDBS/PDNNTest_InputDataFrames/TCC/merged/ggF/Signal/X_train_scaled.txt', X_train, delimiter = ',', fmt = '%s')
-    np.savetxt('/nfs/kloe/einstein4/HDBS/PDNNTest_InputDataFrames/TCC/merged/ggF/Signal/X_test_scaled.txt', X_test, delimiter = ',', fmt = '%s')
+    ### Converting numpy arrays into pandas dataframes
+    data_train = pd.DataFrame(data_train, columns = columnsNames)
+    data_test = pd.DataFrame(data_test, columns = columnsNames)
 
-    ### Saving dataframes as csv files
-    np.savetxt(outputDir + '/X_train_' + outputFileCommonName + '.csv', X_train, delimiter = ',', fmt = '%s')
-    print('Saved ' + outputDir + '/X_train_' + outputFileCommonName + '.csv')
-    np.savetxt(outputDir + '/X_test_' + outputFileCommonName + '.csv', X_test, delimiter = ',', fmt = '%s')
-    print('Saved ' + outputDir + '/X_test_' + outputFileCommonName + '.csv')
-    np.savetxt(outputDir + '/y_train_' + outputFileCommonName + '.csv', y_train, delimiter = ',', fmt = '%s')
-    print('Saved ' + outputDir + '/y_train_' + outputFileCommonName + '.csv')
-    np.savetxt(outputDir + '/y_test_' + outputFileCommonName + '.csv', y_test, delimiter = ',', fmt = '%s')
-    print('Saved ' + outputDir + '/y_test_' + outputFileCommonName + '.csv')
-    np.savetxt(outputDir + '/m_train_unscaled_' + outputFileCommonName + '.csv', m_train_unscaled, delimiter = ',', fmt = '%s')
-    print('Saved ' + outputDir + '/m_train_unscaled_' + outputFileCommonName + '.csv')
-    np.savetxt(outputDir + '/m_test_unscaled_' + outputFileCommonName + '.csv', m_test_unscaled, delimiter = ',', fmt = '%s')
-    print('Saved ' + outputDir + '/m_test_unscaled_' + outputFileCommonName + '.csv')
-    np.savetxt(outputDir + '/origin_train_' + outputFileCommonName + '.csv', origin_train, delimiter = ',', fmt = '%s')
-    print('Saved ' + outputDir + '/origin_train_' + outputFileCommonName + '.csv')
-    np.savetxt(outputDir + '/origin_test_' + outputFileCommonName + '.csv', origin_test, delimiter = ',', fmt = '%s')
-    print('Saved ' + outputDir + '/origin_test_' + outputFileCommonName + '.csv')
-    np.savetxt(outputDir + '/X_train_unscaled_' + outputFileCommonName + '.csv', X_train_unscaled, delimiter = ',', fmt = '%s')
-    print('Saved ' + outputDir + '/X_train_unscaled_' + outputFileCommonName + '.csv')
+    ### Saving scaled dataframes
+    dataTrainName = outputDir + '/data_train_' + outputFileCommonName + '.pkl'
+    data_train.to_pickle(dataTrainName)
+    print('Saved ' + dataTrainName)
+    dataTestName = outputDir + '/data_test_' + outputFileCommonName + '.pkl'
+    data_test.to_pickle(dataTestName)
+    print('Saved ' + dataTestName)
 
 if foundSignal == 0:
     print(Fore.RED + 'Requested signal not found')
