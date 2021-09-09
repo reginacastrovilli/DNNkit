@@ -50,12 +50,8 @@ model = BuildDNN(len(InputFeatures), numberOfNodes, numberOfLayers, dropout)
 model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', metrics = ['accuracy'])
 
 ### Training
-callbacks = [
-    # If we don't have a decrease of the loss for 11 epochs, terminate training.
-    EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss')#, ModelCheckpoint('model.hdf5', save_weights_only = False, monitor = 'val_loss', mode = 'min', verbose = True, save_best_only = True) 
-]
 print(Fore.BLUE + 'Training the ' + NN)
-modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = 2048,  validation_split = validationFraction, verbose = 1, callbacks = callbacks)
+modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = 2048,  validation_split = validationFraction, verbose = 1, callbacks = EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss', restore_best_weights = True))
 
 ### Saving to files
 SaveModel(model, X_train_unscaled, outputDir)

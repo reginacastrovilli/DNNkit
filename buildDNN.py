@@ -1,4 +1,6 @@
 from Functions import *
+
+### Setting a seed for reproducibility
 import tensorflow as tf
 tf.random.set_seed(1234)
 
@@ -106,13 +108,9 @@ for unscaledMass in testMass:
         w_train_mass = weightEvents(origin_train_mass)
 
     ### Compiling and training
-    callbacks = [
-        # If we don't have a decrease of the loss for 11 epochs, terminate training.
-        EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss', restore_best_weights = True)
-    ]
     model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', metrics = ['accuracy'])
     print(Fore.BLUE + 'Training the DNN on train events with mass ' + str(int(unscaledMass)))
-    modelMetricsHistory = model.fit(X_train_mass, y_train_mass, sample_weight = w_train_mass, epochs = numberOfEpochs, batch_size = 2048, validation_split = validationFraction, verbose = True, callbacks = callbacks)
+    modelMetricsHistory = model.fit(X_train_mass, y_train_mass, sample_weight = w_train_mass, epochs = numberOfEpochs, batch_size = 2048, validation_data = (X_train_mass, y_train_mass), verbose = True, callbacks = EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss', restore_best_weights = True))
 
     ### Saving to files
     SaveModel(model, X_train_unscaled, outputDir)
