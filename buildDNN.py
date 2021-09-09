@@ -1,4 +1,6 @@
 from Functions import *
+import tensorflow as tf
+tf.random.set_seed(1234)
 
 savePlot = True
 NN = 'DNN'
@@ -106,7 +108,7 @@ for unscaledMass in testMass:
     ### Compiling and training
     callbacks = [
         # If we don't have a decrease of the loss for 11 epochs, terminate training.
-        EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss')
+        EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss', restore_best_weights = True)
     ]
     model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', metrics = ['accuracy'])
     print(Fore.BLUE + 'Training the DNN on train events with mass ' + str(int(unscaledMass)))
