@@ -47,7 +47,7 @@ if(useWeights == True):
 
 ### Building and compiling the PDNN
 model = BuildDNN(len(InputFeatures), numberOfNodes, numberOfLayers, dropout)
-model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', metrics = ['accuracy'])
+model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', weighted_metrics = ['accuracy'])
 
 ### Training
 print(Fore.BLUE + 'Training the ' + NN)

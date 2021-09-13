@@ -62,6 +62,7 @@ for unscaledMass in testMass:
 
     ### Creating the output directory
     outputDir = dfPath + '/' + NN + '/useWeights' + str(useWeights) + '/cutTrainEvents' + str(cutTrainEvents) + '/' + str(int(unscaledMass))
+    #outputDir =  NN + '/useWeights' + str(useWeights) + '/cutTrainEvents' + str(cutTrainEvents) + '/' + str(int(unscaledMass))
     print (format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
 
     ### Creating the logFile
@@ -108,9 +109,9 @@ for unscaledMass in testMass:
         w_train_mass = weightEvents(origin_train_mass)
 
     ### Compiling and training
-    model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', metrics = ['accuracy'])
+    model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', weighted_metrics = ['accuracy'])
     print(Fore.BLUE + 'Training the DNN on train events with mass ' + str(int(unscaledMass)))
-    modelMetricsHistory = model.fit(X_train_mass, y_train_mass, sample_weight = w_train_mass, epochs = numberOfEpochs, batch_size = 2048, validation_data = (X_train_mass, y_train_mass), verbose = True, callbacks = EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss', restore_best_weights = True))
+    modelMetricsHistory = model.fit(X_train_mass, y_train_mass, sample_weight = w_train_mass, epochs = numberOfEpochs, batch_size = 2048, validation_split = validationFraction, verbose = True, callbacks = EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss', restore_best_weights = True))
 
     ### Saving to files
     SaveModel(model, X_train_unscaled, outputDir)
