@@ -23,7 +23,7 @@ def ReadArgParser():
     parser.add_argument('-t', '--TrainingFraction', help = 'Relative size of the training sample, between 0 and 1', default = 0.8)
     parser.add_argument('-p', '--PreselectionCuts', help = 'Preselection cut', type = str)
     parser.add_argument('-n', '--Nodes', help = 'Number of nodes of the (p)DNN, should always be >= nColumns and strictly positive', default = 32)
-    parser.add_argument('-l', '--Layers', help = 'Number of layers of the (p)DNN', default = 2)
+    parser.add_argument('-l', '--Layers', help = 'Number of hidden layers of the (p)DNN', default = 2)
     parser.add_argument('-e', '--Epochs', help = 'Number of epochs for the training', default = 150)
     parser.add_argument('-v', '--Validation', help = 'Fraction of the training data that will actually be used for validation', default = 0.2)
     parser.add_argument('-d', '--Dropout', help = 'Fraction of the neurons to drop during the training', default = 0.2)
@@ -92,14 +92,14 @@ def ReadArgParser():
         return jetCollection, analysis, channel, preselectionCuts, backgroundString, signalString, trainingFraction
 
     if(sys.argv[0] == fileName4 or sys.argv[0] == fileName5):
-        print(Fore.BLUE + '      background(s) = ' + str(backgroundString))
-        print(Fore.BLUE + '      test mass(es) = ' + str(mass))
-        print(Fore.BLUE + '  training fraction = ' + str(trainingFraction))
-        print(Fore.BLUE + '    number of nodes = ' + str(numberOfNodes))
-        print(Fore.BLUE + '   number of layers = ' + str(numberOfLayers))
-        print(Fore.BLUE + '   number of epochs = ' + str(numberOfEpochs))
-        print(Fore.BLUE + 'validation fraction = ' + str(validationFraction))
-        print(Fore.BLUE + '            dropout = ' + str(dropout))
+        print(Fore.BLUE + '          background(s) = ' + str(backgroundString))
+        print(Fore.BLUE + '          test mass(es) = ' + str(mass))
+        print(Fore.BLUE + '      training fraction = ' + str(trainingFraction))
+        print(Fore.BLUE + '        number of nodes = ' + str(numberOfNodes))
+        print(Fore.BLUE + 'number of hidden layers = ' + str(numberOfLayers))
+        print(Fore.BLUE + '       number of epochs = ' + str(numberOfEpochs))
+        print(Fore.BLUE + '    validation fraction = ' + str(validationFraction))
+        print(Fore.BLUE + '                dropout = ' + str(dropout))
         return jetCollection, analysis, channel, preselectionCuts, backgroundString, trainingFraction, signalString, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, mass
 
 ### Reading from the configuration file
@@ -187,13 +187,14 @@ from keras.layers import Dense, Dropout, Input, BatchNormalization
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.layers.core import Dense, Activation
 
-def BuildDNN(N_input, width, depth, dropout):
+def BuildDNN(N_input, nodesNumber, layersNumber, dropout):
     model = Sequential()
-    model.add(Dense(units = width, input_dim = N_input))
+    model.add(Dense(units = nodesNumber, input_dim = N_input))
     model.add(Activation('relu'))
-    model.add(Dropout(dropout))
-    for i in range(0, depth):
-        model.add(Dense(width))
+    if dropout > 0:
+        model.add(Dropout(dropout))
+    for i in range(0, layersNumber):
+        model.add(Dense(nodesNumber))
         model.add(Activation('relu'))
         model.add(Dropout(dropout))
     model.add(Dense(1, activation = 'sigmoid'))
@@ -566,16 +567,11 @@ def cutEvents(data_train_mass):
     for origin in originsList:
         originsNumber = np.append(originsNumber, list(data_train_mass['origin']).count(origin))
     minNumber = int(min(originsNumber))
-    print(minNumber)
     for origin in originsList:
         data_train_mass_origin = data_train_mass[data_train_mass['origin'] == origin]
-        print(len(data_train_mass_origin))
         if origin == 'Radion':
             data_train_mass_origin = data_train_mass_origin
         else:
-            data_train_mass_origin = data_train_mass_origin[:int(minNumber / 2)]
-        print(len(data_train_mass_origin))
+            data_train_mass_origin = data_train_mass_origin[:int(minNumber)]
         data_train_mass_cut = pd.concat([data_train_mass_cut, data_train_mass_origin], ignore_index = True)
-    print(len(data_train_mass_cut))
-    print(data_train_mass_cut)
     return data_train_mass_cut

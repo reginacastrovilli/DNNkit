@@ -62,7 +62,7 @@ for i in inputFiles:
         continue
     ### Loading input file
     inFile = dfPath + i + '_DF.pkl'
-    print('Loading ' + inFile)
+    print(Fore.GREEN + 'Loading ' + inFile)
     logFile.write(i + '_DF.pkl')
     if counter != (len(inputFiles) - 1):
         logFile.write(', ')
@@ -122,29 +122,29 @@ for i in inputFiles:
         ### Creating an array of mass values corresponding to the values in the 'DSID' column
         masses = np.zeros(len(newDf['DSID']))
         DSID_values = set(newDf['DSID'])
-        print('DSID values: ', DSID_values)
+        print(Fore.BLUE + 'DSID values in the dataset: ' + str(DSID_values))
         for x in DSID_values:
             found = False
-            print('searching for ', x,' DSID')
+            print(Fore.BLUE + 'Searching for mass associated to DSID = ' + str(x) + '...')
             for j in range(len(DSID)):
                 if (x == int(DSID[j])):
                     found=True
-                    print('found mass:',int(mass[j]))
+                    print(Fore.BLUE + '... found mass = ' +  str(int(mass[j])))
                     masses[np.where(newDf['DSID']==x)]=mass[j]
                     continue
             if found==False:
-                print('mass related to',x,'not found')
-        print('found masses:',set(masses))
+                print(Fore.RED + '... mass not found!')
+        print(Fore.BLUE + 'Masses found in the dataset: ' + str(set(masses)))
         ### Inserting the new array as a new 'mass' column in the dataframe
         newDf.insert(len(newDf.columns), 'mass', masses, True)
 
     ### Selecting in the dataframe only the variables that will be given as input to the neural networks
     newDf = newDf[InputFeatures]
 
-    print(newDf[0:5])
+    #print(newDf[0:5])
     df.append(newDf)
     counter+=1
-
+exit()
 df_pd = pd.DataFrame()
 for i in range(len(df)):
     df_pd = pd.concat([df_pd, df[i]], ignore_index = True)
