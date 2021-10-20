@@ -4,8 +4,6 @@ fileName2 = 'buildDataset.py'
 fileName3 = 'splitDataset.py'
 fileName4 = 'buildDNN.py'
 fileName5 = 'buildPDNN.py'
-#fileName4 = 'buildPDNNperEnrico.py'
-#fileName4 = 'testDNN.py'
 
 ### Reading the command line
 from argparse import ArgumentParser
@@ -512,8 +510,11 @@ def weightEvents(origin_train):
     originsNumber = np.array([])
     for origin in originsList:
         originsNumber = np.append(originsNumber, list(origin_train).count(origin))
+    #print(originsNumber)
     minNumber = min(originsNumber)
-    weights = minNumber / originsNumber
+    weights = 0.5 * minNumber / originsNumber
+    weights = np.where(weights == 0.5, 1, weights)
+    #print(weights)
     w_origin_train = origin_train.copy()
     for origin in originsList:
         w_origin_train = np.where(w_origin_train == str(origin), weights[np.where(originsList == origin)], w_origin_train)

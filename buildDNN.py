@@ -1,4 +1,5 @@
 from Functions import *
+from sklearn.model_selection import train_test_split
 
 ### Setting a seed for reproducibility
 import tensorflow as tf
@@ -6,10 +7,10 @@ tf.random.set_seed(1234)
 
 savePlot = True
 NN = 'DNN'
-useWeights = True
-cutTrainEvents = False
-print(Fore.BLUE + '         useWeights = ' + str(useWeights))
-print(Fore.BLUE + '     cutTrainEvents = ' + str(cutTrainEvents))
+useWeights = False
+cutTrainEvents = True
+print(Fore.BLUE + '             useWeights = ' + str(useWeights))
+print(Fore.BLUE + '         cutTrainEvents = ' + str(cutTrainEvents))
 
 ### Reading the command line
 jetCollection, analysis, channel, preselectionCuts, background, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, testMass = ReadArgParser()
@@ -62,7 +63,6 @@ for unscaledMass in testMass:
 
     ### Creating the output directory
     outputDir = dfPath + '/' + NN + '/useWeights' + str(useWeights) + '/cutTrainEvents' + str(cutTrainEvents) + '/' + str(int(unscaledMass))
-    #outputDir =  NN + '/useWeights' + str(useWeights) + '/cutTrainEvents' + str(cutTrainEvents) + '/' + str(int(unscaledMass))
     print (format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
 
     ### Creating the logFile
@@ -83,7 +83,6 @@ for unscaledMass in testMass:
 
     if cutTrainEvents == True:
         data_train_mass = cutEvents(data_train_mass)
-        print(len(data_train_mass))
 
     ### Shuffling data
     data_train_mass = ShufflingData(data_train_mass)
@@ -104,13 +103,31 @@ for unscaledMass in testMass:
     X_test_mass = np.asarray(X_test_mass.values).astype(np.float32)
 
     ### Weighting train events
-    w_train_mass = None
     if(useWeights == True):
         w_train_mass = weightEvents(origin_train_mass)
-
+        logFile.write('\nWeights for train events: ' + str(list(set(list(w_train_mass)))))
+    '''
+    ### Extracting validation sample
+    if(useWeights == False):
+        w_train_mass = None
+        w_val_mass = None
+        X_train_mass, X_val_mass, y_train_mass, y_val_mass, origin_train_mass, origin_val_mass = train_test_split(X_train_mass, y_train_mass, origin_train_mass, train_size = 1 - validationFraction, random_state = 123)
+    elif(useWeights == True):
+        X_train_mass, X_val_mass, y_train_mass, y_val_mass, w_train_mass, w_val_mass = train_test_split(X_train_mass, y_train_mass, w_train_mass, train_size = 1 - validationFraction, random_state = 123)
+    logFile.write('\nNumber of train events with mass ' + str(unscaledMass) + ' without validation: ' + str(len(y_train_mass)) + ' (' + str(int(sum(y_train_mass))) + ' signal and ' + str(int(len(y_train_mass) - sum(y_train_mass))) + ' background)')
+    logFile.write('\nNumber of validation events with mass ' + str(unscaledMass) + ': ' + str(len(y_val_mass)) + ' (' + str(int(sum(y_val_mass))) + ' signal and ' + str(int(len(y_val_mass) - sum(y_val_mass))) + ' background)')
+    '''
     ### Compiling and training
-    model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', weighted_metrics = ['accuracy'])
+    if(useWeights == False):
+        print('Compiling without weights')
+        w_train_mass = None
+        model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', metrics = ['accuracy'])
+    elif(useWeights == True):
+        print('Compiling with weights')
+        model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', weighted_metrics = ['accuracy'])
+        
     print(Fore.BLUE + 'Training the DNN on train events with mass ' + str(int(unscaledMass)))
+    #modelMetricsHistory = model.fit(X_train_mass, y_train_mass, sample_weight = w_train_mass, epochs = numberOfEpochs, batch_size = 2048, validation_data = (X_val_mass, y_val_mass, w_val_mass), verbose = True, callbacks = EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss', restore_best_weights = True))
     modelMetricsHistory = model.fit(X_train_mass, y_train_mass, sample_weight = w_train_mass, epochs = numberOfEpochs, batch_size = 2048, validation_split = validationFraction, verbose = True, callbacks = EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss', restore_best_weights = True))
 
     ### Saving to files
