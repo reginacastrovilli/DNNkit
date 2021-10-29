@@ -1,5 +1,4 @@
 from Functions import *
-from sklearn.model_selection import train_test_split
 
 ### Setting a seed for reproducibility
 import tensorflow as tf
@@ -7,10 +6,7 @@ tf.random.set_seed(1234)
 
 savePlot = True
 NN = 'DNN'
-useWeights = False
-cutTrainEvents = True
-print(Fore.BLUE + '             useWeights = ' + str(useWeights))
-print(Fore.BLUE + '         cutTrainEvents = ' + str(cutTrainEvents))
+batchSize = 2048
 
 ### Reading the command line
 jetCollection, analysis, channel, preselectionCuts, background, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, testMass = ReadArgParser()
@@ -22,13 +18,9 @@ dfPath += analysis + '/' + channel + '/' + str(signal) + '/' + background
 ### Loading input data
 data_train, data_test, X_train_unscaled, m_train_unscaled, m_test_unscaled = LoadData(dfPath, jetCollection, str(signal), analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures) 
 
-### Removing 'mass' from the list of variables that will be given as input to the DNN
+### Removing 'mass' from the list of variables that will be given as input to the DNN and from the unscaled train sample (otherwise files saved with "SaveModel" will have the wrong format) 
 InputFeatures.remove('mass')
-
-originsBkgTest = list(background.split('_'))
-
-### Building the DNN
-model = BuildDNN(len(InputFeatures), numberOfNodes, numberOfLayers, dropout)
+X_train_unscaled = X_train_unscaled[InputFeatures]
 
 ### Dividing signal from background
 data_test_signal = data_test[data_test['isSignal'] == 1]
@@ -42,7 +34,7 @@ m_train_unscaled_signal = m_train_unscaled[data_train['isSignal'] == 1]
 unscaledTrainMassPointsList = list(dict.fromkeys(list(m_train_unscaled_signal)))
 
 ### Extracting scaled test/train signal masses
-m_test_signal = data_test_signal['mass']
+#m_test_signal = data_test_signal['mass']
 m_train_signal = data_train_signal['mass']
 scaledTrainMassPointsList = list(dict.fromkeys(list(m_train_signal)))
 
@@ -62,8 +54,8 @@ for unscaledMass in testMass:
     mass = scaledTrainMassPointsList[unscaledTrainMassPointsList.index(unscaledMass)]
 
     ### Creating the output directory
-    outputDir = dfPath + '/' + NN + '/useWeights' + str(useWeights) + '/cutTrainEvents' + str(cutTrainEvents) + '/' + str(int(unscaledMass))
-    print (format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
+    outputDir = dfPath + '/' + NN + '/' + str(int(unscaledMass))
+    print(format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
 
     ### Creating the logFile
     logFileName = outputDir + '/logFile.txt'
@@ -80,9 +72,6 @@ for unscaledMass in testMass:
     ### Putting signal and background events back together
     data_train_mass = pd.concat([data_train_signal_mass, data_train_bkg], ignore_index = True)
     data_test_mass = pd.concat([data_test_signal_mass, data_test_bkg], ignore_index = True)
-
-    if cutTrainEvents == True:
-        data_train_mass = cutEvents(data_train_mass)
 
     ### Shuffling data
     data_train_mass = ShufflingData(data_train_mass)
@@ -103,32 +92,16 @@ for unscaledMass in testMass:
     X_test_mass = np.asarray(X_test_mass.values).astype(np.float32)
 
     ### Weighting train events
-    if(useWeights == True):
-        w_train_mass = weightEvents(origin_train_mass)
-        logFile.write('\nWeights for train events: ' + str(list(set(list(w_train_mass)))))
-    '''
-    ### Extracting validation sample
-    if(useWeights == False):
-        w_train_mass = None
-        w_val_mass = None
-        X_train_mass, X_val_mass, y_train_mass, y_val_mass, origin_train_mass, origin_val_mass = train_test_split(X_train_mass, y_train_mass, origin_train_mass, train_size = 1 - validationFraction, random_state = 123)
-    elif(useWeights == True):
-        X_train_mass, X_val_mass, y_train_mass, y_val_mass, w_train_mass, w_val_mass = train_test_split(X_train_mass, y_train_mass, w_train_mass, train_size = 1 - validationFraction, random_state = 123)
-    logFile.write('\nNumber of train events with mass ' + str(unscaledMass) + ' without validation: ' + str(len(y_train_mass)) + ' (' + str(int(sum(y_train_mass))) + ' signal and ' + str(int(len(y_train_mass) - sum(y_train_mass))) + ' background)')
-    logFile.write('\nNumber of validation events with mass ' + str(unscaledMass) + ': ' + str(len(y_val_mass)) + ' (' + str(int(sum(y_val_mass))) + ' signal and ' + str(int(len(y_val_mass) - sum(y_val_mass))) + ' background)')
-    '''
-    ### Compiling and training
-    if(useWeights == False):
-        print('Compiling without weights')
-        w_train_mass = None
-        model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', metrics = ['accuracy'])
-    elif(useWeights == True):
-        print('Compiling with weights')
-        model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', weighted_metrics = ['accuracy'])
+    w_train_mass, origins_list, origins_numbers = weightEvents(origin_train_mass)
+    logFile.write('\nOrigins list: ' + str(origins_list) + '\nNumber of events with the corresponding origin: ' + str(origins_numbers))
+    #logFile.write('\nWeights for train events: ' + str(list(set(list(w_train_mass)))))
+
+    ### Building the model, compiling and training
+    model = BuildDNN(len(InputFeatures), numberOfNodes, numberOfLayers, dropout)
+    model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', weighted_metrics = ['accuracy'])
         
     print(Fore.BLUE + 'Training the DNN on train events with mass ' + str(int(unscaledMass)))
-    #modelMetricsHistory = model.fit(X_train_mass, y_train_mass, sample_weight = w_train_mass, epochs = numberOfEpochs, batch_size = 2048, validation_data = (X_val_mass, y_val_mass, w_val_mass), verbose = True, callbacks = EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss', restore_best_weights = True))
-    modelMetricsHistory = model.fit(X_train_mass, y_train_mass, sample_weight = w_train_mass, epochs = numberOfEpochs, batch_size = 2048, validation_split = validationFraction, verbose = True, callbacks = EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss', restore_best_weights = True))
+    modelMetricsHistory = model.fit(X_train_mass, y_train_mass, sample_weight = w_train_mass, epochs = numberOfEpochs, batch_size = batchSize, validation_split = validationFraction, verbose = True, callbacks = EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss', restore_best_weights = True))
 
     ### Saving to files
     SaveModel(model, X_train_unscaled, outputDir)
@@ -140,11 +113,11 @@ for unscaledMass in testMass:
 
     ### Drawing accuracy and loss
     if savePlot:
-        DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background, useWeights, cutTrainEvents, unscaledMass)
-        DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background, useWeights, cutTrainEvents, unscaledMass)
+        DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background, unscaledMass)
+        DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background, unscaledMass)
 
     ### Prediction on the whole test sample and confusion matrix
-    yhat_test = model.predict(X_test_mass, batch_size = 2048) 
+    yhat_test = model.predict(X_test_mass, batch_size = batchSize) 
     if savePlot:
         DrawCM(yhat_test, y_test_mass, True, outputDir, unscaledMass, background)
 
@@ -154,26 +127,35 @@ for unscaledMass in testMass:
     X_train_bkg = X_train_mass[y_train_mass == 0]
     X_test_bkg = X_test_mass[y_test_mass == 0]
     yhat_train_signal, yhat_train_bkg, yhat_test_signal, yhat_test_bkg = PredictionSigBkg(model, X_train_signal_mass, X_train_bkg, X_test_signal_mass, X_test_bkg)
+    '''
+    scoresFile = open(outputDir + '/Scores_train_signal.txt', 'w')
+    for score in yhat_train_signal:
+        scoresFile.write(str(score) + '\n')
+    scoresFile.close()
 
+    scoresFile = open(outputDir + '/Scores_train_bkg.txt', 'w')
+    for score in yhat_train_bkg:
+        scoresFile.write(str(score) + '\n')
+    scoresFile.close()
+
+    scoresFile = open(outputDir + '/Scores_test_signal.txt', 'w')
+    for score in yhat_test_signal:
+        scoresFile.write(str(score) + '\n')
+    scoresFile.close()
+
+    scoresFile = open(outputDir + '/Scores_test_bkg.txt', 'w')
+    for score in yhat_test_bkg:
+        scoresFile.write(str(score) + '\n')
+    scoresFile.close()
+    '''
     ### Drawing scores, ROC and background rejection
-    AUC, WP, WP_rej = DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background, savePlot, useWeights, cutTrainEvents)
+    AUC, WP, WP_rej = DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background, savePlot)
     print(Fore.BLUE + 'AUC (Area Under ROC Curve): ' + str(AUC))
     logFile.write('\nAUC: ' + str(AUC) + '\nWorking points: ' + str(WP) + '\nBackground rejection at each working point: ' + str(WP_rej))
 
     '''
-    with open(outputDir + '/BkgRejection_' + background + '_last.txt', 'a') as BkgRejectionFile:
-        BkgRejectionFile.write(str(WP_rej[0]) + '\n')
-
-    np.savetxt('data_test_mass.csv', data_test_mass, delimiter = ',', fmt = '%s')
-    np.savetxt('y_test_mass.csv', y_test_mass, delimiter = ',', fmt = '%s')
-
-    scoresFile = open(outputDir + '/Scores.txt', 'w')
-    for score in yhat_test:
-        scoresFile.write(str(score) + '\n')
-    scoresFile.close()
-    '''
-
     ### Dividing sample by origin
+    originsBkgTest = list(background.split('_'))
     if len(originsBkgTest) > 1:
         for origin in originsBkgTest:
             print(Fore.BLUE + 'Evaluating the performance of the DNN on events with mass ' + str(unscaledMass) + ' and origin = \'' + signal + '\' or \'' + origin + '\'')
@@ -187,7 +169,7 @@ for unscaledMass in testMass:
             y_test_mass_origin = y_test_mass[originsTest == 1]
 
             ### Prediction on the whole test sample and confusion matrix
-            yhat_test_origin = model.predict(X_test_mass_origin, batch_size = 2048) 
+            yhat_test_origin = model.predict(X_test_mass_origin, batch_size = batchSize) 
             if savePlot:
                 DrawCM(yhat_test_origin, y_test_mass_origin, True, outputDir, unscaledMass, origin)
 
@@ -202,8 +184,8 @@ for unscaledMass in testMass:
             AUC, WP, WP_rej = DrawEfficiency(yhat_train_signal_origin, yhat_test_signal_origin, yhat_train_bkg_origin, yhat_test_bkg_origin, outputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, origin, savePlot, useWeights, cutTrainEvents)
             print(Fore.BLUE + 'AUC (Area Under ROC Curve): ' + str(AUC))
             logFile.write('\nAUC: ' + str(AUC) + '\nWorking points: ' + str(WP) + '\nBackground rejection at each working point: ' + str(WP_rej))
-
-            '''
+    '''
+    '''
             with open(outputDir + '/BkgRejection_' + origin + '_last.txt', 'a') as BkgRejectionFile:
                 BkgRejectionFile.write(str(WP_rej[0]) + '\n')
 
@@ -212,7 +194,7 @@ for unscaledMass in testMass:
 
             np.savetxt('data_test_signal_mass.csv', data_test_signal_mass, delimiter = ',', fmt = '%s')
             np.savetxt('data_test_bkg.csv', data_test_bkg, delimiter = ',', fmt = '%s')
-            '''
+    '''
 
     ### Closing the logFile
     logFile.close()

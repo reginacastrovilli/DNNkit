@@ -2,10 +2,7 @@ from Functions import *
 
 savePlot = True
 NN = 'PDNN'
-useWeights = True
-cutTrainEvents = False
-print(Fore.BLUE + '         useWeights = ' + str(useWeights))
-print(Fore.BLUE + '     cutTrainEvents = ' + str(cutTrainEvents))
+batchSize = 2048
 
 ### Reading the command line
 jetCollection, analysis, channel, preselectionCuts, background, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, testMass = ReadArgParser()
@@ -16,7 +13,7 @@ dfPath, InputFeatures = ReadConfig(analysis, jetCollection)
 dfPath += analysis + '/' + channel + '/' + signal + '/' + background + '/'
 
 ### Creating the output directory and the logFile
-outputDir = dfPath + NN + '/useWeights' + str(useWeights) + '/cutTrainEvents' + str(cutTrainEvents)
+outputDir = dfPath + NN
 print (format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
 logFileName = outputDir + '/logFile.txt'
 logFile = open(logFileName, 'w')
@@ -40,10 +37,12 @@ logFile.write(logString)
 logInfo += logString
 
 ### Weighting train events
-w_train = None
-if(useWeights == True): 
-    origin_train = np.array(data_train['origin'].values)
-    w_train = weightEvents(origin_train)
+origin_train = np.array(data_train['origin'].values)
+w_train, origins_list, origins_numbers = weightEvents(origin_train)
+#w_train, origins_list, origins_numbers = weightEvents(origin_train_mass)
+logString = '\nOrigins list: ' + str(origins_list) + '\nNumber of events with the corresponding origin: ' + str(origins_numbers)
+logFile.write(logString)
+logInfo += logString
 
 ### Building and compiling the PDNN
 model = BuildDNN(len(InputFeatures), numberOfNodes, numberOfLayers, dropout)
@@ -51,7 +50,7 @@ model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', weighted_metr
 
 ### Training
 print(Fore.BLUE + 'Training the ' + NN)
-modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = 2048,  validation_split = validationFraction, verbose = 1, callbacks = EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss', restore_best_weights = True))
+modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = batchSize,  validation_split = validationFraction, verbose = 1, callbacks = EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss', restore_best_weights = True))
 
 ### Saving to files
 SaveModel(model, X_train_unscaled, outputDir)
@@ -65,8 +64,8 @@ logInfo += logString
 
 ### Drawing accuracy and loss
 if savePlot:
-    DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, useWeights, cutTrainEvents, background)
-    DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, useWeights, cutTrainEvents, background)
+    DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background)
+    DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background)
 
 logFile.close()
 print(Fore.GREEN + 'Saved ' + logFileName)
@@ -76,7 +75,7 @@ print(Fore.GREEN + 'Saved ' + logFileName)
 ### Dividing signal from background
 data_test_signal = data_test[y_test == 1]
 data_test_bkg = data_test[y_test != 1]
-X_train_signal = X_train[y_train == 1] ## serve solo se faccio gli score anche per il train
+X_train_signal = X_train[y_train == 1]
 X_train_bkg = X_train[y_train != 1]
 
 ### Saving unscaled test signal mass values
@@ -131,7 +130,7 @@ for unscaledMass in testMass:
     X_test_mass = np.array(data_test_mass[InputFeatures].values).astype(np.float32)
 
     ### Prediction on signal + background
-    yhat_test_mass = model.predict(X_test_mass, batch_size = 2048)
+    yhat_test_mass = model.predict(X_test_mass, batch_size = batchSize)
 
     ###### Prediction on signal and background separately
     ### Selecting train signal events with the same mass
@@ -145,7 +144,7 @@ for unscaledMass in testMass:
     yhat_train_signal_mass, yhat_train_bkg_mass, yhat_test_signal_mass, yhat_test_bkg_mass = PredictionSigBkg(model, X_train_signal_mass, X_train_bkg, X_test_signal_mass, X_test_bkg)
 
     ### Calculating area under ROC curve (AUC), background rejection and saving plots 
-    AUC, WP, WP_rej = DrawEfficiency(yhat_train_signal_mass, yhat_test_signal_mass, yhat_train_bkg_mass, yhat_test_bkg_mass, newOutputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background, savePlot, useWeights, cutTrainEvents)
+    AUC, WP, WP_rej = DrawEfficiency(yhat_train_signal_mass, yhat_test_signal_mass, yhat_train_bkg_mass, yhat_test_bkg_mass, newOutputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background, savePlot)
     print(Fore.BLUE + 'AUC: ' + str(AUC))
     newLogFile.write('\nAUC: ' + str(AUC) + '\nWorking points: ' + str(WP) + '\nBackground rejection at each working point: ' + str(WP_rej))
 

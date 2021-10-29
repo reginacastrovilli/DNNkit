@@ -16,7 +16,7 @@ def ReadArgParser():
     parser.add_argument('-a', '--Analysis', help = 'Type of analysis: \'merged\' or \'resolved\'', type = str)
     parser.add_argument('-c', '--Channel', help = 'Channel: \'ggF\' or \'VBF\'', type = str)
     parser.add_argument('-s', '--Signal', help = 'Signal: \'VBFHVTWZ\', \'Radion\', \'RSG\' or \'VBFRadion\'', type = str, default = 'all')
-    parser.add_argument('-j', '--JetCollection', help = 'Jet collection: \'TCC\'', type = str, default = 'TCC')
+    parser.add_argument('-j', '--JetCollection', help = 'Jet collection: \'TCC\', \'UFO_PFLOW\'', type = str, default = 'UFO_PFLOW')
     parser.add_argument('-b', '--Background', help = 'Background: \'Zjets\', \'Wjets\', \'stop\', \'Diboson\', \'ttbar\' or \'all\' (in quotation mark separated by a space)', type = str, default = 'all')
     parser.add_argument('-t', '--TrainingFraction', help = 'Relative size of the training sample, between 0 and 1', default = 0.8)
     parser.add_argument('-p', '--PreselectionCuts', help = 'Preselection cut', type = str)
@@ -45,7 +45,7 @@ def ReadArgParser():
         signalString = '_'.join([str(item) for item in signal])
     jetCollection = args.JetCollection
     if args.JetCollection is None:
-        parser.error(Fore.RED + 'Requested jet collection (\'TCC\' or )')
+        parser.error(Fore.RED + 'Requested jet collection (\'TCC\' or \'UFO_PFLOW\')')
     #elif args.JetCollection != 'TCC':
         #parser.error(Fore.RED + 'Jet collection can be \'TCC\', ')
     background = args.Background.split()
@@ -103,9 +103,10 @@ def ReadArgParser():
 ### Reading from the configuration file
 import configparser, ast
 
-configurationFile = 'Configuration.ini'
+#configurationFile = 'Configuration.ini'
 
 def ReadConfigSaveToPkl(jetCollection):
+    configurationFile = 'Configuration_' + jetCollection + '.ini'
     config = configparser.ConfigParser()
     config.read(configurationFile)
     ntuplePath = config.get('config', 'ntuplePath')
@@ -116,6 +117,7 @@ def ReadConfigSaveToPkl(jetCollection):
     return ntuplePath, inputFiles, dfPath
 
 def ReadConfig(analysis, jetCollection):
+    configurationFile = 'Configuration_' + jetCollection + '.ini'
     config = configparser.ConfigParser()
     config.read(configurationFile)
     inputFiles = ast.literal_eval(config.get('config', 'inputFiles'))
@@ -125,8 +127,6 @@ def ReadConfig(analysis, jetCollection):
     backgroundsList = ast.literal_eval(config.get('config', 'backgrounds'))
     dfPath = config.get('config', 'dfPath')
     dfPath += jetCollection + '/'# + '_DataFrames/'
-    #modelPath = config.get('config', 'modelPath')
-    #modelPath += jetCollection + '/'
     if analysis == 'merged':
         InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesMerged'))
     elif analysis == 'resolved':
@@ -163,10 +163,6 @@ def LoadData(dfPath, jetCollection, signal, analysis, channel, background, train
     return data_Train, data_Test, X_Train_unscaled, m_Train_unscaled, m_Test_unscaled
 
 ### Writing in the log file
-def WritingLogFile(dfPath, X_test, y_test, X_train, y_train, InputFeatures, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, useWeights):
-    logString = 'dfPath: ' + dfPath + '\nNumber of test events: ' + str(int(X_test.shape[0])) + ' (' + str(sum(y_test)) + ' signal and ' + str(len(y_test) - sum(y_test)) + ' background)' + '\nNumber of train events: ' + str(X_train.shape[0]) + ' (' + str(sum(y_train)) + ' signal and ' + str(len(y_train) - sum(y_train)) + ' background)' + '\nInputFeatures: ' + str(InputFeatures) + '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of layers: ' + str(numberOfLayers) + '\nNumber of epochs: ' + str(numberOfEpochs) + '\nValidation fraction: ' + str(validationFraction) + '\nDropout: ' + str(dropout) + '\nuseWeights: ' + str(useWeights)
-    return logString
-
 def WriteLogFile(numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, InputFeatures, dfPath):
     logString = 'Number of nodes: ' + str(numberOfNodes) + '\nNumber of layers: ' + str(numberOfLayers) + '\nNumber of epochs: ' + str(numberOfEpochs) + '\nValidation fraction: ' + str(validationFraction) + '\nDropout: ' + str(dropout) + '\nInputFeatures: ' + str(InputFeatures) + '\ndfPath: ' + dfPath# + '\nNumber of train events: ' + str(len(data_train)) + ' (' + str(len(data_train_signal)) + ' signal and ' + str(len(data_train_bkg)) + ' background)' + '\nNumber of test events: ' + str(len(data_test)) + ' (' + str(len(data_test_signal)) + ' signal and ' + str(len(data_test_bkg)) + ' background)'
     return logString
@@ -291,7 +287,7 @@ def PredictionSigBkg(model, X_train_signal, X_train_bkg, X_test_signal, X_test_b
     return yhat_train_signal, yhat_train_bkg, yhat_test_signal, yhat_test_bkg
 
 ### Drawing Accuracy
-def DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, useWeights, cutTrainEvents, mass = 0):
+def DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, mass = 0):
     plt.plot(modelMetricsHistory.history['accuracy'], label = 'Training')
     lines = plt.plot(modelMetricsHistory.history['val_accuracy'], label = 'Validation')
     xvalues = lines[0].get_xdata()
@@ -310,7 +306,7 @@ def DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection
     #plt.legend()
     #legend1 = plt.legend(['Training', 'Validation'], loc = 'lower right')
     legend1 = plt.legend(loc = 'center right')
-    legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg) + '\nuseWeights: ' + str(useWeights) + '\ncutTrainEvents: ' + str(cutTrainEvents)
+    legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg)
     if (PreselectionCuts != 'none'):
         legendText += '\npreselection cuts: ' + PreselectionCuts
     #legendText += '\nTest accuracy: ' + str(round(testAccuracy, 2))
@@ -325,7 +321,7 @@ def DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection
     plt.clf()
         
 ### Drawing Loss
-def DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, useWeights, cutTrainEvents, mass = 0):
+def DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, mass = 0):
     plt.plot(modelMetricsHistory.history['loss'], label = 'Training')
     lines = plt.plot(modelMetricsHistory.history['val_loss'], label = 'Validation')
     xvalues = lines[0].get_xdata()
@@ -343,7 +339,7 @@ def DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, jetCollection, analys
     plt.xlabel('Epoch')
     #plt.legend(['Training', 'Validation'], loc = 'upper right')
     legend1 = plt.legend(loc = 'upper right')
-    legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\npreselection cuts: ' + PreselectionCuts + '\nsignal: ' + signal + '\nbackground: ' + str(bkg) + '\nuseWeights: ' + str(useWeights) + '\ncutTrainEvents: ' + str(cutTrainEvents)
+    legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\npreselection cuts: ' + PreselectionCuts + '\nsignal: ' + signal + '\nbackground: ' + str(bkg)
     if (PreselectionCuts != 'none'):
         legendText += '\npreselection cuts: ' + PreselectionCuts
     #legendText += '\nTest loss: ' + str(round(testLoss, 2))
@@ -381,7 +377,7 @@ def integral(y,x,bins):
 ### Drawing scores, ROC and efficiency
 #import numpy as np
 
-def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, mass, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, savePlot, useWeights, cutTrainEvents):
+def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, mass, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, savePlot):
 
     ### Scores
     Nbins = 1000
@@ -399,7 +395,7 @@ def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_tes
             titleScores = NN + ' scores (mass: ' + str(int(mass)) + ' GeV, bkg: ' + bkg + ')'
         plt.title(titleScores)
         plt.legend(loc = 'upper center')
-        legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg) + '\nuseWeights: ' + str(useWeights) + '\ncutTrainEvents: ' + str(cutTrainEvents)
+        legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg)
         if (PreselectionCuts != 'none'):
             legendText += '\npreselection cuts: ' + PreselectionCuts
         #plt.figtext(0.35, 0.45, legendText, wrap = True, horizontalalignment = 'left')
@@ -434,7 +430,7 @@ def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_tes
         else:
             titleROC = NN + ' ROC curve (mass: ' + str(int(mass)) + ' GeV, bkg: ' + bkg + ')'
         plt.title(titleROC)
-        legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg) + '\nuseWeights: ' + str(useWeights) + '\ncutTrainEvents: ' + str(cutTrainEvents)
+        legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg)
         if (PreselectionCuts != 'none'):
             legendText += '\npreselection cuts: ' + PreselectionCuts
         plt.figtext(0.4, 0.25, legendText, wrap = True, horizontalalignment = 'left')
@@ -512,55 +508,17 @@ def weightEvents(origin_train):
         originsNumber = np.append(originsNumber, list(origin_train).count(origin))
     #print(originsNumber)
     minNumber = min(originsNumber)
-    weights = 0.5 * minNumber / originsNumber
+    #weights = minNumber / originsNumber
+    weights = minNumber / ( 2 * originsNumber)
     weights = np.where(weights == 0.5, 1, weights)
-    #print(weights)
+    print(weights)
     w_origin_train = origin_train.copy()
     for origin in originsList:
         w_origin_train = np.where(w_origin_train == str(origin), weights[np.where(originsList == origin)], w_origin_train)
     w_origin_train = np.asarray(w_origin_train).astype(np.float32)
-    return w_origin_train
+    return w_origin_train, originsList, originsNumber
 
-def cutEventsOld(X_train_mass, origin_train_mass):
-    X_train_mass_ext = np.insert(X_train_mass, X_train_mass.shape[1], origin_train_mass, axis = 1)
-    X_train_signal_mass_ext = X_train_mass_ext[origin_train_mass == 0]
-    X_train_signal_mass_ext = np.insert(X_train_signal_mass_ext, X_train_signal_mass_ext.shape[1], 1, axis = 1)
-    '''
-    X_train_bkg_mass_ext = X_train_mass_ext[origin_train_mass != 0]
-    X_train_bkg_mass_ext = np.insert(X_train_bkg_mass_ext, X_train_bkg_mass_ext.shape[1], 0, axis = 1)
-    '''
-    originsList = list(set(list(origin_train_mass)))
-    originsNumber = np.array([])
-    for origin in originsList:
-        originsNumber = np.append(originsNumber, list(origin_train_mass).count(origin))
-    print(originsNumber)
-    minNumber = min(originsNumber)
-    print(minNumber)
-    X_train_mass_origin_ext = X_train_signal_mass_ext
-    for origin in range(1, 3):
-        print('concat')
-        X_train_origin_ext = X_train_mass_ext[origin_train_mass == origin]
-        X_train_origin_ext = X_train_origin_ext[:int(minNumber)]
-        X_train_origin_ext = np.insert(X_train_origin_ext, X_train_origin_ext.shape[1], 0, axis = 1)
-        X_train_mass_origin_ext = np.concatenate((X_train_mass_origin_ext, X_train_origin_ext), axis = 0)
-    '''
-    origin_train_mass = X_train_mass_origin_ext[:, X_train_mass_origin_ext.shape[1] - 1]
-    for origin in origin_train_mass:
-        if origin == 0:
-            X_train_mass_origin_ext = np.insert(X_train_mass_origin_ext, X_train_mass_origin_ext.shape[1], 1, axis = 1)
-        else:
-            X_train_mass_origin_ext = np.insert(X_train_mass_origin_ext, X_train_mass_origin_ext.shape[1], 0, axis = 1)
-    '''
-    X_train_mass_origin_ext = ShufflingData(X_train_mass_origin_ext)
-    print(X_train_mass_origin_ext.shape[0])
-    y_train_mass_origin = X_train_mass_origin_ext[:, X_train_mass_origin_ext.shape[1] - 1]
-    X_train_mass_origin_ext = np.delete(X_train_mass_origin_ext, X_train_mass_origin_ext.shape[1] - 1, axis = 1)
-    origin_train_mass = X_train_mass_origin_ext[:, X_train_mass_origin_ext.shape[1] - 1]
-    X_train_bkg_origin_ext = X_train_mass_origin_ext[origin_train_mass != 0]
-    origin_train_bkg_mass = X_train_bkg_origin_ext[:, X_train_bkg_origin_ext.shape[1] - 1]
-    X_train_mass_origin = np.delete(X_train_mass_origin_ext, X_train_mass_origin_ext.shape[1] - 1, axis = 1)
-    return X_train_mass_origin, y_train_mass_origin, origin_train_bkg_mass    
-
+'''
 def cutEvents(data_train_mass):
     data_train_mass_cut = pd.DataFrame()
     originsList = np.array(list(set(list(data_train_mass['origin']))))
@@ -576,3 +534,4 @@ def cutEvents(data_train_mass):
             data_train_mass_origin = data_train_mass_origin[:int(minNumber)]
         data_train_mass_cut = pd.concat([data_train_mass_cut, data_train_mass_origin], ignore_index = True)
     return data_train_mass_cut
+'''

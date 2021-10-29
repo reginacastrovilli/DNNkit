@@ -16,12 +16,14 @@ jetCollection = ReadArgParser()
 ntuplePath, inputFiles, dfPath = ReadConfigSaveToPkl(jetCollection)
 
 ### Loading, converting and saving each input file
+totalEvents = 0 
 for i in inputFiles:
     inFile = ntuplePath + i + '.root'
     print('Loading ' + inFile)
     theFile = uproot3.open(inFile)
     tree = theFile['Nominal']
     Nevents = tree.numentries
+    totalEvents += Nevents
     print('Number of events in ' + inFile, '\t' + str(Nevents))
     if Nevents == 0:
         print(Fore.RED + 'Ignoring empty file')
@@ -30,3 +32,4 @@ for i in inputFiles:
     outFile = dfPath + i + '_DF.pkl'
     DF.to_pickle(outFile)
     print('Saved ' + outFile)
+print('Total events: ' + str(totalEvents))
