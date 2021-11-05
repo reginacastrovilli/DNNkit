@@ -45,7 +45,7 @@ if testMass == ['all']:
 for unscaledMass in testMass:
     unscaledMass = int(unscaledMass)
 
-    ### Checking wheter there are train events with the selected mass
+    ### Checking whether there are train events with the selected mass
     if unscaledMass not in unscaledTrainMassPointsList:
         print(Fore.RED + 'No train signal with mass ' + str(unscaledMass))
         continue

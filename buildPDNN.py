@@ -94,7 +94,7 @@ if testMass == ['all']:
 for unscaledMass in testMass:
     unscaledMass = int(unscaledMass)
 
-    ### Checking wheter there are train events with the selected mass
+    ### Checking whether there are train events with the selected mass
     if unscaledMass not in unscaledTestMassPointsList:
         print(Fore.RED + 'No test signal with mass ' + str(unscaledMass))
         continue
@@ -129,8 +129,11 @@ for unscaledMass in testMass:
     ### Creating the X_test_mass array
     X_test_mass = np.array(data_test_mass[InputFeatures].values).astype(np.float32)
 
-    ### Prediction on signal + background
+    ### Prediction on signal + background and confusion matrix
     yhat_test_mass = model.predict(X_test_mass, batch_size = batchSize)
+
+    if savePlot:
+        DrawCM(yhat_test_mass, y_test_mass, True, newOutputDir, unscaledMass, background)
 
     ###### Prediction on signal and background separately
     ### Selecting train signal events with the same mass
@@ -147,9 +150,6 @@ for unscaledMass in testMass:
     AUC, WP, WP_rej = DrawEfficiency(yhat_train_signal_mass, yhat_test_signal_mass, yhat_train_bkg_mass, yhat_test_bkg_mass, newOutputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background, savePlot)
     print(Fore.BLUE + 'AUC: ' + str(AUC))
     newLogFile.write('\nAUC: ' + str(AUC) + '\nWorking points: ' + str(WP) + '\nBackground rejection at each working point: ' + str(WP_rej))
-
-    if savePlot:
-        DrawCM(yhat_test_mass, y_test_mass, True, newOutputDir, unscaledMass, background)
 
     ### Closing the newLogFile
     newLogFile.close()

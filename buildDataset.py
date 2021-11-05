@@ -155,11 +155,10 @@ pandasDF = ShufflingData(pandasDF)
 logFile.write('\nNumber of events: ' + str(pandasDF.shape[0]))
 logFile.close()
 print('Saved ' + logFileName)
-'''
+
 ### Saving pkl files
 outputDir = dfPath + analysis + '/' + channel
 print (format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
 outputFileName = '/MixData_PD_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '.pkl'
 pandasDF.to_pickle(outputDir + outputFileName)
 print('Saved ' + outputDir + outputFileName)
-'''
