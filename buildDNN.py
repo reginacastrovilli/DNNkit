@@ -1,8 +1,7 @@
 from Functions import *
 
 ### Setting a seed for reproducibility
-import tensorflow as tf
-tf.random.set_seed(1234)
+#tf.random.set_seed(1234)
 
 savePlot = True
 NN = 'DNN'
@@ -39,7 +38,7 @@ m_train_signal = data_train_signal['mass']
 scaledTrainMassPointsList = list(dict.fromkeys(list(m_train_signal)))
 
 if testMass == ['all']:
-    testMass = [] ############################ serve?
+    testMass = []
     testMass = list(str(int(item)) for item in set(list(m_test_unscaled_signal)))
 
 for unscaledMass in testMass:
@@ -92,14 +91,14 @@ for unscaledMass in testMass:
     X_test_mass = np.asarray(X_test_mass.values).astype(np.float32)
 
     ### Weighting train events
-    w_train_mass, origins_list, origins_numbers = weightEvents(origin_train_mass)
-    logFile.write('\nOrigins list: ' + str(origins_list) + '\nNumber of events with the corresponding origin: ' + str(origins_numbers))
-    #logFile.write('\nWeights for train events: ' + str(list(set(list(w_train_mass)))))
+    w_train_mass, origins_list, origins_numbers, weights = weightEvents(origin_train_mass)
+    logFile.write('\nOrigins list: ' + str(origins_list) + '\nNumber of events with the corresponding origin: ' + str(origins_numbers) + '\nWeights for each origin: ' + str(weights))
 
     ### Building the model, compiling and training
-    model = BuildDNN(len(InputFeatures), numberOfNodes, numberOfLayers, dropout)
-    model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', weighted_metrics = ['accuracy'])
-        
+    model, Loss, Metrics, learningRate, Optimizer = BuildDNN(len(InputFeatures), numberOfNodes, numberOfLayers, dropout)
+    model.compile(loss = Loss, optimizer = Optimizer, weighted_metrics = Metrics)
+    logFile.write('\nLoss: ' + Loss + '\nLearning rate: ' + str(learningRate) + '\nOptimizer: ' + str(Optimizer) + '\nweighted_metrics: ' + str(Metrics))
+
     print(Fore.BLUE + 'Training the DNN on train events with mass ' + str(int(unscaledMass)))
     modelMetricsHistory = model.fit(X_train_mass, y_train_mass, sample_weight = w_train_mass, epochs = numberOfEpochs, batch_size = batchSize, validation_split = validationFraction, verbose = True, callbacks = EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss', restore_best_weights = True))
 
@@ -118,8 +117,8 @@ for unscaledMass in testMass:
 
     ### Prediction on the whole test sample and confusion matrix
     yhat_test = model.predict(X_test_mass, batch_size = batchSize) 
-    if savePlot:
-        DrawCM(yhat_test, y_test_mass, True, outputDir, unscaledMass, background)
+    CMvalues = DrawCM(yhat_test, y_test_mass, True, outputDir, unscaledMass, background, savePlot)
+    logFile.write('\nTrue bkg, predicted bkg: ' + str(CMvalues[0]) + '\nTrue bkg, predicted signal: ' + str(CMvalues[1]) + '\nTrue signal, predicted bkg: ' + str(CMvalues[2]) + '\nTrue signal, predicted signal: ' + str(CMvalues[3]))
 
     ### Prediction on signal and background separately 
     X_train_signal_mass = X_train_mass[y_train_mass == 1]

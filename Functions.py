@@ -180,6 +180,7 @@ from keras.models import Model, Sequential
 from keras.layers import Dense, Dropout, Input, BatchNormalization
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.layers.core import Dense, Activation
+import tensorflow as tf
 
 def BuildDNN(N_input, nodesNumber, layersNumber, dropout):
     model = Sequential()
@@ -193,7 +194,11 @@ def BuildDNN(N_input, nodesNumber, layersNumber, dropout):
         model.add(Dropout(dropout))
     model.add(Dense(1, activation = 'sigmoid'))
     #model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', metrics = ['accuracy'])
-    return model
+    Loss = 'binary_crossentropy'
+    Metrics = ['accuracy']
+    learningRate = 0.001
+    Optimizer = tf.keras.optimizers.RMSprop(learning_rate = learningRate)
+    return model, Loss, Metrics, learningRate, Optimizer
 
 def SaveArchAndWeights(model, outputDir):
     arch = model.to_json()
@@ -472,7 +477,7 @@ def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_tes
 from sklearn.metrics import confusion_matrix
 import itertools
 
-def DrawCM(yhat_test, y_test, normalize, outputDir, mass, background):
+def DrawCM(yhat_test, y_test, normalize, outputDir, mass, background, savePlot):
     yResult_test_cls = np.array([ int(round(x[0])) for x in yhat_test])
     cm = confusion_matrix(y_test, yResult_test_cls)
     classes = ['Background', 'Signal']
@@ -492,14 +497,18 @@ def DrawCM(yhat_test, y_test, normalize, outputDir, mass, background):
     plt.yticks(tick_marks, classes, rotation = 90)
     fmt = '.2f' if normalize else 'd'
     thresh = cm.max() / 2.
+    values = np.array([])
     for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
         plt.text(j, i, format(cm[i, j], fmt), horizontalalignment = "center", color = "white" if cm[i, j] > thresh else "black")
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
-    CMPltName = outputDir + '/ConfusionMatrix_' + background + '.png'
-    plt.savefig(CMPltName)
-    print(Fore.GREEN + 'Saved ' + CMPltName)
-    plt.clf()    
+        values = np.append(values, cm[i, j])
+    if savePlot:
+        plt.ylabel('True label')
+        plt.xlabel('Predicted label')
+        CMPltName = outputDir + '/ConfusionMatrix_' + background + '.png'
+        plt.savefig(CMPltName)
+        print(Fore.GREEN + 'Saved ' + CMPltName)
+        plt.clf()    
+    return values
 
 def weightEvents(origin_train):
     originsList = np.array(list(set(list(origin_train))))
@@ -511,12 +520,12 @@ def weightEvents(origin_train):
     #weights = minNumber / originsNumber
     weights = minNumber / ( 2 * originsNumber)
     weights = np.where(weights == 0.5, 1, weights)
-    print(weights)
+    #print(weights)
     w_origin_train = origin_train.copy()
     for origin in originsList:
         w_origin_train = np.where(w_origin_train == str(origin), weights[np.where(originsList == origin)], w_origin_train)
     w_origin_train = np.asarray(w_origin_train).astype(np.float32)
-    return w_origin_train, originsList, originsNumber
+    return w_origin_train, originsList, originsNumber, weights
 
 '''
 def cutEvents(data_train_mass):

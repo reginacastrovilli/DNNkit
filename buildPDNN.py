@@ -38,15 +38,17 @@ logInfo += logString
 
 ### Weighting train events
 origin_train = np.array(data_train['origin'].values)
-w_train, origins_list, origins_numbers = weightEvents(origin_train)
-#w_train, origins_list, origins_numbers = weightEvents(origin_train_mass)
-logString = '\nOrigins list: ' + str(origins_list) + '\nNumber of events with the corresponding origin: ' + str(origins_numbers)
+w_train, origins_list, origins_numbers, weights = weightEvents(origin_train)
+logString = '\nOrigins list: ' + str(origins_list) + '\nNumber of events with the corresponding origin: ' + str(origins_numbers) + '\nWeights for each origin: ' + str(weights)
 logFile.write(logString)
 logInfo += logString
 
 ### Building and compiling the PDNN
-model = BuildDNN(len(InputFeatures), numberOfNodes, numberOfLayers, dropout)
-model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', weighted_metrics = ['accuracy'])
+model, Loss, Metrics, learningRate, Optimizer = BuildDNN(len(InputFeatures), numberOfNodes, numberOfLayers, dropout) 
+model.compile(loss = Loss, optimizer = Optimizer, weighted_metrics = Metrics)
+logString = '\nLoss: ' + Loss + '\nLearning rate: ' + str(learningRate) + '\nOptimizer: ' + str(Optimizer) + '\nweighted_metrics: ' + str(Metrics)
+logFile.write(logString)
+logInfo += logString
 
 ### Training
 print(Fore.BLUE + 'Training the ' + NN)
@@ -101,6 +103,7 @@ for unscaledMass in testMass:
 
     ### Associating the unscaled mass to the scaled one
     mass = scaledTestMassPointsList[unscaledTestMassPointsList.index(unscaledMass)]
+    #print('Scaled mass: ' + str(mass))
 
     ### Creating new output directory and log file
     newOutputDir = outputDir + '/' + str(int(unscaledMass))
@@ -131,9 +134,8 @@ for unscaledMass in testMass:
 
     ### Prediction on signal + background and confusion matrix
     yhat_test_mass = model.predict(X_test_mass, batch_size = batchSize)
-
-    if savePlot:
-        DrawCM(yhat_test_mass, y_test_mass, True, newOutputDir, unscaledMass, background)
+    CMvalues = DrawCM(yhat_test_mass, y_test_mass, True, newOutputDir, unscaledMass, background, savePlot)
+    newLogFile.write('\nTrue bkg, predicted bkg: ' + str(CMvalues[0]) + '\nTrue bkg, predicted signal: ' + str(CMvalues[1]) + '\nTrue signal, predicted bkg: ' + str(CMvalues[2]) + '\nTrue signal, predicted signal: ' + str(CMvalues[3]))
 
     ###### Prediction on signal and background separately
     ### Selecting train signal events with the same mass
@@ -145,6 +147,26 @@ for unscaledMass in testMass:
 
     ### Prediction
     yhat_train_signal_mass, yhat_train_bkg_mass, yhat_test_signal_mass, yhat_test_bkg_mass = PredictionSigBkg(model, X_train_signal_mass, X_train_bkg, X_test_signal_mass, X_test_bkg)
+
+    scoresFile = open(newOutputDir + '/Scores_train_signal.txt', 'w')
+    for score in yhat_train_signal_mass:
+        scoresFile.write(str(score) + '\n')
+    scoresFile.close()
+
+    scoresFile = open(newOutputDir + '/Scores_train_bkg.txt', 'w')
+    for score in yhat_train_bkg_mass:
+        scoresFile.write(str(score) + '\n')
+    scoresFile.close()                                                                                                                                               
+
+    scoresFile = open(newOutputDir + '/Scores_test_signal.txt', 'w')
+    for score in yhat_test_signal_mass:
+        scoresFile.write(str(score) + '\n')
+    scoresFile.close()
+
+    scoresFile = open(newOutputDir + '/Scores_test_bkg.txt', 'w')
+    for score in yhat_test_bkg_mass:
+        scoresFile.write(str(score) + '\n')
+    scoresFile.close()
 
     ### Calculating area under ROC curve (AUC), background rejection and saving plots 
     AUC, WP, WP_rej = DrawEfficiency(yhat_train_signal_mass, yhat_test_signal_mass, yhat_train_bkg_mass, yhat_test_bkg_mass, newOutputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background, savePlot)
