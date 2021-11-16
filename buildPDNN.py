@@ -1,5 +1,8 @@
 from Functions import *
 
+### Setting a seed for reproducibility
+#tf.random.set_seed(1234)
+
 savePlot = True
 NN = 'PDNN'
 batchSize = 2048
@@ -13,8 +16,9 @@ dfPath, InputFeatures = ReadConfig(analysis, jetCollection)
 dfPath += analysis + '/' + channel + '/' + signal + '/' + background + '/'
 
 ### Creating the output directory and the logFile
-outputDir = dfPath + NN
-print (format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
+#outputDir = dfPath + NN
+outputDir = NN
+print(format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
 logFileName = outputDir + '/logFile.txt'
 logFile = open(logFileName, 'w')
 logInfo = ''
@@ -107,7 +111,7 @@ for unscaledMass in testMass:
 
     ### Creating new output directory and log file
     newOutputDir = outputDir + '/' + str(int(unscaledMass))
-    print (format('Output directory: ' + Fore.GREEN + newOutputDir), checkCreateDir(newOutputDir))
+    print(format('Output directory: ' + Fore.GREEN + newOutputDir), checkCreateDir(newOutputDir))
     newLogFileName = newOutputDir + '/logFile.txt'
     newLogFile = open(newLogFileName, 'w')
 
@@ -124,7 +128,7 @@ for unscaledMass in testMass:
     data_test_mass = pd.concat([data_test_signal_mass, data_test_bkg], ignore_index = True)
 
     ### Shuffling data
-    data_test_mass_ext = ShufflingData(data_test_mass)
+    data_test_mass = ShufflingData(data_test_mass)
 
     ### Extracting y_test_mass
     y_test_mass = np.asarray(data_test_mass['isSignal'].values).astype(np.float32)
@@ -139,8 +143,8 @@ for unscaledMass in testMass:
 
     ###### Prediction on signal and background separately
     ### Selecting train signal events with the same mass
-    m_train_signal = X_train[:, InputFeatures.index('mass')]
-    X_train_signal_mass = X_train[m_train_signal == mass]
+    m_train_signal = X_train_signal[:, InputFeatures.index('mass')]
+    X_train_signal_mass = X_train_signal[m_train_signal == mass]
 
     ### Assigning the same mass value to train background events
     X_train_bkg[:, InputFeatures.index('mass')] = np.full(len(X_train_bkg), mass)
