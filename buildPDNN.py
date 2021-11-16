@@ -1,7 +1,7 @@
 from Functions import *
 
 ### Setting a seed for reproducibility
-#tf.random.set_seed(1234)
+tf.random.set_seed(1234)
 
 savePlot = True
 NN = 'PDNN'
@@ -16,8 +16,7 @@ dfPath, InputFeatures = ReadConfig(analysis, jetCollection)
 dfPath += analysis + '/' + channel + '/' + signal + '/' + background + '/'
 
 ### Creating the output directory and the logFile
-#outputDir = dfPath + NN
-outputDir = NN
+outputDir = dfPath + NN
 print(format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
 logFileName = outputDir + '/logFile.txt'
 logFile = open(logFileName, 'w')
@@ -63,7 +62,7 @@ SaveModel(model, X_train_unscaled, outputDir)
 
 ### Evaluating the performance of the PDNN on the test sample and writing results to the log file
 print(Fore.BLUE + 'Evaluating the performance of the ' + NN)
-testLoss, testAccuracy = EvaluatePerformance(model, X_test, y_test)
+testLoss, testAccuracy = EvaluatePerformance(model, X_test, y_test, batchSize)
 logString = '\nTest loss: ' + str(testLoss) + '\nTest accuracy: ' + str(testAccuracy)
 logFile.write(logString)
 logInfo += logString
@@ -75,8 +74,6 @@ if savePlot:
 
 logFile.close()
 print(Fore.GREEN + 'Saved ' + logFileName)
-
-###### Prediction on the full test sample
 
 ### Dividing signal from background
 data_test_signal = data_test[y_test == 1]
@@ -124,24 +121,6 @@ for unscaledMass in testMass:
     data_test_bkg = data_test_bkg.assign(mass = np.full(len(data_test_bkg), mass))
     X_test_bkg = np.asarray(data_test_bkg[InputFeatures].values).astype(np.float32)
 
-    ### Putting signal and background events back togheter
-    data_test_mass = pd.concat([data_test_signal_mass, data_test_bkg], ignore_index = True)
-
-    ### Shuffling data
-    data_test_mass = ShufflingData(data_test_mass)
-
-    ### Extracting y_test_mass
-    y_test_mass = np.asarray(data_test_mass['isSignal'].values).astype(np.float32)
-
-    ### Creating the X_test_mass array
-    X_test_mass = np.array(data_test_mass[InputFeatures].values).astype(np.float32)
-
-    ### Prediction on signal + background and confusion matrix
-    yhat_test_mass = model.predict(X_test_mass, batch_size = batchSize)
-    CMvalues = DrawCM(yhat_test_mass, y_test_mass, True, newOutputDir, unscaledMass, background, savePlot)
-    newLogFile.write('\nTrue bkg, predicted bkg: ' + str(CMvalues[0]) + '\nTrue bkg, predicted signal: ' + str(CMvalues[1]) + '\nTrue signal, predicted bkg: ' + str(CMvalues[2]) + '\nTrue signal, predicted signal: ' + str(CMvalues[3]))
-
-    ###### Prediction on signal and background separately
     ### Selecting train signal events with the same mass
     m_train_signal = X_train_signal[:, InputFeatures.index('mass')]
     X_train_signal_mass = X_train_signal[m_train_signal == mass]
@@ -149,8 +128,8 @@ for unscaledMass in testMass:
     ### Assigning the same mass value to train background events
     X_train_bkg[:, InputFeatures.index('mass')] = np.full(len(X_train_bkg), mass)
 
-    ### Prediction
-    yhat_train_signal_mass, yhat_train_bkg_mass, yhat_test_signal_mass, yhat_test_bkg_mass = PredictionSigBkg(model, X_train_signal_mass, X_train_bkg, X_test_signal_mass, X_test_bkg)
+    ### Prediction on signal and background
+    yhat_train_signal_mass, yhat_train_bkg_mass, yhat_test_signal_mass, yhat_test_bkg_mass = PredictionSigBkg(model, X_train_signal_mass, X_train_bkg, X_test_signal_mass, X_test_bkg, batchSize)
 
     scoresFile = open(newOutputDir + '/Scores_train_signal.txt', 'w')
     for score in yhat_train_signal_mass:
@@ -171,6 +150,12 @@ for unscaledMass in testMass:
     for score in yhat_test_bkg_mass:
         scoresFile.write(str(score) + '\n')
     scoresFile.close()
+
+    ### Drawing confusion matrix
+    yhat_test_mass = np.concatenate((yhat_test_signal_mass, yhat_test_bkg_mass))
+    y_test_mass = np.concatenate((np.ones(len(yhat_test_signal_mass)), np.zeros(len(yhat_test_bkg_mass))))
+    CMvalues = DrawCM(yhat_test_mass, y_test_mass, True, newOutputDir, unscaledMass, background, savePlot)
+    newLogFile.write('\nTrue bkg, predicted bkg: ' + str(CMvalues[0]) + '\nTrue bkg, predicted signal: ' + str(CMvalues[1]) + '\nTrue signal, predicted bkg: ' + str(CMvalues[2]) + '\nTrue signal, predicted signal: ' + str(CMvalues[3]))
 
     ### Calculating area under ROC curve (AUC), background rejection and saving plots 
     AUC, WP, WP_rej = DrawEfficiency(yhat_train_signal_mass, yhat_test_signal_mass, yhat_train_bkg_mass, yhat_test_bkg_mass, newOutputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background, savePlot)

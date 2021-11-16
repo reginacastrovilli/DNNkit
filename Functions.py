@@ -277,18 +277,24 @@ plt.rcParams["figure.figsize"] = [7,7]
 plt.rcParams.update({'font.size': 16})
 
 ### Evaluating the (P)DNN performance
-def EvaluatePerformance(model, X_test, y_test):
-    perf = model.evaluate(X_test, y_test, batch_size = 2048)
+def EvaluatePerformance(model, X_test, y_test, batchSize):
+    perf = model.evaluate(X_test, y_test, batch_size = batchSize)
     testLoss = perf[0]
     testAccuracy = perf[1]
     return testLoss, testAccuracy
 
-### Prediction on signal and background separately
-def PredictionSigBkg(model, X_train_signal, X_train_bkg, X_test_signal, X_test_bkg):
-    yhat_train_signal = model.predict(X_train_signal, batch_size = 2048)
-    yhat_train_bkg = model.predict(X_train_bkg, batch_size = 2048)
-    yhat_test_signal = model.predict(X_test_signal, batch_size = 2048)
-    yhat_test_bkg = model.predict(X_test_bkg, batch_size = 2048)
+### Prediction on train and test sample (for DNN)
+def PredictionTrainTest(model, X_test, X_train, batchSize):
+    yhat_test = model.predict(X_test, batch_size = batchSize)
+    yhat_train = model.predict(X_train, batch_size = batchSize)
+    return yhat_test, yhat_train
+    
+### Prediction on signal and background separately (for PDNN)
+def PredictionSigBkg(model, X_train_signal, X_train_bkg, X_test_signal, X_test_bkg, batchSize):
+    yhat_train_signal = model.predict(X_train_signal, batch_size = batchSize)
+    yhat_train_bkg = model.predict(X_train_bkg, batch_size = batchSize)
+    yhat_test_signal = model.predict(X_test_signal, batch_size = batchSize)
+    yhat_test_bkg = model.predict(X_test_bkg, batch_size = batchSize)
     return yhat_train_signal, yhat_train_bkg, yhat_test_signal, yhat_test_bkg
 
 ### Drawing Accuracy

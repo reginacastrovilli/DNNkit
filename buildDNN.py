@@ -1,7 +1,7 @@
 from Functions import *
 
 ### Setting a seed for reproducibility
-#tf.random.set_seed(1234)
+tf.random.set_seed(1234)
 
 savePlot = True
 NN = 'DNN'
@@ -80,7 +80,7 @@ for unscaledMass in testMass:
     y_train_mass = np.asarray(data_train_mass['isSignal'].values).astype(np.float32)
     y_test_mass = np.asarray(data_test_mass['isSignal'].values).astype(np.float32)
     origin_train_mass = np.array(data_train_mass['origin'].values)
-    origin_test_mass = np.array(data_test_mass['origin'].values)
+    #origin_test_mass = np.array(data_test_mass['origin'].values)
 
     ### Selecting only the variables to give to the DNN
     X_train_mass = data_train_mass[InputFeatures]
@@ -107,26 +107,21 @@ for unscaledMass in testMass:
 
     ### Evaluating the performance of the DNN and writing results to the log file
     print(Fore.BLUE + 'Evaluating the performance of the DNN on test events with mass ' + str(int(unscaledMass)))
-    testLoss, testAccuracy = EvaluatePerformance(model, X_test_mass, y_test_mass)
+    testLoss, testAccuracy = EvaluatePerformance(model, X_test_mass, y_test_mass, batchSize)
     logFile.write('\nTest loss: ' + str(testLoss) + '\nTest accuracy: ' + str(testAccuracy))
 
     ### Drawing accuracy and loss
     if savePlot:
         DrawLoss(modelMetricsHistory, testLoss, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background, unscaledMass)
         DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background, unscaledMass)
+        
+    ### Prediction on signal and background
+    yhat_test, yhat_train = PredictionTrainTest(model, X_test_mass, X_train_mass, batchSize)
+    yhat_train_signal = yhat_train[y_train_mass == 1];
+    yhat_train_bkg = yhat_train[y_train_mass == 0];
+    yhat_test_signal = yhat_test[y_test_mass == 1];
+    yhat_test_bkg = yhat_test[y_test_mass == 0];
 
-    ### Prediction on the whole test sample and confusion matrix
-    yhat_test = model.predict(X_test_mass, batch_size = batchSize) 
-    CMvalues = DrawCM(yhat_test, y_test_mass, True, outputDir, unscaledMass, background, savePlot)
-    logFile.write('\nTrue bkg, predicted bkg: ' + str(CMvalues[0]) + '\nTrue bkg, predicted signal: ' + str(CMvalues[1]) + '\nTrue signal, predicted bkg: ' + str(CMvalues[2]) + '\nTrue signal, predicted signal: ' + str(CMvalues[3]))
-
-    ### Prediction on signal and background separately 
-    X_train_signal_mass = X_train_mass[y_train_mass == 1]
-    X_test_signal_mass = X_test_mass[y_test_mass == 1]
-    X_train_bkg = X_train_mass[y_train_mass == 0]
-    X_test_bkg = X_test_mass[y_test_mass == 0]
-    yhat_train_signal, yhat_train_bkg, yhat_test_signal, yhat_test_bkg = PredictionSigBkg(model, X_train_signal_mass, X_train_bkg, X_test_signal_mass, X_test_bkg)
-    '''
     scoresFile = open(outputDir + '/Scores_train_signal.txt', 'w')
     for score in yhat_train_signal:
         scoresFile.write(str(score) + '\n')
@@ -146,7 +141,11 @@ for unscaledMass in testMass:
     for score in yhat_test_bkg:
         scoresFile.write(str(score) + '\n')
     scoresFile.close()
-    '''
+
+    ### Drawing confusion matrix
+    CMvalues = DrawCM(yhat_test, y_test_mass, True, outputDir, unscaledMass, background, savePlot)
+    logFile.write('\nTrue bkg, predicted bkg: ' + str(CMvalues[0]) + '\nTrue bkg, predicted signal: ' + str(CMvalues[1]) + '\nTrue signal, predicted bkg: ' + str(CMvalues[2]) + '\nTrue signal, predicted signal: ' + str(CMvalues[3]))
+
     ### Drawing scores, ROC and background rejection
     AUC, WP, WP_rej = DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background, savePlot)
     print(Fore.BLUE + 'AUC (Area Under ROC Curve): ' + str(AUC))
