@@ -1,4 +1,4 @@
-from Functions import ReadArgParser, checkCreateDir, ReadConfig, SaveFeatureScaling
+from Functions import ReadArgParser, checkCreateDir, ReadConfig, SaveFeatureScaling, DrawCorrelationMatrix
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -31,7 +31,7 @@ def composition_plot(df, directory, signal, jetCollection, analysis, channel, Pr
     plt.xlabel('Origin')
     plt.ylabel('Number of events')
     plt.yscale('log')
-    pltName = directory + '/' + jetCollection + '_' + analysis + '_' + channel + '_' + signal + '_' + preselectionCuts + '_' + background + '_composition.pdf'
+    pltName = directory + '/' + jetCollection + '_' + analysis + '_' + channel + '_' + signal + '_' + preselectionCuts + '_' + background + '_composition.png'
     plt.savefig(pltName)
     print('Saved ' + pltName)
     plt.clf()
@@ -54,6 +54,7 @@ else:
 data = pd.read_pickle(dfPath + '/MixData_PD_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '.pkl') 
 
 foundSignal = 0
+drawPlot = False
 
 for signal in signalsList:
     ### Selecting only the request signal
@@ -75,8 +76,10 @@ for signal in signalsList:
     ### Selecting events according to their origin 
     data_set = data[data['origin'].isin(inputOrigin)]
 
-    ### Plotting the dataframe composition
-    composition = composition_plot(data_set, outputDir, signal, jetCollection, analysis, channel, preselectionCuts, background)
+    if(drawPlot):
+        ### Plotting the dataframe composition and the correlation matrix
+        composition = composition_plot(data_set, outputDir, signal, jetCollection, analysis, channel, preselectionCuts, background)
+        DrawCorrelationMatrix(data_set, InputFeatures, outputDir, jetCollection, analysis, channel, signal, preselectionCuts, background)
 
     ### Splitting data into train and test set
     data_train, data_test = train_test_split(data_set, train_size = trainingFraction)

@@ -297,6 +297,22 @@ def PredictionSigBkg(model, X_train_signal, X_train_bkg, X_test_signal, X_test_b
     yhat_test_bkg = model.predict(X_test_bkg, batch_size = batchSize)
     return yhat_train_signal, yhat_train_bkg, yhat_test_signal, yhat_test_bkg
 
+### Drawing correlation matrix
+def DrawCorrelationMatrix(dataFrame, InputFeatures, outputDir, jetCollection, analysis, channel, signal, preselectionCuts, bkg):
+    fig, ax1 = plt.subplots(figsize = (10, 10))
+    plt.set_cmap('bwr')
+    im = ax1.matshow((dataFrame[InputFeatures].astype(float)).corr(), vmin = -1, vmax = 1)
+    plt.colorbar(im, ax = ax1)
+    plt.xticks(range(len(InputFeatures)), InputFeatures, rotation = 'vertical')
+    plt.yticks(range(len(InputFeatures)), InputFeatures)
+    for feature1 in range(len(InputFeatures)):
+        for feature2 in range(len(InputFeatures)):
+            ax1.text(feature2, feature1, "%.2f" % (dataFrame[InputFeatures].astype(float)).corr().at[InputFeatures[feature2], InputFeatures[feature1]], ha = 'center', va = 'center', color = 'r', fontsize = 6)
+    CorrelationMatrixName = outputDir + '/' + jetCollection + '_' + analysis + '_' + channel + '_' + signal + '_' + preselectionCuts + '_' + bkg + '_CorrelationMatrix.png' 
+    plt.savefig(CorrelationMatrixName)
+    print(Fore.GREEN + 'Saved ' + CorrelationMatrixName)
+    plt.clf()
+
 ### Drawing Accuracy
 def DrawAccuracy(modelMetricsHistory, testAccuracy, outputDir, NN, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, mass = 0):
     plt.plot(modelMetricsHistory.history['accuracy'], label = 'Training')
