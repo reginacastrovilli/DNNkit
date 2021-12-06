@@ -20,9 +20,9 @@ def ReadArgParser():
     parser.add_argument('-b', '--Background', help = 'Background: \'Zjets\', \'Wjets\', \'stop\', \'Diboson\', \'ttbar\' or \'all\' (in quotation mark separated by a space)', type = str, default = 'all')
     parser.add_argument('-t', '--TrainingFraction', help = 'Relative size of the training sample, between 0 and 1', default = 0.8)
     parser.add_argument('-p', '--PreselectionCuts', help = 'Preselection cut', type = str)
-    parser.add_argument('-n', '--Nodes', help = 'Number of nodes of the (p)DNN, should always be >= nColumns and strictly positive', default = 32)
-    parser.add_argument('-l', '--Layers', help = 'Number of hidden layers of the (p)DNN', default = 2)
-    parser.add_argument('-e', '--Epochs', help = 'Number of epochs for the training', default = 150)
+    parser.add_argument('-n', '--Nodes', help = 'Number of nodes of the (p)DNN, should always be >= nColumns and strictly positive', default = 128) #32
+    parser.add_argument('-l', '--Layers', help = 'Number of hidden layers of the (p)DNN', default = 4) #2
+    parser.add_argument('-e', '--Epochs', help = 'Number of epochs for the training', default = 200) #150
     parser.add_argument('-v', '--Validation', help = 'Fraction of the training data that will actually be used for validation', default = 0.2)
     parser.add_argument('-d', '--Dropout', help = 'Fraction of the neurons to drop during the training', default = 0.2)
     parser.add_argument('-m', '--Mass', help = 'Masses for the (P)DNN train/test (GeV, in quotation mark separated by a space)', default = 'all')
@@ -175,12 +175,33 @@ def ShufflingData(dataFrame):
     #dataFrame = dataFrame.reset_index(drop = True)
     return dataFrame
 
+### Drawing histograms of each variables in the dataframe divided by class
+import seaborn
+def DrawVariablesHisto(dataFrame, outputDir, jetCollection, analysis, channel, signal, preselectionCuts, background):
+    featureLogX = ['fatjet_D2', 'fatjet_m', 'fatjet_pt', 'lep1_pt', 'lep2_pt', 'Zcand_pt']
+    for feature in dataFrame.columns:
+        if feature == 'isSignal':
+            continue
+        statType = 'probability'
+        if feature == 'origin':
+            statType = 'count'
+        ax = seaborn.histplot(data = dataFrame[feature], x = dataFrame[feature], hue = dataFrame['origin'], common_norm = False, stat = statType, legend = True)
+        if feature in featureLogX:
+            ax.set_xscale('log')
+        plt.title(analysis + ' ' + channel + ' ' + signal + ' ' + background)
+        pltName = '/Histo_' + feature + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + signal + '_' + preselectionCuts + '_' + background + '.png'
+        plt.tight_layout()
+        plt.savefig(outputDir + pltName)
+        print(Fore.GREEN + 'Saved ' + outputDir + pltName)
+        plt.clf()
+
 ### Building the (P)DNN
 from keras.models import Model, Sequential
 from keras.layers import Dense, Dropout, Input, BatchNormalization
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.layers.core import Dense, Activation
 import tensorflow as tf
+from sklearn.metrics import log_loss
 
 def BuildDNN(N_input, nodesNumber, layersNumber, dropout):
     model = Sequential()
@@ -196,8 +217,8 @@ def BuildDNN(N_input, nodesNumber, layersNumber, dropout):
     #model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', metrics = ['accuracy'])
     Loss = 'binary_crossentropy'
     Metrics = ['accuracy']
-    learningRate = 0.001
-    Optimizer = tf.keras.optimizers.RMSprop(learning_rate = learningRate)
+    learningRate = 0.001 #0.0003
+    Optimizer = tf.keras.optimizers.RMSprop(learning_rate = learningRate) #Adam
     return model, Loss, Metrics, learningRate, Optimizer
 
 def SaveArchAndWeights(model, outputDir):
@@ -305,7 +326,7 @@ def DrawCorrelationMatrix(dataFrame, InputFeatures, outputDir, jetCollection, an
     plt.colorbar(im, ax = ax1)
     plt.xticks(range(len(InputFeatures)), InputFeatures, rotation = 'vertical')
     plt.yticks(range(len(InputFeatures)), InputFeatures)
-    for feature1 in range(len(InputFeatures)):
+    for feature1 in range(len(InputFeatures)): ### This is really slow, perform only if needed
         for feature2 in range(len(InputFeatures)):
             ax1.text(feature2, feature1, "%.2f" % (dataFrame[InputFeatures].astype(float)).corr().at[InputFeatures[feature2], InputFeatures[feature1]], ha = 'center', va = 'center', color = 'r', fontsize = 6)
     CorrelationMatrixName = outputDir + '/' + jetCollection + '_' + analysis + '_' + channel + '_' + signal + '_' + preselectionCuts + '_' + bkg + '_CorrelationMatrix.png' 

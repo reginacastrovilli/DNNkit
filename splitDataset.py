@@ -1,4 +1,4 @@
-from Functions import ReadArgParser, checkCreateDir, ReadConfig, SaveFeatureScaling, DrawCorrelationMatrix
+from Functions import ReadArgParser, checkCreateDir, ReadConfig, SaveFeatureScaling, DrawCorrelationMatrix, DrawVariablesHisto
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -10,38 +10,11 @@ from sklearn.model_selection import train_test_split
 from colorama import init, Fore
 init(autoreset = True)
 
-def find(str_jets,df):
-    n=0
-    for i in df['origin']==str_jets:
-        if i==True:
-            n+=1
-    return n
-    
-def composition_plot(df, directory, signal, jetCollection, analysis, channel, PreselectionCuts, background):
-    samples = []
-    x=np.array([])
-    samples=list(set(df['origin']))
-    for var in samples:
-        x=np.append(x,find(var,df))
-    #plt.figure(1,figsize=(18,6))
-    plt.bar(samples,x)
-    legend = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\npreselection cuts: ' + PreselectionCuts
-    plt.figtext(0.6, 0.7, legend, wrap = True, horizontalalignment = 'left')#, fontsize = 10)
-    plt.suptitle('Dataset composition')
-    plt.xlabel('Origin')
-    plt.ylabel('Number of events')
-    plt.yscale('log')
-    pltName = directory + '/' + jetCollection + '_' + analysis + '_' + channel + '_' + signal + '_' + preselectionCuts + '_' + background + '_composition.png'
-    plt.savefig(pltName)
-    print('Saved ' + pltName)
-    plt.clf()
-    return x,samples
-
 ### Reading from command line
 jetCollection, analysis, channel, preselectionCuts, background, testSignal, trainingFraction = ReadArgParser()
 
 ### Reading from configuration file
-dfPath, InputFeatures, signalsList, backgroundsList = ReadConfig(analysis, jetCollection) ### inputFeatures non serve più! 
+dfPath, InputFeatures, signalsList, backgroundsList = ReadConfig(analysis, jetCollection)
 dfPath += analysis + '/' + channel
 
 ### Creating the list of signals to take
@@ -52,7 +25,11 @@ else:
 
 ### Loading input file
 data = pd.read_pickle(dfPath + '/MixData_PD_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '.pkl') 
-
+'''
+print(list(data['origin']).count('Diboson'))
+print(list(data['origin']).count('Zjets'))
+print(list(data['origin']).count('Radion'))
+'''
 foundSignal = 0
 drawPlot = False
 
@@ -77,8 +54,8 @@ for signal in signalsList:
     data_set = data[data['origin'].isin(inputOrigin)]
 
     if(drawPlot):
-        ### Plotting the dataframe composition and the correlation matrix
-        composition = composition_plot(data_set, outputDir, signal, jetCollection, analysis, channel, preselectionCuts, background)
+        ### Plotting histograms of each variables divided by class and the correlation matrix
+        DrawVariablesHisto(data_set, outputDir, jetCollection, analysis, channel, signal, preselectionCuts, background)
         DrawCorrelationMatrix(data_set, InputFeatures, outputDir, jetCollection, analysis, channel, signal, preselectionCuts, background)
 
     ### Splitting data into train and test set
