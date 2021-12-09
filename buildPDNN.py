@@ -1,4 +1,4 @@
-from Functions import *
+from newFunctions import *
 
 ### Setting a seed for reproducibility
 tf.random.set_seed(1234)
@@ -9,6 +9,7 @@ batchSize = 2048
 
 ### Reading the command line
 jetCollection, analysis, channel, preselectionCuts, background, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, testMass = ReadArgParser()
+
 originsBkgTest = list(background.split('_'))
 
 ### Reading the configuration file
@@ -28,11 +29,23 @@ logInfo += logString
 ### Loading input data
 data_train, data_test, X_train_unscaled, m_train_unscaled, m_test_unscaled = LoadData(dfPath, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures)
 
+print(data_train)
+import seaborn
+    ax = seaborn.histplot(data = data_train['X_boosted_m'], x = data['X_boosted_m'], hue = data['origin'], common_norm = False, stat = 'probability', legend = True)
+    plt.title(analysis + ' ' + channel + ' ' + signal + ' ' + background)
+    #pltName = '/Histo_mass_' + jetCollection + '_' + analysis + '_' + channel + '_' + signal + '_' + preselectionCuts + '_' + background + '.png'                    
+    plt.tight_layout()
+    plt.show()
+exit()
 ### Extracting X and y arrays 
 X_train = np.array(data_train[InputFeatures].values).astype(np.float32)
 y_train = np.array(data_train['isSignal'].values).astype(np.float32)
 X_test = np.array(data_test[InputFeatures].values).astype(np.float32)
 y_test = np.array(data_test['isSignal'].values).astype(np.float32)
+print(InputFeatures)
+print('Xtrain: ' + str(X_train.shape[1]))
+print(X_train)
+print('input features: ' + str(len(InputFeatures)))
 
 ### Writing dataframes composition to the log file
 logString = '\nNumber of train events: ' + str(len(X_train)) + ' (' + str(int(sum(y_train))) + ' signal and ' + str(int(len(y_train) - sum(y_train))) + ' background)' + '\nNumber of test events: ' + str(len(X_test)) + ' (' + str(int(sum(y_test))) + ' signal and ' + str(int(len(y_test) - sum(y_test))) + ' background)'
@@ -41,8 +54,8 @@ logInfo += logString
 
 ### Weighting train events
 origin_train = np.array(data_train['origin'].values)
-w_train, origins_list, origins_numbers, weights = weightEvents(origin_train)
-logString = '\nOrigins list: ' + str(origins_list) + '\nNumber of events with the corresponding origin: ' + str(origins_numbers) + '\nWeights for each origin: ' + str(weights)
+w_train, origins_list, DictNumbers, DictWeights = weightEvents(origin_train, str(signal))
+logString = '\nOrigin list: ' + str(origins_list) + '\nOrigins numbers: ' + str(DictNumbers) + '\nOrigins weights: ' + str(DictWeights)
 logFile.write(logString)
 logInfo += logString
 
@@ -55,7 +68,7 @@ logInfo += logString
 
 ### Training
 print(Fore.BLUE + 'Training the ' + NN)
-modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = batchSize,  validation_split = validationFraction, verbose = 1, callbacks = EarlyStopping(verbose = True, patience = 10, monitor = 'val_loss', restore_best_weights = True))
+modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = batchSize, validation_split = validationFraction, verbose = 1, callbacks = EarlyStopping(verbose = True, patience = 5, monitor = 'val_loss', restore_best_weights = True))
 
 ### Saving to files
 SaveModel(model, X_train_unscaled, outputDir)
@@ -89,10 +102,18 @@ unscaledTestMassPointsList = list(dict.fromkeys(list(m_test_unscaled_signal)))
 m_test_signal = data_test_signal['mass']
 scaledTestMassPointsList = list(dict.fromkeys(list(m_test_signal)))
 
+massVec = []
+WP_rejVec90 = []
+WP_rejVec94 = []
+WP_rejVec97 = []
+WP_rejVec99 = []
+
+bkgRejFile = open(outputDir + '/BkgRejectionVsMass_paper_newWeights_bkgMass_MedianInterquartile_Delta.txt', 'w')
+bkgRejFile.write('Mass Bkg_rej_at_0.90_WP Bkg_rej_at_0.94_WP Bkg_rej_at_0.97_WP Bkg_rej_at_0.99_WP (background mass distribution equal to signal mass distribution)\n')
 ### If testMass = 'all', defining testMass as the list of test signal masses 
 if testMass == ['all']:
     testMass = []
-    testMass = list(str(int(item)) for item in set(list(m_test_unscaled_signal)))
+    testMass = list(str(int(item)) for item in set(list(m_test_unscaled_signal)))#.sort()
 
 for unscaledMass in testMass:
     unscaledMass = int(unscaledMass)
@@ -130,7 +151,7 @@ for unscaledMass in testMass:
 
     ### Prediction on signal and background
     yhat_train_signal_mass, yhat_train_bkg_mass, yhat_test_signal_mass, yhat_test_bkg_mass = PredictionSigBkg(model, X_train_signal_mass, X_train_bkg, X_test_signal_mass, X_test_bkg, batchSize)
-
+    '''
     scoresFile = open(newOutputDir + '/Scores_train_signal.txt', 'w')
     for score in yhat_train_signal_mass:
         scoresFile.write(str(score) + '\n')
@@ -150,7 +171,7 @@ for unscaledMass in testMass:
     for score in yhat_test_bkg_mass:
         scoresFile.write(str(score) + '\n')
     scoresFile.close()
-
+    '''
     ### Drawing confusion matrix
     yhat_test_mass = np.concatenate((yhat_test_signal_mass, yhat_test_bkg_mass))
     y_test_mass = np.concatenate((np.ones(len(yhat_test_signal_mass)), np.zeros(len(yhat_test_bkg_mass))))
@@ -159,9 +180,38 @@ for unscaledMass in testMass:
 
     ### Calculating area under ROC curve (AUC), background rejection and saving plots 
     AUC, WP, WP_rej = DrawEfficiency(yhat_train_signal_mass, yhat_test_signal_mass, yhat_train_bkg_mass, yhat_test_bkg_mass, newOutputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background, savePlot)
+    
+    massVec.append(unscaledMass)
+    WP_rejVec90.append(float(WP_rej[0]))
+    WP_rejVec94.append(float(WP_rej[1]))
+    WP_rejVec97.append(float(WP_rej[2]))
+    WP_rejVec99.append(float(WP_rej[3]))
+
+    bkgRejFile.write(str(unscaledMass) + ' ' + WP_rej[0] + ' ' + WP_rej[1] + ' ' + WP_rej[2] + ' ' + WP_rej[3] + '\n')
+
     print(Fore.BLUE + 'AUC: ' + str(AUC))
     newLogFile.write('\nAUC: ' + str(AUC) + '\nWorking points: ' + str(WP) + '\nBackground rejection at each working point: ' + str(WP_rej))
 
     ### Closing the newLogFile
     newLogFile.close()
     print(Fore.GREEN + 'Saved ' + newLogFileName)
+
+print(massVec)
+print(WP_rejVec90)
+print(WP_rejVec94)
+print(WP_rejVec97)
+print(WP_rejVec99)
+'''
+plt.plot(massVec, WP_rejVec90, color = 'blue', label = 'WP: 0.90')
+plt.plot(massVec, WP_rejVec94, color = 'orange', label = 'WP: 0.94')
+plt.plot(massVec, WP_rejVec97, color = 'green', label = 'WP: 0.97')
+plt.plot(massVec, WP_rejVec99, color = 'red', label = 'WP: 0.99')
+plt.yscale('log')
+plt.legend()
+plt.xlabel('Mass [GeV]')
+plt.ylabel('Background rejection')
+pltName = '/BkgRejectionVsMassPaperNewWeights.png'
+plt.savefig(outputDir + pltName, bbox_inches = 'tight')
+print(Fore.GREEN + 'Saved ' + outputDir + pltName)
+'''
+bkgRejFile.close()    

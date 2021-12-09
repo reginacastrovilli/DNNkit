@@ -82,6 +82,7 @@ for unscaledMass in testMass:
     origin_train_mass = np.array(data_train_mass['origin'].values)
     #origin_test_mass = np.array(data_test_mass['origin'].values)
 
+
     ### Selecting only the variables to give to the DNN
     X_train_mass = data_train_mass[InputFeatures]
     X_test_mass = data_test_mass[InputFeatures]
@@ -91,8 +92,9 @@ for unscaledMass in testMass:
     X_test_mass = np.asarray(X_test_mass.values).astype(np.float32)
 
     ### Weighting train events
-    w_train_mass, origins_list, origins_numbers, weights = weightEvents(origin_train_mass)
-    logFile.write('\nOrigins list: ' + str(origins_list) + '\nNumber of events with the corresponding origin: ' + str(origins_numbers) + '\nWeights for each origin: ' + str(weights))
+    w_train_mass, origins_list, DictNumbers, DictWeights = weightEvents(origin_train_mass, str(signal))
+    logFile.write('\nOrigin list: ' + str(origins_list) + '\nOrigins numbers: ' + str(DictNumbers) + '\nOrigins weights: ' + str(DictWeights))
+logFile.write(logString)
 
     ### Building the model, compiling and training
     model, Loss, Metrics, learningRate, Optimizer = BuildDNN(len(InputFeatures), numberOfNodes, numberOfLayers, dropout)

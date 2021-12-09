@@ -76,7 +76,7 @@ def ReadArgParser():
     dropout = float(args.Dropout)
     if args.Dropout and (dropout < 0. or dropout > 1.):
         parser.error(Fore.RED + 'Dropout must be between 0 and 1')
-    mass = args.Mass.split()
+    mass = args.Mass.split()#.sort()
 
     if sys.argv[0] == fileName1:
         return jetCollection
@@ -217,8 +217,8 @@ def BuildDNN(N_input, nodesNumber, layersNumber, dropout):
     #model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', metrics = ['accuracy'])
     Loss = 'binary_crossentropy'
     Metrics = ['accuracy']
-    learningRate = 0.001 #0.0003
-    Optimizer = tf.keras.optimizers.RMSprop(learning_rate = learningRate) #Adam
+    learningRate = 0.0003 #0.001
+    Optimizer = tf.keras.optimizers.Adam(learning_rate = learningRate) #Adam
     return model, Loss, Metrics, learningRate, Optimizer
 
 def SaveArchAndWeights(model, outputDir):
@@ -553,7 +553,7 @@ def DrawCM(yhat_test, y_test, normalize, outputDir, mass, background, savePlot):
         plt.clf()    
     return values
 
-def weightEvents(origin_train):
+def weightEventsOld(origin_train):
     originsList = np.array(list(set(list(origin_train))))
     originsNumber = np.array([])
     for origin in originsList:
@@ -569,6 +569,36 @@ def weightEvents(origin_train):
         w_origin_train = np.where(w_origin_train == str(origin), weights[np.where(originsList == origin)], w_origin_train)
     w_origin_train = np.asarray(w_origin_train).astype(np.float32)
     return w_origin_train, originsList, originsNumber, weights
+
+def weightEvents(origin_train, signal):
+    DictNumbers = {}
+    originsList = np.array(list(set(list(origin_train))))
+    for origin in originsList:
+        DictNumbers[origin] = list(origin_train).count(origin)
+    minNumber = min(DictNumbers.values())
+    minOrigin = [key for key in DictNumbers if DictNumbers[key] == minNumber]
+    DictWeights = {}
+    if signal in minOrigin:
+        for origin in originsList:
+            if origin == signal:
+                DictWeights[origin] = 1
+            else:
+                DictWeights[origin] = minNumber / ((len(originsList) - 1) * DictNumbers[origin]) ### DictNumbers[signal]
+    elif DictNumbers[signal] > ((len(originsList) - 1) * minNumber):
+        for origin in originsList:
+            if origin == signal:
+                DictWeights[origin] = (len(originsList) - 1) * minNumber / DictNumbers[origin]
+            elif origin in minOrigin:
+                DictWeights[origin] = 1
+            else:
+                DictWeights[origin] = minNumber / DictNumbers[origin]
+    else:
+        print(Fore.RED + 'No weights defined for this statistic')
+    w_origin_train = origin_train.copy()
+    for origin in originsList:
+        w_origin_train = np.where(w_origin_train == origin, DictWeights[origin], w_origin_train)
+    w_origin_train = np.asarray(w_origin_train).astype(np.float32)
+    return w_origin_train, originsList, DictNumbers, DictWeights
 
 '''
 def cutEvents(data_train_mass):
