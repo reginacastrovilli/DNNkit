@@ -1,6 +1,6 @@
 ### Assigning script names to variables
 fileName1 = 'saveToPkl.py'
-fileName2 = 'buildDataset.py'
+fileName2 = 'newbuildDataset.py'
 fileName3 = 'splitDataset.py'
 fileName4 = 'buildDNN.py'
 fileName5 = 'buildPDNN.py'
@@ -76,13 +76,13 @@ def ReadArgParser():
     dropout = float(args.Dropout)
     if args.Dropout and (dropout < 0. or dropout > 1.):
         parser.error(Fore.RED + 'Dropout must be between 0 and 1')
-    mass = args.Mass.split()#.sort()
+    mass = args.Mass.split()
 
     if sys.argv[0] == fileName1:
         return jetCollection
 
     if sys.argv[0] == fileName2:
-        return jetCollection, analysis, channel, preselectionCuts
+        return jetCollection, analysis, channel, preselectionCuts, signalString, backgroundString
 
     if sys.argv[0] == fileName3:
         print(Fore.BLUE + '         background = ' + str(backgroundString))
@@ -121,7 +121,6 @@ def ReadConfig(analysis, jetCollection):
     config = configparser.ConfigParser()
     config.read(configurationFile)
     inputFiles = ast.literal_eval(config.get('config', 'inputFiles'))
-    dataType = ast.literal_eval(config.get('config', 'dataType'))
     rootBranchSubSample = ast.literal_eval(config.get('config', 'rootBranchSubSample'))
     signalsList = ast.literal_eval(config.get('config', 'signals'))
     backgroundsList = ast.literal_eval(config.get('config', 'backgrounds'))
@@ -133,7 +132,7 @@ def ReadConfig(analysis, jetCollection):
         InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesResolved'))
 
     if sys.argv[0] == fileName2:
-        return inputFiles, dataType, rootBranchSubSample, dfPath, InputFeatures
+        return inputFiles, rootBranchSubSample, dfPath, InputFeatures
     if sys.argv[0] == fileName3:
         return dfPath, InputFeatures, signalsList, backgroundsList
     if sys.argv[0] == fileName4 or sys.argv[0] == fileName5:
@@ -166,6 +165,40 @@ def LoadData(dfPath, jetCollection, signal, analysis, channel, background, train
 def WriteLogFile(numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, InputFeatures, dfPath):
     logString = 'Number of nodes: ' + str(numberOfNodes) + '\nNumber of layers: ' + str(numberOfLayers) + '\nNumber of epochs: ' + str(numberOfEpochs) + '\nValidation fraction: ' + str(validationFraction) + '\nDropout: ' + str(dropout) + '\nInputFeatures: ' + str(InputFeatures) + '\ndfPath: ' + dfPath# + '\nNumber of train events: ' + str(len(data_train)) + ' (' + str(len(data_train_signal)) + ' signal and ' + str(len(data_train_bkg)) + ' background)' + '\nNumber of test events: ' + str(len(data_test)) + ' (' + str(len(data_test_signal)) + ' signal and ' + str(len(data_test_bkg)) + ' background)'
     return logString
+
+def SelectEvents(dataFrame, channel, analysis, preselectionCuts):
+    ### Selecting events according to type of analysis and channel
+    selectionMergedGGF = 'Pass_MergHP_GGF_ZZ_Tag_SR == True or Pass_MergHP_GGF_ZZ_Untag_SR == True or Pass_MergHP_GGF_WZ_SR == True or Pass_MergLP_GGF_ZZ_Tag_SR == True or Pass_MergLP_GGF_ZZ_Untag_SR == True or Pass_MergHP_GGF_ZZ_Tag_ZCR == True or Pass_MergHP_GGF_WZ_ZCR == True or Pass_MergHP_GGF_ZZ_Untag_ZCR == True or Pass_MergLP_GGF_ZZ_Tag_ZCR == True or Pass_MergLP_GGF_ZZ_Untag_ZCR == True or Pass_MergLP_GGF_WZ_SR == True or Pass_MergLP_GGF_WZ_ZCR == True'
+    selectionMergedVBF = 'Pass_MergHP_VBF_WZ_SR == True or Pass_MergHP_VBF_ZZ_SR == True or Pass_MergHP_VBF_WZ_ZCR == True or Pass_MergHP_VBF_ZZ_ZCR == True or Pass_MergLP_VBF_WZ_SR == True or Pass_MergLP_VBF_ZZ_SR == True or Pass_MergLP_VBF_WZ_ZCR == True or Pass_MergLP_VBF_ZZ_ZCR == True'
+    selectionResolvedGGF = 'Pass_Res_GGF_WZ_SR == True or Pass_Res_GGF_WZ_ZCR == True or Pass_Res_GGF_ZZ_Tag_SR == True or Pass_Res_GGF_ZZ_Untag_SR == True or Pass_Res_GGF_ZZ_Tag_ZCR == True or Pass_Res_GGF_ZZ_Untag_ZCR == True'
+    selectionResolvedVBF = 'Pass_Res_VBF_WZ_SR == True or Pass_Res_VBF_WZ_ZCR == True or Pass_Res_VBF_ZZ_SR == True or Pass_Res_VBF_ZZ_ZCR'
+    if channel == 'ggF':
+        dataFrame = dataFrame.query('Pass_isVBF == False')
+        if analysis == 'merged':
+            selection = selectionMergedGGF
+        elif analysis == 'resolved':
+            selection = selectionResolvedGGF
+    elif channel == 'VBF':
+        dataFrame = dataFrame.query('Pass_isVBF == True')
+        if analysis == 'merged':
+            selection = selectionMergedVBF
+        elif analysis == 'resolved':
+            selection = selectionResolvedVBF
+    dataFrame = dataFrame.query(selection)
+
+    ### Applying preselection cuts (if any)
+    if preselectionCuts != 'none':
+        dataFrame = dataFrame.query(preselectionCuts)
+
+    return dataFrame
+
+### Selecting signal events according to their mass and type of analysis
+def CutMasses(dataFrame, analysis):
+    if analysis == 'merged':
+        dataFrame = dataFrame.query('mass >= 500')
+    elif analysis == 'resolved':
+        dataFrame = dataFrame.query('mass <= 1500')
+    return dataFrame
 
 ### Shuffling dataframe
 import sklearn.utils
@@ -569,6 +602,7 @@ def weightEventsOld(origin_train):
         w_origin_train = np.where(w_origin_train == str(origin), weights[np.where(originsList == origin)], w_origin_train)
     w_origin_train = np.asarray(w_origin_train).astype(np.float32)
     return w_origin_train, originsList, originsNumber, weights
+
 
 def weightEvents(origin_train, signal):
     DictNumbers = {}
