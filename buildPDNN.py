@@ -1,4 +1,4 @@
-from newFunctions import *
+from Functions import *
 
 ### Setting a seed for reproducibility
 tf.random.set_seed(1234)
@@ -29,14 +29,6 @@ logInfo += logString
 ### Loading input data
 data_train, data_test, X_train_unscaled, m_train_unscaled, m_test_unscaled = LoadData(dfPath, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures)
 
-print(data_train)
-import seaborn
-    ax = seaborn.histplot(data = data_train['X_boosted_m'], x = data['X_boosted_m'], hue = data['origin'], common_norm = False, stat = 'probability', legend = True)
-    plt.title(analysis + ' ' + channel + ' ' + signal + ' ' + background)
-    #pltName = '/Histo_mass_' + jetCollection + '_' + analysis + '_' + channel + '_' + signal + '_' + preselectionCuts + '_' + background + '.png'                    
-    plt.tight_layout()
-    plt.show()
-exit()
 ### Extracting X and y arrays 
 X_train = np.array(data_train[InputFeatures].values).astype(np.float32)
 y_train = np.array(data_train['isSignal'].values).astype(np.float32)

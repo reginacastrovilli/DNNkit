@@ -1,6 +1,6 @@
 ### Assigning script names to variables
 fileName1 = 'saveToPkl.py'
-fileName2 = 'newbuildDataset.py'
+fileName2 = 'buildDataset.py'
 fileName3 = 'splitDataset.py'
 fileName4 = 'buildDNN.py'
 fileName5 = 'buildPDNN.py'
@@ -152,7 +152,7 @@ def checkCreateDir(dir):
 import pandas as pd
 import numpy as np
 def LoadData(dfPath, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures):
-    fileCommonName = jetCollection + '_' + analysis + '_' + channel + '_' + str(signal) + '_' + preselectionCuts + '_' + background + '_' + str(trainingFraction) + 't'
+    fileCommonName = jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + str(signal) + '_' + background + '_' + str(trainingFraction) + 't'
     data_Train = pd.read_pickle(dfPath + '/data_train_' + fileCommonName + '.pkl')
     data_Test = pd.read_pickle(dfPath + '/data_test_' + fileCommonName + '.pkl')
     data_Train_unscaled = pd.read_pickle(dfPath + '/data_train_unscaled_' + fileCommonName + '.pkl')
@@ -210,7 +210,7 @@ def ShufflingData(dataFrame):
 
 ### Drawing histograms of each variables in the dataframe divided by class
 import seaborn
-def DrawVariablesHisto(dataFrame, outputDir, jetCollection, analysis, channel, signal, preselectionCuts, background):
+def DrawVariablesHisto(dataFrame, outputDir, outputFileCommonName, analysis, channel, signal, background):#jetCollection, analysis, channel, signal, preselectionCuts, background):
     featureLogX = ['fatjet_D2', 'fatjet_m', 'fatjet_pt', 'lep1_pt', 'lep2_pt', 'Zcand_pt']
     for feature in dataFrame.columns:
         if feature == 'isSignal':
@@ -222,7 +222,8 @@ def DrawVariablesHisto(dataFrame, outputDir, jetCollection, analysis, channel, s
         if feature in featureLogX:
             ax.set_xscale('log')
         plt.title(analysis + ' ' + channel + ' ' + signal + ' ' + background)
-        pltName = '/Histo_' + feature + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + signal + '_' + preselectionCuts + '_' + background + '.png'
+        pltName = '/Histo_' + feature + '_' + outputFileCommonName + '.png'
+        #pltName = '/Histo_' + feature + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + signal + '_' + preselectionCuts + '_' + background + '.png'
         plt.tight_layout()
         plt.savefig(outputDir + pltName)
         print(Fore.GREEN + 'Saved ' + outputDir + pltName)
@@ -352,7 +353,7 @@ def PredictionSigBkg(model, X_train_signal, X_train_bkg, X_test_signal, X_test_b
     return yhat_train_signal, yhat_train_bkg, yhat_test_signal, yhat_test_bkg
 
 ### Drawing correlation matrix
-def DrawCorrelationMatrix(dataFrame, InputFeatures, outputDir, jetCollection, analysis, channel, signal, preselectionCuts, bkg):
+def DrawCorrelationMatrix(dataFrame, InputFeatures, outputDir, outputFileCommonName, analysis, channel, signal, bkg):
     fig, ax1 = plt.subplots(figsize = (10, 10))
     plt.set_cmap('bwr')
     im = ax1.matshow((dataFrame[InputFeatures].astype(float)).corr(), vmin = -1, vmax = 1)
@@ -362,7 +363,8 @@ def DrawCorrelationMatrix(dataFrame, InputFeatures, outputDir, jetCollection, an
     for feature1 in range(len(InputFeatures)): ### This is really slow, perform only if needed
         for feature2 in range(len(InputFeatures)):
             ax1.text(feature2, feature1, "%.2f" % (dataFrame[InputFeatures].astype(float)).corr().at[InputFeatures[feature2], InputFeatures[feature1]], ha = 'center', va = 'center', color = 'r', fontsize = 6)
-    CorrelationMatrixName = outputDir + '/' + jetCollection + '_' + analysis + '_' + channel + '_' + signal + '_' + preselectionCuts + '_' + bkg + '_CorrelationMatrix.png' 
+    plt.title('Correlation matrix (' + analysis + ' ' + channel + ' ' + signal + ' ' + background + ')')
+    CorrelationMatrixName = outputDir + '/' + outputFileCommonName + '.png'
     plt.savefig(CorrelationMatrixName)
     print(Fore.GREEN + 'Saved ' + CorrelationMatrixName)
     plt.clf()

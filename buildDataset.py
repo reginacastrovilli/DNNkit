@@ -18,7 +18,7 @@ targetOrigins = originsBkgTest.copy()
 targetOrigins.insert(0, signal)
 
 ### Reading from config file
-inputFiles, dataType, rootBranchSubSample, dfPath, InputFeatures = ReadConfig(analysis, jetCollection)
+inputFiles, rootBranchSubSample, dfPath, InputFeatures = ReadConfig(analysis, jetCollection)
 
 InputFeatures.append('isSignal')
 InputFeatures.append('origin')
@@ -82,8 +82,8 @@ dataFrame = dataFrame[InputFeatures]
 dataFrame = ShufflingData(dataFrame)
 
 ### Saving pkl files
-outputDir = dfPath + analysis + '/' + channel
+outputDir = dfPath + analysis + '/' + channel + '/' + signal + '/' + background
 print (format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
-outputFileName = '/MixData_PD_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '.pkl'
+outputFileName = '/MixData_PD_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + signal + '_' + background + '.pkl'
 dataFrame.to_pickle(outputDir + outputFileName)
 print('Saved ' + outputDir + outputFileName)
