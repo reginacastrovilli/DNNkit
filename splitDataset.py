@@ -1,4 +1,4 @@
-from Functions import ReadArgParser, checkCreateDir, ReadConfig, SaveFeatureScaling, DrawCorrelationMatrix, DrawVariablesHisto
+from Functions import ReadArgParser, checkCreateDir, ReadConfig, SaveFeatureScaling, DrawCorrelationMatrix, DrawVariablesHisto, weightEvents
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -6,6 +6,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.compose import ColumnTransformer
 from sklearn.model_selection import train_test_split
 #from tensorflow.keras.utils import to_categorical
+
+pd.options.mode.chained_assignment = None ### to suppress the SettingWithCopyWarning
 
 from colorama import init, Fore
 init(autoreset = True)
@@ -15,7 +17,6 @@ jetCollection, analysis, channel, preselectionCuts, background, testSignal, trai
 
 ### Reading from configuration file
 dfPath, InputFeatures, signalsList, backgroundsList = ReadConfig(analysis, jetCollection)
-
 
 ### Creating the list of signals to take
 if testSignal == 'all':
@@ -47,8 +48,14 @@ for signal in signalsList:
     ### Selecting events according to their origin 
     data_set = data[data['origin'].isin(inputOrigin)]
 
+    nEvents = round(data_set.shape[0] * 2 / 4)
+    #data_set = data_set[:nEvents]
+
+    dictOrigin = {}
     for origin in inputOrigin:
-        print(Fore.BLUE + 'Number of ' + origin + ' events: ' + str(list(data_set['origin']).count(origin)))
+        dictOrigin[origin] = list(data_set['origin']).count(origin)
+        print(Fore.BLUE + 'Number of ' + origin + ' events: ' + str(dictOrigin[origin]))#str(list(data_set['origin']).count(origin)))
+        #print(Fore.BLUE + 'Number of ' + origin + ' events: ' + str(list(data_set['origin']).count(origin)))
 
     if(drawPlot):
         ### Plotting histograms of each variables divided by class and the correlation matrix
@@ -71,28 +78,33 @@ for signal in signalsList:
 
     ### Saving list of columns names
     columnsNames = data_train.columns
+    origin_train = np.array(data_train['origin'].values)
+    weights, _, _, _ = weightEvents(origin_train, str(signal))
 
     ### Scaling InputFeatures of train and test set
+    data_train_copy = data_train.copy()
     for column in InputFeatures:
-        median = data_train[column].median()
-        q75, q25 = np.percentile(data_train[column], [75 ,25])
+        data_train_copy[column] *= weights
+        median = data_train_copy[column].median()
+        q75, q25 = np.percentile(data_train_copy[column], [75, 25])
         iqr = q75 - q25
         data_train[column] = (data_train[column] - median) / iqr
         data_test[column] = (data_test[column] - median) / iqr
 
     '''
-    ct = ColumnTransformer([('scaler', StandardScaler(), InputFeatures)], remainder = 'passthrough')
-    scaler_train = ct.fit(data_train)
+    scaler_train = ct.fit(data_train, None)
     data_train = scaler_train.transform(data_train)
     data_test = scaler_train.transform(data_test)
-    #print(scaler_train.mean_)
-    #print(scaler_train.var_)
+    print(scaler_train.mean_)
+    print(scaler_train.var_)
+    seaborn.histplot(data = data_train['lep2_eta'], x = data_train['lep2_eta'], hue = dataFrame['origin'], common_norm = False, stat = statType, legend = True)
+    plt.show()
+    exit()
     '''
-    
     ### Converting numpy arrays into pandas dataframes
-    data_train = pd.DataFrame(data_train, columns = columnsNames)
-    data_test = pd.DataFrame(data_test, columns = columnsNames)
-
+    #data_train = pd.DataFrame(data_train, columns = columnsNames)
+    #data_test = pd.DataFrame(data_test, columns = columnsNames)
+    
     ### Saving scaled dataframes
     dataTrainName = inputOutputDir + '/data_train_' + fileCommonName + '.pkl'
     data_train.to_pickle(dataTrainName)
