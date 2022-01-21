@@ -65,11 +65,18 @@ dataFrameSignal = dataFrameSignal.assign(mass = massesSignal)
 
 ### Cutting signal events according to their mass and the type of analysis
 dataFrameSignal = CutMasses(dataFrameSignal, analysis)
-print(Fore.BLUE + 'Masses in the signal sample: ' + str(set(list(dataFrameSignal['mass']))))
+massesSignalList = list(set(list(dataFrameSignal['mass'])))
+print(Fore.BLUE + 'Masses in the signal sample: ' + str(massesSignalList))#str(set(list(dataFrameSignal['mass']))))
 
+'''
 ### Assigning a random mass to background events according to the signal mass distribution 
 massDict = dict(dataFrameSignal['mass'].value_counts(normalize = True))
 massesBkg = random.choices(list(massDict.keys()), weights = list(massDict.values()), k = len(dataFrameBkg))
+dataFrameBkg = dataFrameBkg.assign(mass = massesBkg)
+'''
+
+### Assigning a random mass to background events 
+massesBkg = np.random.choice(massesSignalList, dataFrameBkg.shape[0])
 dataFrameBkg = dataFrameBkg.assign(mass = massesBkg)
 
 ### Concatening signal and background dataframes
