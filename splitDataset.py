@@ -13,10 +13,10 @@ from colorama import init, Fore
 init(autoreset = True)
 
 ### Reading from command line
-jetCollection, analysis, channel, preselectionCuts, background, testSignal, trainingFraction = ReadArgParser()
+tag, jetCollection, analysis, channel, preselectionCuts, background, testSignal, trainingFraction = ReadArgParser()
 
 ### Reading from configuration file
-dfPath, InputFeatures, signalsList, backgroundsList = ReadConfig(analysis, jetCollection)
+dfPath, InputFeatures, signalsList, backgroundsList = ReadConfig(tag, analysis, jetCollection)
 
 ### Creating the list of signals to take
 if testSignal == 'all':

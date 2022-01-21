@@ -9,7 +9,7 @@ from colorama import init, Fore
 init(autoreset = True)
 
 ### Reading the command line
-jetCollection, analysis, channel, preselectionCuts, signal, background = ReadArgParser()
+tag, jetCollection, analysis, channel, preselectionCuts, signal, background = ReadArgParser()
 
 originsBkgTest = list(background.split('_'))
 
@@ -18,7 +18,7 @@ targetOrigins = originsBkgTest.copy()
 targetOrigins.insert(0, signal)
 
 ### Reading from config file
-inputFiles, rootBranchSubSample, dfPath, InputFeatures = ReadConfig(analysis, jetCollection)
+inputFiles, rootBranchSubSample, dfPath, InputFeatures = ReadConfig(tag, analysis, jetCollection)
 
 InputFeatures.append('isSignal')
 InputFeatures.append('origin')

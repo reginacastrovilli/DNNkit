@@ -10,10 +10,10 @@ from colorama import init, Fore
 init(autoreset = True)
 
 ### Reading the command line
-jetCollection = ReadArgParser()
+tag, jetCollection = ReadArgParser()
 
 ### Reading from config file
-ntuplePath, inputFiles, dfPath = ReadConfigSaveToPkl(jetCollection)
+ntuplePath, inputFiles, dfPath = ReadConfigSaveToPkl(tag, jetCollection)
 
 ### Loading, converting and saving each input file
 totalEvents = 0 
@@ -32,4 +32,5 @@ for i in inputFiles:
     outFile = dfPath + i + '_DF.pkl'
     DF.to_pickle(outFile)
     print('Saved ' + outFile)
+
 print('Total events: ' + str(totalEvents))
