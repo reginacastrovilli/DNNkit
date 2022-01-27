@@ -15,6 +15,12 @@ tag, jetCollection = ReadArgParser()
 ### Reading from config file
 ntuplePath, inputFiles, dfPath = ReadConfigSaveToPkl(tag, jetCollection)
 
+### Creating log file
+logFileName = dfPath + 'EventsNumberNtuples.txt'
+logFile = open(logFileName, 'w')
+logFile.write('Path to the input nutples: ' + ntuplePath)
+logFile.write('\nNumber of events in the input ntuples:\n')
+
 ### Loading, converting and saving each input file
 totalEvents = 0 
 for i in inputFiles:
@@ -25,6 +31,7 @@ for i in inputFiles:
     Nevents = tree.numentries
     totalEvents += Nevents
     print('Number of events in ' + inFile, '\t' + str(Nevents))
+    logFile.write(i + ' -> ' + str(Nevents) + '\n')
     if Nevents == 0:
         print(Fore.RED + 'Ignoring empty file')
         continue
@@ -34,3 +41,6 @@ for i in inputFiles:
     print('Saved ' + outFile)
 
 print('Total events: ' + str(totalEvents))
+logFile.write('Number of total events: ' + str(totalEvents))
+logFile.write('\npkl files saved in ' + dfPath)
+logFile.close()
