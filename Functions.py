@@ -1,4 +1,4 @@
-## Assigning script names to variables
+# Assigning script names to variables
 fileName1 = 'saveToPkl.py'
 fileName2 = 'buildDataset.py'
 fileName3 = 'splitDataset.py'
@@ -17,7 +17,7 @@ def ReadArgParser():
     parser = ArgumentParser()
     parser.add_argument('-a', '--Analysis', help = 'Type of analysis: \'merged\' or \'resolved\'', type = str)
     parser.add_argument('-c', '--Channel', help = 'Channel: \'ggF\' or \'VBF\'', type = str)
-    parser.add_argument('-s', '--Signal', help = 'Signal: \'VBFHVTWZ\', \'Radion\', \'RSG\' or \'VBFRadion\'', type = str, default = 'all')
+    parser.add_argument('-s', '--Signal', help = 'Signal: \'VBFHVTWZ\', \'Radion\', \'RSG\' or \'VBFRadion\'', type = str)
     parser.add_argument('-j', '--JetCollection', help = 'Jet collection: \'TCC\', \'UFO_PFLOW\'', type = str, default = 'UFO_PFLOW')
     parser.add_argument('-b', '--Background', help = 'Background: \'Zjets\', \'Wjets\', \'stop\', \'Diboson\', \'ttbar\' or \'all\' (in quotation mark separated by a space)', type = str, default = 'all')
     parser.add_argument('-t', '--TrainingFraction', help = 'Relative size of the training sample, between 0 and 1', default = 0.8)
@@ -45,10 +45,9 @@ def ReadArgParser():
         parser.error(Fore.RED + 'Requested channel (either \'ggF\' or \'VBF\')')
     elif args.Channel != 'ggF' and args.Channel != 'VBF' and sys.argv[0] != fileName1:
         parser.error(Fore.RED + 'Channel can be either \'ggF\' or \'VBF\'')
-    signal = args.Signal.split()
-    signalString = 'all'
-    if args.Signal != 'all':
-        signalString = '_'.join([str(item) for item in signal])
+    signal = args.Signal
+    if args.Signal is None and sys.argv[0] != fileName1:
+        parser.error(Fore.RED + 'Requested type of signal (\'Radion\', )')
     jetCollection = args.JetCollection
     if args.JetCollection is None:
         parser.error(Fore.RED + 'Requested jet collection (\'TCC\' or \'UFO_PFLOW\')')
@@ -93,17 +92,19 @@ def ReadArgParser():
     tag = args.tag
 
     if sys.argv[0] == fileName1:
-        print(Fore.BLUE + 'tag = ' + tag)
+        print(Fore.BLUE + '           tag = ' + tag)
         print(Fore.BLUE + 'jet collection = ' + jetCollection)
         return tag, jetCollection
 
     if sys.argv[0] == fileName2:
-        return tag, jetCollection, analysis, channel, preselectionCuts, signalString, backgroundString
+        print(Fore.BLUE + '          background(s) = ' + str(backgroundString))
+        print(Fore.BLUE + '                 signal = ' + str(signal))
+        return tag, jetCollection, analysis, channel, preselectionCuts, signal, backgroundString
 
     if sys.argv[0] == fileName3:
         print(Fore.BLUE + '       background = ' + str(backgroundString))
         print(Fore.BLUE + 'training fraction = ' + str(trainingFraction))
-        return tag, jetCollection, analysis, channel, preselectionCuts, backgroundString, signalString, trainingFraction
+        return tag, jetCollection, analysis, channel, preselectionCuts, backgroundString, signal, trainingFraction
 
     if(sys.argv[0] == fileName4 or sys.argv[0] == fileName5 or sys.argv[0] == fileName6):
         print(Fore.BLUE + '          background(s) = ' + str(backgroundString))
@@ -116,7 +117,7 @@ def ReadArgParser():
         print(Fore.BLUE + '                dropout = ' + str(dropout))
         print(Fore.BLUE + '                doTrain = ' + str(doTrain))
         print(Fore.BLUE + '                 doTest = ' + str(doTest))
-        return tag, jetCollection, analysis, channel, preselectionCuts, backgroundString, trainingFraction, signalString, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, mass, doTrain, doTest, loop
+        return tag, jetCollection, analysis, channel, preselectionCuts, backgroundString, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, mass, doTrain, doTest, loop
 
 ### Reading from the configuration file
 import configparser, ast
@@ -147,11 +148,12 @@ def ReadConfig(tag, analysis, jetCollection):
     dfPath += jetCollection + '/'
     if analysis == 'merged':
         InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesMerged'))
+        variablesToSave = ast.literal_eval(config.get('config', 'variablesToSaveMerged'))
     elif analysis == 'resolved':
         InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesResolved'))
-
+        variablesToSave = ast.literal_eval(config.get('config', 'variablesToSaveResolved'))
     if sys.argv[0] == fileName2:
-        return inputFiles, rootBranchSubSample, dfPath, InputFeatures
+        return inputFiles, rootBranchSubSample, dfPath, variablesToSave, backgroundsList
     if sys.argv[0] == fileName3:
         return dfPath, InputFeatures, signalsList, backgroundsList
     if sys.argv[0] == fileName4 or sys.argv[0] == fileName5 or sys.argv[0] == fileName6:
@@ -170,15 +172,16 @@ def checkCreateDir(dir):
 ### Loading input data
 import pandas as pd
 import numpy as np
-def LoadData(dfPath, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures):
-    fileCommonName = jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + str(signal) + '_' + background + '_' + str(trainingFraction) + 't'
+def LoadData(dfPath, tag, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures):
+    fileCommonName = tag + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + str(signal) + '_' + background + '_' + str(trainingFraction) + 't'
     data_Train = pd.read_pickle(dfPath + '/data_train_' + fileCommonName + '.pkl')
     data_Test = pd.read_pickle(dfPath + '/data_test_' + fileCommonName + '.pkl')
     data_Train_unscaled = pd.read_pickle(dfPath + '/data_train_unscaled_' + fileCommonName + '.pkl')
+    w_train = data_Train['train_weight'].values
     X_Train_unscaled =  data_Train_unscaled[InputFeatures]
     m_Test_unscaled = pd.read_pickle(dfPath + '/m_test_unscaled_' + fileCommonName + '.pkl').values
     m_Train_unscaled = data_Train_unscaled['mass'].values
-    return data_Train, data_Test, X_Train_unscaled, m_Train_unscaled, m_Test_unscaled
+    return data_Train, data_Test, X_Train_unscaled, m_Train_unscaled, m_Test_unscaled, w_train
 
 ### Writing in the log file
 def WriteLogFile(tag, ntuplePath, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, InputFeatures, dfPath):
@@ -188,13 +191,15 @@ def WriteLogFile(tag, ntuplePath, numberOfNodes, numberOfLayers, numberOfEpochs,
 def SelectEvents(dataFrame, channel, analysis, preselectionCuts):
     ### Selecting events according to type of analysis and channel
     selectionMergedGGF = 'Pass_MergHP_GGF_ZZ_Tag_SR == True or Pass_MergHP_GGF_ZZ_Untag_SR == True or Pass_MergHP_GGF_WZ_SR == True or Pass_MergLP_GGF_ZZ_Tag_SR == True or Pass_MergLP_GGF_ZZ_Untag_SR == True or Pass_MergHP_GGF_ZZ_Tag_ZCR == True or Pass_MergHP_GGF_WZ_ZCR == True or Pass_MergHP_GGF_ZZ_Untag_ZCR == True or Pass_MergLP_GGF_ZZ_Tag_ZCR == True or Pass_MergLP_GGF_ZZ_Untag_ZCR == True or Pass_MergLP_GGF_WZ_SR == True or Pass_MergLP_GGF_WZ_ZCR == True'
+    selectionMergedGGFZZLPuntagSR = 'Pass_MergLP_GGF_ZZ_Untag_SR == True and Pass_MergHP_GGF_ZZ_Tag_SR == False and Pass_MergHP_GGF_ZZ_Untag_SR == False and Pass_MergHP_GGF_WZ_SR == False and Pass_MergLP_GGF_ZZ_Tag_SR == False and Pass_MergHP_GGF_ZZ_Tag_ZCR == False and Pass_MergHP_GGF_WZ_ZCR == False and Pass_MergHP_GGF_ZZ_Untag_ZCR == False and Pass_MergLP_GGF_ZZ_Tag_ZCR == False and Pass_MergLP_GGF_ZZ_Untag_ZCR == False and Pass_MergLP_GGF_WZ_SR == False and Pass_MergLP_GGF_WZ_ZCR == False'
     selectionMergedVBF = 'Pass_MergHP_VBF_WZ_SR == True or Pass_MergHP_VBF_ZZ_SR == True or Pass_MergHP_VBF_WZ_ZCR == True or Pass_MergHP_VBF_ZZ_ZCR == True or Pass_MergLP_VBF_WZ_SR == True or Pass_MergLP_VBF_ZZ_SR == True or Pass_MergLP_VBF_WZ_ZCR == True or Pass_MergLP_VBF_ZZ_ZCR == True'
     selectionResolvedGGF = 'Pass_Res_GGF_WZ_SR == True or Pass_Res_GGF_WZ_ZCR == True or Pass_Res_GGF_ZZ_Tag_SR == True or Pass_Res_GGF_ZZ_Untag_SR == True or Pass_Res_GGF_ZZ_Tag_ZCR == True or Pass_Res_GGF_ZZ_Untag_ZCR == True'
     selectionResolvedVBF = 'Pass_Res_VBF_WZ_SR == True or Pass_Res_VBF_WZ_ZCR == True or Pass_Res_VBF_ZZ_SR == True or Pass_Res_VBF_ZZ_ZCR'
     if channel == 'ggF':
         dataFrame = dataFrame.query('Pass_isVBF == False')
         if analysis == 'merged':
-            selection = selectionMergedGGF
+            #selection = selectionMergedGGF
+            selection = selectionMergedGGFZZLPuntagSR            
         elif analysis == 'resolved':
             selection = selectionResolvedGGF
     elif channel == 'VBF':
@@ -229,20 +234,51 @@ def ShufflingData(dataFrame):
 
 ### Drawing histograms of each variables in the dataframe divided by class
 import seaborn
-def DrawVariablesHisto(dataFrame, outputDir, outputFileCommonName, analysis, channel, signal, background):#jetCollection, analysis, channel, signal, preselectionCuts, background):
+import matplotlib
+import matplotlib.pyplot as plt
+plt.rcParams["figure.figsize"] = [7,7]
+plt.rcParams.update({'font.size': 16})
+
+def DrawVariablesHisto(dataFrame, outputDir, outputFileCommonName, jetCollection, analysis, channel, signal, background, preselectionCuts):
+    ### Replacing '0' with 'Background' and '1' with 'Signal' in the 'isOrigin' column
+    dataFrame['isSignal'].replace(to_replace = [0, 1], value = ['Background', 'Signal'], inplace = True)
     featureLogX = ['fatjet_D2', 'fatjet_m', 'fatjet_pt', 'lep1_pt', 'lep2_pt', 'Zcand_pt']
     for feature in dataFrame.columns:
-        if feature == 'isSignal':
-            continue
+        #if feature == 'isSignal':
+        #    continue
         statType = 'probability'
         if feature == 'origin':
             statType = 'count'
-        ax = seaborn.histplot(data = dataFrame[feature], x = dataFrame[feature], hue = dataFrame['origin'], common_norm = False, stat = statType, legend = True)
+        ax = seaborn.histplot(data = dataFrame[feature], x = dataFrame[feature], hue = dataFrame['isSignal'], common_norm = False, stat = statType, legend = True)#, multiple = 'stack')
+        labelDict = {}
+        labelDict['lep1_m'] = 'lep1_m [GeV]'
+        labelDict['lep1_pt'] = 'lep1_pt [GeV]'
+        labelDict['lep1_eta'] = 'lep1_eta'        
+        labelDict['lep1_phi'] = 'lep1_phi'
+        labelDict['lep2_m'] = 'lep2_m [GeV]'
+        labelDict['lep2_pt'] = 'lep2_pt [eV]'
+        labelDict['lep2_eta'] = 'lep2_eta'        
+        labelDict['lep2_phi'] = 'lep2_phi'
+        labelDict['fatjet_m'] = 'fatjet_m [GeV]'
+        labelDict['fatjet_pt'] = 'fatjet_pt [GeV]'
+        labelDict['fatjet_eta'] = 'fatjet_eta'        
+        labelDict['fatjet_phi'] = 'fatjet_phi'
+        labelDict['fatjet_D2'] = 'fatjet_D2'
+        labelDict['Zcand_m'] = 'Zcand_m [GeV]'
+        labelDict['Zcand_pt'] = 'Zcand_pt [GeV]'
+        labelDict['X_boosted_m'] = 'X_boosted_m [GeV]'
+        labelDict['mass'] = 'mass [GeV]'
+        labelDict['weight'] = 'weight'
+        labelDict['isSignal'] = 'isSignal [GeV]'
+        labelDict['origin'] = 'origin [GeV]'
         if feature in featureLogX:
             ax.set_xscale('log')
-        plt.title(analysis + ' ' + channel + ' ' + signal + ' ' + background)
+        legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(background)
+        if (preselectionCuts != 'none'):
+            legendText += '\npreselection cuts: ' + preselectionCuts
+        plt.figtext(0.35, 0.7, legendText, wrap = True, horizontalalignment = 'left')
+        plt.xlabel(labelDict[feature])
         pltName = '/Histo_' + feature + '_' + outputFileCommonName + '.png'
-        #pltName = '/Histo_' + feature + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + signal + '_' + preselectionCuts + '_' + background + '.png'
         plt.tight_layout()
         plt.savefig(outputDir + pltName)
         print(Fore.GREEN + 'Saved ' + outputDir + pltName)
@@ -344,12 +380,12 @@ def SaveModel(model, X_input, outputDir):
     SaveArchAndWeights(model, outputDir)
     SaveVariables(outputDir, X_input)
     SaveFeatureScaling(outputDir, X_input)
-
+'''
 import matplotlib
 import matplotlib.pyplot as plt
 plt.rcParams["figure.figsize"] = [7,7]
 plt.rcParams.update({'font.size': 16})
-
+'''
 ### Evaluating the (P)DNN performance
 def EvaluatePerformance(model, X_test, y_test, batchSize):
     perf = model.evaluate(X_test, y_test, batch_size = batchSize)

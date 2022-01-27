@@ -16,9 +16,10 @@ tag, jetCollection = ReadArgParser()
 ntuplePath, inputFiles, dfPath = ReadConfigSaveToPkl(tag, jetCollection)
 
 ### Creating log file
-logFileName = dfPath + 'EventsNumberNtuples.txt'
+logFileName = dfPath + 'EventsNumberNtuples_' + tag + '_' + jetCollection + '.txt'
 logFile = open(logFileName, 'w')
-logFile.write('Path to the input nutples: ' + ntuplePath)
+logFile.write('CxAOD tag: ' + tag + '\nJet collection: ' + jetCollection)
+logFile.write('\nPath to the input nutples: ' + ntuplePath)
 logFile.write('\nNumber of events in the input ntuples:\n')
 
 ### Loading, converting and saving each input file
@@ -30,7 +31,7 @@ for i in inputFiles:
     tree = theFile['Nominal']
     Nevents = tree.numentries
     totalEvents += Nevents
-    print('Number of events in ' + inFile, '\t' + str(Nevents))
+    print(Fore.BLUE + 'Number of events in ' + inFile, '->\t' + str(Nevents))
     logFile.write(i + ' -> ' + str(Nevents) + '\n')
     if Nevents == 0:
         print(Fore.RED + 'Ignoring empty file')
@@ -38,9 +39,10 @@ for i in inputFiles:
     DF = tree.pandas.df()
     outFile = dfPath + i + '_DF.pkl'
     DF.to_pickle(outFile)
-    print('Saved ' + outFile)
+    print(Fore.GREEN + 'Saved ' + outFile)
 
-print('Total events: ' + str(totalEvents))
+print(Fore.BLUE + 'Total events: ' + str(totalEvents))
 logFile.write('Number of total events: ' + str(totalEvents))
 logFile.write('\npkl files saved in ' + dfPath)
 logFile.close()
+print(Fore.GREEN + 'Saved ' + logFileName)

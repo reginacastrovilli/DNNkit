@@ -1,4 +1,4 @@
-from Functions import ReadArgParser, ReadConfig, checkCreateDir, ShufflingData, SelectEvents, CutMasses
+from Functions import ReadArgParser, ReadConfig, checkCreateDir, ShufflingData, SelectEvents, CutMasses, DrawVariablesHisto
 import pandas as pd
 import numpy as np
 import re
@@ -7,21 +7,33 @@ import random
 import os.path
 from colorama import init, Fore
 init(autoreset = True)
+import matplotlib
+import matplotlib.pyplot as plt
+
+drawPlots = True
 
 ### Reading the command line
 tag, jetCollection, analysis, channel, preselectionCuts, signal, background = ReadArgParser()
 
-originsBkgTest = list(background.split('_'))
+### Reading from config file
+inputFiles, rootBranchSubSample, dfPath, variablesToSave, backgroundsList = ReadConfig(tag, analysis, jetCollection)
+
+### Creating output directory and logFile
+outputDir = dfPath + analysis + '/' + channel + '/' + signal + '/' + background
+print (format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
+fileCommonName = tag + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + signal + '_' + background
+logFileName = outputDir + '/EventsNumberAfterSelection_' + fileCommonName + '.txt'
+logFile = open(logFileName, 'w')
+logFile.write('CxAOD tag: ' + tag + '\nJetCollection: ' + jetCollection + '\nAnalysis: ' + analysis + '\nChannel: ' + channel + '\nPreselection cuts: ' + '\nSignal: ' + signal + '\nBackground: ' + background + '\nInput files path: ' + dfPath + '\nInput files and number of events after selection:\n')
 
 ### Creating the list of the origins selected (signal + background)
+if background == 'all':
+    originsBkgTest = backgroundsList.copy()
+else:
+    originsBkgTest = list(background.split('_'))
+
 targetOrigins = originsBkgTest.copy()
 targetOrigins.insert(0, signal)
-
-### Reading from config file
-inputFiles, rootBranchSubSample, dfPath, InputFeatures = ReadConfig(tag, analysis, jetCollection)
-
-InputFeatures.append('isSignal')
-InputFeatures.append('origin')
 
 ### Loading DSID-mass map and storing it into a dictionary
 DictDSID = {}
@@ -30,15 +42,28 @@ lines = DSIDfile.readlines()
 for line in lines:
     DictDSID[int(line.split(':')[0])] = int(line.split(':')[1])
 
+### Creating two empty dataframes to fill with signal and background events
 dataFrameSignal = []
 dataFrameBkg = []
 
 for file in os.listdir(dfPath):
+    if not file.endswith('.pkl'):
+        continue
+    #if file == 'Wjets-mc16d_DF.pkl':
+    #    continue
     for target in targetOrigins:
         if file.startswith(target):
             print(Fore.GREEN + 'Loading ' + dfPath + file)
             inputDf = pd.read_pickle(dfPath + file)
+            logFile.write('\n' + file)
+            ### Selecting only variables relevant to the analysis (needed in order to avoid memory issues)
+            inputDf = inputDf[rootBranchSubSample]
+            ### Selecting events according to merged/resolved regime and ggF/VBF channel
+            inputDf = SelectEvents(inputDf, channel, analysis, preselectionCuts)
+            logFile.write(' -> ' + str(inputDf.shape[0]))
+            ### Creating new column in the dataframe with the origin
             inputDf = inputDf.assign(origin = target)
+            ### Filling signal/background dataframes
             if target == signal:
                 dataFrameSignal.append(inputDf)
             else:
@@ -52,10 +77,6 @@ dataFrameBkg = pd.concat(dataFrameBkg, ignore_index = True)
 dataFrameSignal = dataFrameSignal.assign(isSignal = 1)
 dataFrameBkg = dataFrameBkg.assign(isSignal = 0)
 
-### Selecting events according to the type of analysis and channel
-dataFrameSignal = SelectEvents(dataFrameSignal, channel, analysis, preselectionCuts)
-dataFrameBkg = SelectEvents(dataFrameBkg, channel, analysis, preselectionCuts)
-
 ### Converting DSID to mass in the signal dataframe
 massesSignal = dataFrameSignal['DSID'].copy()
 DSIDsignal = np.array(list(set(list(dataFrameSignal['DSID']))))
@@ -66,7 +87,8 @@ dataFrameSignal = dataFrameSignal.assign(mass = massesSignal)
 ### Cutting signal events according to their mass and the type of analysis
 dataFrameSignal = CutMasses(dataFrameSignal, analysis)
 massesSignalList = list(set(list(dataFrameSignal['mass'])))
-print(Fore.BLUE + 'Masses in the signal sample: ' + str(massesSignalList))#str(set(list(dataFrameSignal['mass']))))
+print(Fore.BLUE + 'Masses in the signal sample: ' + str(np.sort(np.array(massesSignalList))))
+logFile.write('\nMasses in the signal sample: ' + str(np.sort(np.array(massesSignalList))))
 
 '''
 ### Assigning a random mass to background events according to the signal mass distribution 
@@ -82,15 +104,20 @@ dataFrameBkg = dataFrameBkg.assign(mass = massesBkg)
 ### Concatening signal and background dataframes
 dataFrame = pd.concat([dataFrameSignal, dataFrameBkg], ignore_index = True)
 
-### Selecting in the dataframe only the variables that will be given as input to the neural networks
-dataFrame = dataFrame[InputFeatures]
+### Selecting in the dataframe only the variables relevant for the next steps
+dataFrame = dataFrame[variablesToSave]
 
 ### Shuffling the dataframe
 dataFrame = ShufflingData(dataFrame)
 
 ### Saving pkl files
-outputDir = dfPath + analysis + '/' + channel + '/' + signal + '/' + background
-print (format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
-outputFileName = '/MixData_PD_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + signal + '_' + background + '.pkl'
+outputFileName = '/MixData_' + fileCommonName + '.pkl'
 dataFrame.to_pickle(outputDir + outputFileName)
-print('Saved ' + outputDir + outputFileName)
+print(Fore.GREEN + 'Saved ' + outputDir + outputFileName)
+logFile.write('\nSaved ' + outputDir + outputFileName)
+logFile.close()
+print(Fore.GREEN + 'Saved ' + logFileName)
+
+### Drawing histogram of variables
+if drawPlots:
+    DrawVariablesHisto(dataFrame, outputDir, fileCommonName, jetCollection, analysis, channel, signal, background, preselectionCuts)
