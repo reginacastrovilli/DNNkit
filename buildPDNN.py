@@ -1,5 +1,5 @@
 from Functions import *
-import time
+#import time
 #start = time.time()
 ### Setting a seed for reproducibility
 tf.random.set_seed(1234)
@@ -18,7 +18,7 @@ dfPath += analysis + '/' + channel + '/' + signal + '/' + background + '/'
 outputFileCommonName = jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + signal + '_' + background + '_' + NN
 
 ### Creating the output directory and the logFile
-outputDir = dfPath + NN + '_fullStat'
+outputDir = dfPath + NN
 print(format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
 logFileName = outputDir + '/logFile_' + outputFileCommonName + '.txt'
 logFile = open(logFileName, 'w')
@@ -28,8 +28,10 @@ logFile.write(logString)
 logInfo += logString
 
 ### Loading input data
-data_train, data_test, X_train_unscaled, m_train_unscaled, m_test_unscaled = LoadData(dfPath, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures)
+data_train, data_test, m_train_unscaled, m_test_unscaled, w_train = LoadData(dfPath, tag, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures)
+#X_train, X_test, y_train, y_test, m_train_unscaled, m_test_unscaled, w_train = LoadData(dfPath, tag, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures)
 
+### Se non peso piu' gli eventi qui potrei anche farmi restituire le y dal loading e i dati con solo le inputvariables
 ### Extracting X and y arrays 
 X_train = np.array(data_train[InputFeatures].values).astype(np.float32)
 y_train = np.array(data_train['isSignal'].values).astype(np.float32)
@@ -42,22 +44,14 @@ bkgNumber = int(len(y_test) - sum(y_test))
 logFile.write(logString)
 logInfo += logString
 
-### Weighting train events
-origin_train = np.array(data_train['origin'].values)
-w_train, origins_list, DictNumbers, DictWeights = weightEvents(origin_train, str(signal))
-logString = '\nOrigin list: ' + str(origins_list) + '\nOrigins numbers: ' + str(DictNumbers) + '\nOrigins weights: ' + str(DictWeights)
-logFile.write(logString)
-logInfo += logString
-
 bkgRejFile = open(outputDir + '/BkgRejectionOldROC.txt', 'w')
-#bkgRejFile.write('Background rejection obtained using...')
+bkgRejFile.write('Background rejection obtained using the version of the software 02-feb-2022, lepton masses as input feature, WP = 0.90, 0.94, 0.97, 0.99\n')
 bkgRej90 = []
 bkgRej94 = []
 bkgRej97 = []
 bkgRej99 = []
 
 for i in range(loop):
-
     #print(Fore.RED + 'loop: ' + str(i))
     ### Building and compiling the PDNN
     model, Loss, Metrics, learningRate, Optimizer = BuildDNN(len(InputFeatures), numberOfNodes, numberOfLayers, dropout) 
@@ -76,6 +70,7 @@ for i in range(loop):
         model = model_from_json(loadedModel)
         model.load_weights(outputDir + '/weights.h5')
         print(Fore.GREEN + 'Loaded ' + outputDir + '/weights.h5')
+        model.compile(loss = Loss, optimizer = Optimizer, weighted_metrics = Metrics) ### DEVE STARE QUI??? PRIMA NON LO CHIEDEVA
 
     if doTrain == True:
         ### Training
@@ -84,21 +79,24 @@ for i in range(loop):
         modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = batchSize, validation_split = validationFraction, verbose = 1, shuffle = False, callbacks = EarlyStopping(verbose = True, patience = patienceValue, monitor = 'val_loss', restore_best_weights = True))
 
         ### Saving to files
-        SaveModel(model, X_train_unscaled, outputDir)
+        #SaveModel(model, X_train_unscaled, outputDir)
+        SaveModel(model, outputDir, NN)
         
-        if doTest == True:
-            ### Evaluating the performance of the PDNN on the test sample and writing results to the log file
-            print(Fore.BLUE + 'Evaluating the performance of the ' + NN)
-            testLoss, testAccuracy = EvaluatePerformance(model, X_test, y_test, batchSize)
-            logString = '\nTest loss: ' + str(testLoss) + '\nTest accuracy: ' + str(testAccuracy)
-            logFile.write(logString)
-            logInfo += logString
+    if doTest == True:
+        ### Evaluating the performance of the PDNN on the test sample and writing results to the log file
+        print(Fore.BLUE + 'Evaluating the performance of the ' + NN)
+        testLoss, testAccuracy = EvaluatePerformance(model, X_test, y_test, batchSize)
+        logString = '\nTest loss: ' + str(testLoss) + '\nTest accuracy: ' + str(testAccuracy)
+        logFile.write(logString)
+        logInfo += logString
             
-        else:
-            testLoss = testAccuracy = None
-            ### Drawing accuracy and loss
-            DrawLoss(modelMetricsHistory, testLoss, patienceValue, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName)
-            DrawAccuracy(modelMetricsHistory, testAccuracy, patienceValue, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName)
+    else:
+        testLoss = testAccuracy = None
+
+    if doTrain and doTest:
+        ### Drawing accuracy and loss
+        DrawLoss(modelMetricsHistory, testLoss, patienceValue, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName)
+        DrawAccuracy(modelMetricsHistory, testAccuracy, patienceValue, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName)
 
     logFile.close()
     print(Fore.GREEN + 'Saved ' + logFileName)
@@ -123,12 +121,13 @@ for i in range(loop):
     ### If testMass = 'all', defining testMass as the list of test signal masses 
     if testMass == ['all']:
         testMass = list(int(item) for item in set(list(m_test_unscaled_signal)))
-        testMass.sort()
+    else:
+        testMass = list(int(item) for item in testMass)
+    testMass.sort()
 
     for unscaledMass in testMass:
-        unscaledMass = int(unscaledMass)
 
-        ### Checking whether there are train events with the selected mass
+        ### Checking whether there are test events with the selected mass
         if unscaledMass not in unscaledTestMassPointsList:
             print(Fore.RED + 'No test signal with mass ' + str(unscaledMass))
             continue
@@ -144,10 +143,12 @@ for i in range(loop):
 
         ### Selecting only test signal events with the same mass value and saving them as an array
         data_test_signal_mass = data_test_signal[m_test_signal == mass]
+        ### perche' non prendo direttamente le x?
         X_test_signal_mass = np.asarray(data_test_signal_mass[InputFeatures].values).astype(np.float32)
         newLogFile.write(logInfo + '\nNumber of test signal events with mass ' + str(int(unscaledMass)) + ' GeV: ' + str(len(X_test_signal_mass)))
         
         ### Assigning the same mass value to test background events and saving them as an array
+        ### Fare direttamente su x ??
         data_test_bkg = data_test_bkg.assign(mass = np.full(len(data_test_bkg), mass))
         X_test_bkg = np.asarray(data_test_bkg[InputFeatures].values).astype(np.float32)
         
@@ -157,7 +158,7 @@ for i in range(loop):
 
         ### Assigning the same mass value to train background events
         X_train_bkg[:, InputFeatures.index('mass')] = np.full(len(X_train_bkg), mass)
-        
+
         ### Prediction on signal and background
         yhat_train_signal_mass, yhat_train_bkg_mass, yhat_test_signal_mass, yhat_test_bkg_mass = PredictionSigBkg(model, X_train_signal_mass, X_train_bkg, X_test_signal_mass, X_test_bkg, batchSize)
 
@@ -182,6 +183,7 @@ for i in range(loop):
         bkgRej94.append(bkgRejWP[1])
         bkgRej97.append(bkgRejWP[2])
         bkgRej99.append(bkgRejWP[3])
+        bkgRejFile.write(str(unscaledMass) + ' ' + str(bkgRejWP[0]) + ' ' + str(bkgRejWP[1]) + ' ' + str(bkgRejWP[2]) + ' ' + str(bkgRejWP[3]) + '\n')
         
         ### Closing the newLogFile
         newLogFile.close()
@@ -192,6 +194,7 @@ for i in range(loop):
         '''
     if (len(testMass) > 1):
         DrawRejectionVsMass(testMass, WP, bkgRej90, bkgRej94, bkgRej97, bkgRej99, outputDir, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName) 
+bkgRejFile.close()
 
 '''
 end = time.time()
