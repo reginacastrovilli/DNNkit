@@ -6,7 +6,7 @@ fileNameBuildDNN = 'buildDNN.py'
 #fileNameBuildPDNN = 'buildPDNNtuningHyp.py'
 fileNameBuildPDNN = 'buildPDNN.py'
 #fileName6 = 'tuningHyperparameters.py'
-fileNamePlots = 'drawPlots.py'
+fileNamePlots = 'tests/drawPlots.py'
 
 ### Reading the command line
 from argparse import ArgumentParser
@@ -107,7 +107,7 @@ def ReadArgParser():
         print(Fore.BLUE + 'training fraction = ' + str(trainingFraction))
         return tag, jetCollection, analysis, channel, preselectionCuts, backgroundString, signal, trainingFraction
 
-    if(sys.argv[0] == fileNameBuildDNN or sys.argv[0] == fileNameBuildPDNN or sys.argv[0] == fileName6):
+    if(sys.argv[0] == fileNameBuildDNN or sys.argv[0] == fileNameBuildPDNN):# or sys.argv[0] == fileName6):
         print(Fore.BLUE + '          background(s) = ' + str(backgroundString))
         print(Fore.BLUE + '          test mass(es) = ' + str(mass))
         print(Fore.BLUE + '      training fraction = ' + str(trainingFraction))
@@ -179,14 +179,18 @@ import numpy as np
 def LoadData(dfPath, tag, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures):
     fileCommonName = tag + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + str(signal) + '_' + background + '_' + str(trainingFraction) + 't'
     data_Train = pd.read_pickle(dfPath + '/data_train_' + fileCommonName + '.pkl')
-    data_Test = pd.read_pickle(dfPath + '/data_test_' + fileCommonName + '.pkl')
-    #data_Train_unscaled = pd.read_pickle(dfPath + '/data_train_unscaled_' + fileCommonName + '.pkl')
+    X_train = np.array(data_Train[InputFeatures].values).astype(np.float32)
+    y_train = np.array(data_Train['isSignal'].values).astype(np.float32)
+    m_Train_unscaled = pd.read_pickle(dfPath + '/m_train_unscaled_' + fileCommonName + '.pkl').values
     w_train = data_Train['train_weight'].values
+    data_Test = pd.read_pickle(dfPath + '/data_test_' + fileCommonName + '.pkl')
+    X_test = np.array(data_Test[InputFeatures].values).astype(np.float32)
+    y_test = np.array(data_Test['isSignal'].values).astype(np.float32)
     #X_Train_unscaled =  data_Train_unscaled[InputFeatures]
     m_Test_unscaled = pd.read_pickle(dfPath + '/m_test_unscaled_' + fileCommonName + '.pkl').values
     #m_Train_unscaled = data_Train_unscaled['mass'].values
-    m_Train_unscaled = pd.read_pickle(dfPath + '/m_train_unscaled_' + fileCommonName + '.pkl').values
-    #return data_Train, data_Test, X_Train_unscaled, m_Train_unscaled, m_Test_unscaled, w_train
+
+    #return X_train, X_test, y_train, y_test, m_Train_unscaled, m_Test_unscaled, w_train
     return data_Train, data_Test, m_Train_unscaled, m_Test_unscaled, w_train
 
 ### Writing in the log file
@@ -367,7 +371,8 @@ def ComputeTrainWeights(dataSetSignal, dataSetBackground, massesSignalList, outp
 
 ### Computing weighted median and IQR range
 def ComputeStat(dataTrain, dataTest, InputFeatures, outputDir):
-    sumTrainWeights = np.array(dataTrain['train_weight']).sum()
+    dataTrainCopy = dataTrain.copy()
+    sumTrainWeights = np.array(dataTrainCopy['train_weight']).sum()
     halfTrainWeights = sumTrainWeights / 2
     perc1 = sumTrainWeights * 0.25
     perc2 = sumTrainWeights * 0.75
@@ -378,28 +383,28 @@ def ComputeStat(dataTrain, dataTest, InputFeatures, outputDir):
     for feature in InputFeatures:
         cumulativeSum = 0
         print('Scaling ' + feature)
-        dataTrain = dataTrain.sort_values(by = [feature])
-        for index in range(len(dataTrain)):
-            cumulativeSum += dataTrain['train_weight'].iloc[index]
+        dataTrainCopy = dataTrainCopy.sort_values(by = [feature])
+        for index in range(len(dataTrainCopy)):
+            cumulativeSum += dataTrainCopy['train_weight'].iloc[index]
             if cumulativeSum <= perc1:
                 perc1index = index
             else:
                 break
-        for index in range(perc1index, len(dataTrain)):
-            cumulativeSum += dataTrain['train_weight'].iloc[index]
+        for index in range(perc1index, len(dataTrainCopy)):
+            cumulativeSum += dataTrainCopy['train_weight'].iloc[index]
             if cumulativeSum <= halfTrainWeights:
                 medianIndex = index
             else:
                 break
-        for index in range(medianIndex, len(dataTrain)):
-            cumulativeSum += dataTrain['train_weight'].iloc[index]
+        for index in range(medianIndex, len(dataTrainCopy)):
+            cumulativeSum += dataTrainCopy['train_weight'].iloc[index]
             if cumulativeSum <= perc2:
                 perc2index = index
             else:
                 break
-        quartileLeft = dataTrain[feature].iloc[perc1index]
-        median = dataTrain[feature].iloc[medianIndex]
-        quartileRight = dataTrain[feature].iloc[perc2index]
+        quartileLeft = dataTrainCopy[feature].iloc[perc1index]
+        median = dataTrainCopy[feature].iloc[medianIndex]
+        quartileRight = dataTrainCopy[feature].iloc[perc2index]
         iqr = quartileRight - quartileLeft ### InterQuartile Range
         dataTrain[feature] = (dataTrain[feature] - median) / iqr
         dataTest[feature] = (dataTest[feature] - median) / iqr
