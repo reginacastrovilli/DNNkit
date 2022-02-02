@@ -6,6 +6,7 @@ fileName4 = 'buildDNN.py'
 #fileName5 = 'buildPDNNtuningHyp.py'
 fileName5 = 'buildPDNN.py'
 #fileName6 = 'tuningHyperparameters.py'
+fileNamePlots = 'drawPlots.py'
 
 ### Reading the command line
 from argparse import ArgumentParser
@@ -101,7 +102,7 @@ def ReadArgParser():
         print(Fore.BLUE + '                 signal = ' + str(signal))
         return tag, jetCollection, analysis, channel, preselectionCuts, signal, backgroundString
 
-    if sys.argv[0] == fileName3:
+    if sys.argv[0] == fileName3 or sys.argv[0] == fileNamePlots:
         print(Fore.BLUE + '       background = ' + str(backgroundString))
         print(Fore.BLUE + 'training fraction = ' + str(trainingFraction))
         return tag, jetCollection, analysis, channel, preselectionCuts, backgroundString, signal, trainingFraction
@@ -130,7 +131,7 @@ def ReadConfigSaveToPkl(tag, jetCollection):
     ntuplePath = config.get('config', 'ntuplePath')
     inputFiles = ast.literal_eval(config.get('config', 'inputFiles'))
     dfPath = config.get('config', 'dfPath')
-    dfPath += jetCollection + '/'
+    dfPath += tag + '/' + jetCollection + '/'
     print (format('Output directory: ' + Fore.GREEN + dfPath), checkCreateDir(dfPath))
     shutil.copyfile(configurationFile, dfPath + configurationFile)
     return ntuplePath, inputFiles, dfPath
@@ -145,7 +146,7 @@ def ReadConfig(tag, analysis, jetCollection):
     signalsList = ast.literal_eval(config.get('config', 'signals'))
     backgroundsList = ast.literal_eval(config.get('config', 'backgrounds'))
     dfPath = config.get('config', 'dfPath')
-    dfPath += jetCollection + '/'
+    dfPath += tag + '/' + jetCollection + '/'
     if analysis == 'merged':
         InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesMerged'))
         variablesToSave = ast.literal_eval(config.get('config', 'variablesToSaveMerged'))
@@ -153,7 +154,9 @@ def ReadConfig(tag, analysis, jetCollection):
         InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesResolved'))
         variablesToSave = ast.literal_eval(config.get('config', 'variablesToSaveResolved'))
     if sys.argv[0] == fileName2:
-        return inputFiles, rootBranchSubSample, dfPath, variablesToSave, backgroundsList
+        return inputFiles, rootBranchSubSample, InputFeatures, dfPath, variablesToSave, backgroundsList
+    if sys.argv[0] == fileNamePlots:
+        return dfPath, InputFeatures
     if sys.argv[0] == fileName3:
         return dfPath, InputFeatures, signalsList, backgroundsList
     if sys.argv[0] == fileName4 or sys.argv[0] == fileName5 or sys.argv[0] == fileName6:
@@ -172,16 +175,19 @@ def checkCreateDir(dir):
 ### Loading input data
 import pandas as pd
 import numpy as np
+
 def LoadData(dfPath, tag, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures):
     fileCommonName = tag + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + str(signal) + '_' + background + '_' + str(trainingFraction) + 't'
     data_Train = pd.read_pickle(dfPath + '/data_train_' + fileCommonName + '.pkl')
     data_Test = pd.read_pickle(dfPath + '/data_test_' + fileCommonName + '.pkl')
-    data_Train_unscaled = pd.read_pickle(dfPath + '/data_train_unscaled_' + fileCommonName + '.pkl')
+    #data_Train_unscaled = pd.read_pickle(dfPath + '/data_train_unscaled_' + fileCommonName + '.pkl')
     w_train = data_Train['train_weight'].values
-    X_Train_unscaled =  data_Train_unscaled[InputFeatures]
+    #X_Train_unscaled =  data_Train_unscaled[InputFeatures]
     m_Test_unscaled = pd.read_pickle(dfPath + '/m_test_unscaled_' + fileCommonName + '.pkl').values
-    m_Train_unscaled = data_Train_unscaled['mass'].values
-    return data_Train, data_Test, X_Train_unscaled, m_Train_unscaled, m_Test_unscaled, w_train
+    #m_Train_unscaled = data_Train_unscaled['mass'].values
+    m_Train_unscaled = pd.read_pickle(dfPath + '/m_train_unscaled_' + fileCommonName + '.pkl').values
+    #return data_Train, data_Test, X_Train_unscaled, m_Train_unscaled, m_Test_unscaled, w_train
+    return data_Train, data_Test, m_Train_unscaled, m_Test_unscaled, w_train
 
 ### Writing in the log file
 def WriteLogFile(tag, ntuplePath, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, InputFeatures, dfPath):
@@ -198,8 +204,8 @@ def SelectEvents(dataFrame, channel, analysis, preselectionCuts):
     if channel == 'ggF':
         dataFrame = dataFrame.query('Pass_isVBF == False')
         if analysis == 'merged':
-            #selection = selectionMergedGGF
-            selection = selectionMergedGGFZZLPuntagSR            
+            selection = selectionMergedGGF
+            #selection = selectionMergedGGFZZLPuntagSR            
         elif analysis == 'resolved':
             selection = selectionResolvedGGF
     elif channel == 'VBF':
@@ -239,50 +245,202 @@ import matplotlib.pyplot as plt
 plt.rcParams["figure.figsize"] = [7,7]
 plt.rcParams.update({'font.size': 16})
 
-def DrawVariablesHisto(dataFrame, outputDir, outputFileCommonName, jetCollection, analysis, channel, signal, background, preselectionCuts):
+def integral(y,x,bins):
+    x_min=x
+    s=0
+    for i in np.where(bins>x)[0][:-1]:
+        s=s+y[i]*(bins[i+1]-bins[i])
+    return s
+
+def DrawVariablesHisto(dataFrame, InputFeatures, outputDir, outputFileCommonName, jetCollection, analysis, channel, signal, background, preselectionCuts):
     ### Replacing '0' with 'Background' and '1' with 'Signal' in the 'isOrigin' column
     dataFrame['isSignal'].replace(to_replace = [0, 1], value = ['Background', 'Signal'], inplace = True)
-    featureLogX = ['fatjet_D2', 'fatjet_m', 'fatjet_pt', 'lep1_pt', 'lep2_pt', 'Zcand_pt']
+    featureLogX = []#'fatjet_D2', 'fatjet_m', 'fatjet_pt', 'lep1_pt', 'lep2_pt', 'Zcand_pt']
     for feature in dataFrame.columns:
-        #if feature == 'isSignal':
-        #    continue
+        #if feature == 'train_weight' or feature == 'weight' or feature == 'isSignal':
+        if feature not in InputFeatures and feature != 'origin':
+            continue
         statType = 'probability'
+        hueType = dataFrame['isSignal']
+        legendBool = True
         if feature == 'origin':
             statType = 'count'
-        ax = seaborn.histplot(data = dataFrame[feature], x = dataFrame[feature], hue = dataFrame['isSignal'], common_norm = False, stat = statType, legend = True)#, multiple = 'stack')
+            hueType = dataFrame['origin']
+            legendBool = False
+        if sys.argv[0] == fileName2:
+            ax = seaborn.histplot(data = dataFrame[feature], x = dataFrame[feature], hue = hueType, common_norm = False, stat = statType, legend = legendBool)#, multiple = 'stack')
+        elif sys.argv[0] == fileName3:
+            contents, bins, _ = plt.hist(dataFrame[feature], weights = dataFrame['train_weight'], bins = 100)
         labelDict = {}
-        labelDict['lep1_m'] = 'lep1_m [GeV]'
-        labelDict['lep1_pt'] = 'lep1_pt [GeV]'
-        labelDict['lep1_eta'] = 'lep1_eta'        
-        labelDict['lep1_phi'] = 'lep1_phi'
-        labelDict['lep2_m'] = 'lep2_m [GeV]'
-        labelDict['lep2_pt'] = 'lep2_pt [eV]'
-        labelDict['lep2_eta'] = 'lep2_eta'        
-        labelDict['lep2_phi'] = 'lep2_phi'
-        labelDict['fatjet_m'] = 'fatjet_m [GeV]'
-        labelDict['fatjet_pt'] = 'fatjet_pt [GeV]'
-        labelDict['fatjet_eta'] = 'fatjet_eta'        
-        labelDict['fatjet_phi'] = 'fatjet_phi'
-        labelDict['fatjet_D2'] = 'fatjet_D2'
-        labelDict['Zcand_m'] = 'Zcand_m [GeV]'
-        labelDict['Zcand_pt'] = 'Zcand_pt [GeV]'
-        labelDict['X_boosted_m'] = 'X_boosted_m [GeV]'
+        labelDict['lep1_E'] = 'lep1 E [GeV]'
+        labelDict['lep1_m'] = 'lep1 m [GeV]'
+        labelDict['lep1_pt'] = r'lep1 p$_T$ [GeV]'
+        labelDict['lep1_eta'] = r'lep1 $\eta$'        
+        labelDict['lep1_phi'] = r'lep1 $\phi$'
+        labelDict['lep2_E'] = 'lep2 E [GeV]'
+        labelDict['lep2_m'] = 'lep2 m [GeV]'
+        labelDict['lep2_pt'] = r'lep2 p$_t$ [GeV]'
+        labelDict['lep2_eta'] = r'lep2 $\eta$'        
+        labelDict['lep2_phi'] = r'lep2 $\phi$'
+        labelDict['fatjet_m'] = 'fatjet m [GeV]'
+        labelDict['fatjet_pt'] = r'fatjet p$_t$ [GeV]'
+        labelDict['fatjet_eta'] = r'fatjet $\eta$'        
+        labelDict['fatjet_phi'] = r'fatjet $\phi$'
+        labelDict['fatjet_D2'] = r'fatjet D$_2$'
+        labelDict['Zcand_m'] = 'Zcand m [GeV]'
+        labelDict['Zcand_pt'] = r'Zcand p$_t$ [GeV]'
+        labelDict['X_boosted_m'] = 'X_boosted m [GeV]'
         labelDict['mass'] = 'mass [GeV]'
         labelDict['weight'] = 'weight'
-        labelDict['isSignal'] = 'isSignal [GeV]'
-        labelDict['origin'] = 'origin [GeV]'
+        labelDict['isSignal'] = 'isSignal'
+        labelDict['origin'] = 'origin'
+        '''
         if feature in featureLogX:
             ax.set_xscale('log')
+        '''
         legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(background)
         if (preselectionCuts != 'none'):
             legendText += '\npreselection cuts: ' + preselectionCuts
-        plt.figtext(0.35, 0.7, legendText, wrap = True, horizontalalignment = 'left')
+        #plt.figtext(0.35, 0.7, legendText, wrap = True, horizontalalignment = 'left')
+        #plt.figtext(0.77, 0.45, legendText, wrap = True, horizontalalignment = 'left')
+        #plt.subplots_adjust(left = 0.1, right = 0.75)
         plt.xlabel(labelDict[feature])
+        if sys.argv[0] == fileName3:
+            plt.ylabel('Weighted counts')
+        if feature == 'origin':
+            plt.yscale('log')
         pltName = '/Histo_' + feature + '_' + outputFileCommonName + '.png'
         plt.tight_layout()
         plt.savefig(outputDir + pltName)
         print(Fore.GREEN + 'Saved ' + outputDir + pltName)
         plt.clf()
+    dataFrame['isSignal'].replace(to_replace = ['Background', 'Signal'], value = [0, 1], inplace = True)
+    #plt.subplots_adjust(left = 0.15, right = 0.95)
+    return
+
+### Computing train weight
+def ComputeTrainWeights(dataSetSignal, dataSetBackground, massesSignalList, outputDir, fileCommonName, jetCollection, analysis, channel, signal, background, preselectionCuts):
+    numbersDict = {}
+    for signalMass in massesSignalList:
+        ### Number of signals with each mass value
+        numbersDict[signalMass] = dataSetSignal[dataSetSignal['mass'] == signalMass].shape[0]
+        print(Fore.BLUE + 'Number of events with mass ' + str(signalMass) + ': ' + str(numbersDict[signalMass]))
+
+    ### Minimum number of signals with the same mass
+    minNumber = min(numbersDict.values())
+    ### New column in the signal dataframe for train_weight
+    dataSetSignal = dataSetSignal.assign(train_weight = 0)
+    for signalMass in massesSignalList:
+        dataSetSignalMass = dataSetSignal[dataSetSignal['mass'] == signalMass]
+        ### Sum of MC weights for signal with the same mass
+        signalSampleWeight = dataSetSignalMass['weight'].sum()
+        ### Scale factor to equalize signal samples with different mass
+        scaleFactorDict = minNumber / signalSampleWeight
+        ### Train weight = MC weight * scale factor
+        dataSetSignal['train_weight'] = np.where(dataSetSignal['mass'] == signalMass, dataSetSignal['weight'] * scaleFactorDict, dataSetSignal['train_weight'])
+        ### Filling the bar plot
+        plt.bar(signal + ' ' + str(signalMass) + ' GeV', dataSetSignal[dataSetSignal['mass'] == signalMass]['train_weight'].sum(), color = 'blue')
+    plt.bar('all ' + signal, dataSetSignal['train_weight'].sum(), color = 'orange')
+    ### All signal weight
+    signalWeight = dataSetSignal['train_weight'].sum()
+    ### Background MC weight
+    bkgWeight = dataSetBackground['weight'].sum()
+    ### Scale factor to equalize signal/background
+    scaleFactor = minNumber *  len(massesSignalList)/ bkgWeight
+    ### Creating new column in the background dataframe with the train weight
+    dataSetBackground = dataSetBackground.assign(train_weight = dataSetBackground['weight'] * scaleFactor)
+
+    plt.bar('background', dataSetBackground['train_weight'].sum(), color = 'green')
+    plt.ylabel('Weighted counts')
+    plt.xticks(rotation = 'vertical')
+    legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(background)
+    if (preselectionCuts != 'none'):
+        legendText += '\npreselection cuts: ' + preselectionCuts
+    plt.figtext(0.25, 0.7, legendText, wrap = True, horizontalalignment = 'left')
+    plt.tight_layout()
+    pltName = outputDir + '/WeightedEvents_' + fileCommonName + '.png'
+    plt.savefig(pltName)
+    print(Fore.GREEN + 'Saved ' + pltName)
+    plt.clf()
+    return dataSetSignal, dataSetBackground
+    
+
+### Computing weighted median and IQR range
+def ComputeStat(dataFrameColumn, trainWeights, perc1, perc2, name):
+    contents, bins, _ = plt.hist(dataFrameColumn, weights = trainWeights, bins = 100)
+    #if name == 'fatjet_m':
+    #    print(bins)
+    plt.clf()
+    binCenters = bins[:-1] + np.diff(bins)/2
+    #if name == 'fatjet_m':
+    #    print(binCenters)
+    pdf = contents / sum(contents)
+    cdf = np.cumsum(pdf)
+    plt.plot(binCenters, cdf, label="CDF")
+    plt.legend()
+    #plt.show()
+    plt.savefig(name + '.png')
+    plt.clf()
+    weightedMedian = np.interp(0.5, cdf, binCenters)
+    print(weightedMedian)
+    q1 = np.interp(perc1, cdf, binCenters) ###0.25
+    q2 = np.interp(perc2, cdf, binCenters) ###0.75
+    iqr = q2 - q1
+    print('IQR: ' + str(iqr))
+    #dataFrameColumnScaled = (dataFrameColumn - weightedMedian) / iqr
+    return weightedMedian, iqr
+
+def ComputeStatNew(dataTrain, dataTest, InputFeatures, outputDir):
+    sumTrainWeights = np.array(dataTrain['train_weight']).sum()
+    halfTrainWeights = sumTrainWeights / 2
+    perc1 = sumTrainWeights * 0.25
+    perc2 = sumTrainWeights * 0.75
+    variablesFileName = outputDir + '/variables.json'
+    variablesFile = open(variablesFileName, 'w')
+    variablesFile.write('{\n')
+    variablesFile.write('  \'inputs\': [\n')
+    for feature in InputFeatures:
+        cumulativeSum = 0
+        print('Scaling ' + feature)
+        dataTrain = dataTrain.sort_values(by = [feature])
+        for index in range(len(dataTrain)):
+            cumulativeSum += dataTrain['train_weight'].iloc[index]
+            if cumulativeSum <= perc1:
+                perc1index = index
+            else:
+                break
+        for index in range(perc1index, len(dataTrain)):
+            cumulativeSum += dataTrain['train_weight'].iloc[index]
+            if cumulativeSum <= halfTrainWeights:
+                medianIndex = index
+            else:
+                break
+        for index in range(medianIndex, len(dataTrain)):
+            cumulativeSum += dataTrain['train_weight'].iloc[index]
+            if cumulativeSum <= perc2:
+                perc2index = index
+            else:
+                break
+        quartileLeft = dataTrain[feature].iloc[perc1index]
+        median = dataTrain[feature].iloc[medianIndex]
+        quartileRight = dataTrain[feature].iloc[perc2index]
+        iqr = quartileRight - quartileLeft ### InterQuartile Range
+        dataTrain[feature] = (dataTrain[feature] - median) / iqr
+        dataTest[feature] = (dataTest[feature] - median) / iqr
+        variablesFile.write('    {\n')
+        variablesFile.write('      \'name\': \'%s\',\n' % feature)
+        variablesFile.write('      \'offset\': %lf,\n' % median) # EJS 2021-05-27: I have compelling reasons to believe this should be -mu
+        variablesFile.write('      \'scale\': %lf\n' % iqr) # EJS 2021-05-27: I have compelling reasons to believe this should be 1/sigma                            
+        variablesFile.write('    }')
+        if feature != dataTrain.columns[len(dataTrain.columns) - 1]:
+            variablesFile.write(',\n')
+        else:
+            variablesFile.write('\n')
+    variablesFile.write('  ],\n')
+    variablesFile.write('  \'class_labels\': [\'BinaryClassificationOutputName\']\n')
+    variablesFile.write('}\n')
+    print(Fore.GREEN + 'Saved variables in ' + variablesFileName)
+    return dataTrain, dataTest
 
 ### Building the (P)DNN
 from keras.models import Model, Sequential
@@ -375,11 +533,20 @@ def SaveFeatureScaling(outputDir, X_input):
         scaling_file.write(' '.join(str(1./float(i)) for i in X_input.std(axis=0)))
         scaling_file.write("]\n")
     print(Fore.GREEN + 'Saved features scaling in ' + outputFeatureScaling)
-    
+'''    
 def SaveModel(model, X_input, outputDir):
     SaveArchAndWeights(model, outputDir)
     SaveVariables(outputDir, X_input)
     SaveFeatureScaling(outputDir, X_input)
+'''
+
+def SaveModel(model, outputDir, NN):
+    SaveArchAndWeights(model, outputDir)
+    variablesFileName = '/variables.json'
+    previousDir = outputDir.replace(NN, '')
+    print(previousDir)
+    shutil.copyfile(previousDir + variablesFileName, outputDir + variablesFileName)
+
 '''
 import matplotlib
 import matplotlib.pyplot as plt
@@ -415,11 +582,13 @@ def DrawCorrelationMatrix(dataFrame, InputFeatures, outputDir, outputFileCommonN
     plt.colorbar(im, ax = ax1)
     plt.xticks(range(len(InputFeatures)), InputFeatures, rotation = 'vertical')
     plt.yticks(range(len(InputFeatures)), InputFeatures)
+    '''
     for feature1 in range(len(InputFeatures)): ### This is really slow, perform only if needed
         for feature2 in range(len(InputFeatures)):
             ax1.text(feature2, feature1, "%.2f" % (dataFrame[InputFeatures].astype(float)).corr().at[InputFeatures[feature2], InputFeatures[feature1]], ha = 'center', va = 'center', color = 'r', fontsize = 6)
-    plt.title('Correlation matrix (' + analysis + ' ' + channel + ' ' + signal + ')')# + ' ' + background + ')')
-    CorrelationMatrixName = outputDir + '/' + outputFileCommonName + '.png'
+    '''
+    plt.title('Correlation matrix (' + analysis + ' ' + channel + ' ' + signal + ' ' + bkg + ')')
+    CorrelationMatrixName = outputDir + '/CorrelationMatrix_' + outputFileCommonName + '.png'
     plt.savefig(CorrelationMatrixName)
     print(Fore.GREEN + 'Saved ' + CorrelationMatrixName)
     plt.clf()
@@ -722,6 +891,37 @@ def DrawRejectionVsMass(massVec, WP, bkgRej90, bkgRej94, bkgRej97, bkgRej99, out
     plt.savefig(pltName)#, bbox_inches = 'tight')
     print(Fore.GREEN + 'Saved ' + pltName)
     plt.subplots_adjust(left = 0.15, right = 0.95)
+
+def DrawRejectionVsStat(massVec, fracTrain, WP, bkgRej90Dict, bkgRej94Dict, bkgRej97Dict, bkgRej99Dict, outputDir, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName):
+    emptyPlot, = plt.plot(massVec[0], bkgRej90Dict[fracTrain[0]], color = 'white')
+    linestyles = ['loosely dotted', 'dotted', 'loosely dashed', 'solid']
+    for i in range(len(fracTrain)):
+        frac = fracTrain[i]
+        print(bkgRej90Dict[frac])
+        plt.plot(massVec, np.array(bkgRej90Dict[frac]), color = 'blue', label = 'WP: ' + str(WP[0]), marker = 'o', mec = 'blue', linestyle = linestyles[i])
+        plt.plot(massVec, np.array(bkgRej94Dict[frac]), color = 'orange', label = 'WP: ' + str(WP[1]), marker = 'o', mec = 'orange', linestyle = linestyles[i])
+        plt.plot(massVec, np.array(bkgRej97Dict[frac]), color = 'green', label = 'WP: ' + str(WP[2]), marker = 'o', mec = 'green', linestyle = linestyles[i])
+        plt.plot(massVec, np.array(bkgRej99Dict[frac]), color = 'red', label = 'WP: ' + str(WP[3]), marker = 'o', mec = 'red', linestyle = linestyles[i])
+    plt.yscale('log')
+    legend1 = plt.legend()
+    plt.xlabel('Mass [GeV]')
+    plt.ylabel('Background rejection')
+    legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(background)
+    if (preselectionCuts != 'none'):
+        legendText += '\npreselection cuts: ' + preselectionCuts
+    '''
+    legend2 = plt.legend([emptyPlot], [legendText], loc = 'lower left', handlelength = 0, handletextpad = 0)
+    for item in legend2.legendHandles:
+        item.set_visible(False)
+    plt.gca().add_artist(legend1)#, bbox_to_anchor = (1.05, 0.6))
+    '''
+    plt.figtext(0.77, 0.45, legendText, wrap = True, horizontalalignment = 'left')
+    plt.subplots_adjust(left = 0.15, right = 0.75)
+    pltName = outputDir + '/BkgRejectionVsStat_' + outputFileCommonName + '.png'
+    plt.savefig(pltName)#, bbox_inches = 'tight')
+    print(Fore.GREEN + 'Saved ' + pltName)
+    plt.subplots_adjust(left = 0.15, right = 0.95)
+
 
 from sklearn.metrics import confusion_matrix
 import itertools
