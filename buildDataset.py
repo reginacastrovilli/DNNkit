@@ -1,4 +1,4 @@
-from Functions import ReadArgParser, ReadConfig, checkCreateDir, ShufflingData, SelectEvents, CutMasses, DrawVariablesHisto
+from Functions import ReadArgParser, ReadConfig, checkCreateDir, ShufflingData, SelectEvents, CutMasses, DrawVariablesHisto, DrawCorrelationMatrix
 import pandas as pd
 import numpy as np
 import re
@@ -16,7 +16,7 @@ drawPlots = True
 tag, jetCollection, analysis, channel, preselectionCuts, signal, background = ReadArgParser()
 
 ### Reading from config file
-inputFiles, rootBranchSubSample, dfPath, variablesToSave, backgroundsList = ReadConfig(tag, analysis, jetCollection)
+inputFiles, rootBranchSubSample, InputFeatures, dfPath, variablesToSave, backgroundsList = ReadConfig(tag, analysis, jetCollection)
 
 ### Creating output directory and logFile
 outputDir = dfPath + analysis + '/' + channel + '/' + signal + '/' + background
@@ -49,8 +49,8 @@ dataFrameBkg = []
 for file in os.listdir(dfPath):
     if not file.endswith('.pkl'):
         continue
-    #if file == 'Wjets-mc16d_DF.pkl':
-    #    continue
+    if file == 'Wjets-mc16d_DF.pkl':
+        continue
     for target in targetOrigins:
         if file.startswith(target):
             print(Fore.GREEN + 'Loading ' + dfPath + file)
@@ -80,6 +80,7 @@ dataFrameBkg = dataFrameBkg.assign(isSignal = 0)
 ### Converting DSID to mass in the signal dataframe
 massesSignal = dataFrameSignal['DSID'].copy()
 DSIDsignal = np.array(list(set(list(dataFrameSignal['DSID']))))
+
 for DSID in DSIDsignal:
     massesSignal = np.where(massesSignal == DSID, DictDSID[DSID], massesSignal)
 dataFrameSignal = dataFrameSignal.assign(mass = massesSignal)
@@ -110,6 +111,10 @@ dataFrame = dataFrame[variablesToSave]
 ### Shuffling the dataframe
 dataFrame = ShufflingData(dataFrame)
 
+### Saving number of events for each origin
+for origin in targetOrigins:
+    logFile.write('\nNumber of ' + origin + ' events: ' + str(dataFrame[dataFrame['origin'] == origin].shape[0]))
+
 ### Saving pkl files
 outputFileName = '/MixData_' + fileCommonName + '.pkl'
 dataFrame.to_pickle(outputDir + outputFileName)
@@ -120,4 +125,7 @@ print(Fore.GREEN + 'Saved ' + logFileName)
 
 ### Drawing histogram of variables
 if drawPlots:
-    DrawVariablesHisto(dataFrame, outputDir, fileCommonName, jetCollection, analysis, channel, signal, background, preselectionCuts)
+    histoOutputDir = outputDir + '/trainTestHistograms'
+    checkCreateDir(histoOutputDir)
+    DrawVariablesHisto(dataFrame, InputFeatures, histoOutputDir, fileCommonName, jetCollection, analysis, channel, signal, background, preselectionCuts)
+    DrawCorrelationMatrix(dataFrame, InputFeatures, outputDir, fileCommonName, analysis, channel, signal, background)
