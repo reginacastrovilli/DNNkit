@@ -1,4 +1,4 @@
-from Functions import ReadArgParser, checkCreateDir, ReadConfig, SaveFeatureScaling, DrawCorrelationMatrix, DrawVariablesHisto, weightEvents
+from Functions import ReadArgParser, checkCreateDir, ReadConfig, SaveFeatureScaling, DrawVariablesHisto, ShufflingData, ComputeTrainWeights, ComputeStat
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -25,7 +25,7 @@ else:
     testSignal = list(testSignal.split('_'))
 
 foundSignal = 0
-drawPlot = False
+drawPlots = True
 
 for signal in signalsList:
     ### Selecting only the request signal
@@ -34,9 +34,14 @@ for signal in signalsList:
     foundSignal += 1
 
     ### Loading input file
-    inputOutputDir = dfPath + analysis + '/' + channel + '/' + signal + '/' + background
-    fileCommonName = jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + signal + '_' + background
-    data = pd.read_pickle(inputOutputDir + '/MixData_PD_' + fileCommonName + '.pkl') 
+    inputDir = dfPath + analysis + '/' + channel + '/' + signal + '/' + background
+    fileCommonName = tag + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + signal + '_' + background
+    data = pd.read_pickle(inputDir + '/MixData_' + fileCommonName + '.pkl') 
+    
+    ### If not already existing, creating output directory
+    outputDir = inputDir
+    checkCreateDir(outputDir) 
+    fileCommonName += '_' + str(trainingFraction) + 't'
 
     ### Creating the list of backgrounds and signal processes to select
     if background == 'all':
@@ -54,62 +59,56 @@ for signal in signalsList:
     dictOrigin = {}
     for origin in inputOrigin:
         dictOrigin[origin] = list(data_set['origin']).count(origin)
-        print(Fore.BLUE + 'Number of ' + origin + ' events: ' + str(dictOrigin[origin]))#str(list(data_set['origin']).count(origin)))
-        #print(Fore.BLUE + 'Number of ' + origin + ' events: ' + str(list(data_set['origin']).count(origin)))
+        print(Fore.BLUE + 'Number of ' + origin + ' events: ' + str(dictOrigin[origin]))
+        
+    ### Dividing signal from background
+    dataSetSignal = data_set[data_set['origin'] == signal]
+    dataSetBackground = data_set[data_set['origin'] != signal]
+    print(Fore.BLUE + '---> Number of background events: ' + str(dataSetBackground.shape[0]))
+    print(Fore.BLUE + '---> Number of signal events: ' + str(dataSetSignal.shape[0]))
+    massesSignalList = sorted(list(set(list(dataSetSignal['mass']))))
+    print(Fore.BLUE + 'Masses in the signal sample: ' + str(massesSignalList) + ' (' + str(len(massesSignalList)) + ')')
 
-    if(drawPlot):
-        ### Plotting histograms of each variables divided by class and the correlation matrix
-        DrawVariablesHisto(data_set, inputOutputDir, fileCommonName, analysis, channel, signal, background)
-        #DrawCorrelationMatrix(data_set, InputFeatures, inputOutputDir, fileCommonName, analysis, channel, signal, background)
+    ### Creating new column in the dataframes with train weight
+    dataSetSignal, dataSetBackground = ComputeTrainWeights(dataSetSignal, dataSetBackground, massesSignalList, outputDir, fileCommonName, jetCollection, analysis, channel, signal, background, preselectionCuts)
 
+    ### Concatening signal and background dataframes
+    dataFrame = pd.concat([dataSetSignal, dataSetBackground], ignore_index = True)
+
+    ### Shuffling the dataframe
+    dataFrame = ShufflingData(dataFrame)
+    
     ### Splitting data into train and test set
-    data_train, data_test = train_test_split(data_set, train_size = trainingFraction)
+    data_train, data_test = train_test_split(dataFrame, train_size = trainingFraction)
 
-    ### Saving unscaled data
-    #fileCommonName = jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + signal + '_' + background + '_' + str(trainingFraction) + 't'
-    fileCommonName += '_' + str(trainingFraction) + 't'
-    dataTrainUnscaledName = inputOutputDir + '/data_train_unscaled_' + fileCommonName + '.pkl' 
-    data_train.to_pickle(dataTrainUnscaledName)
-    print(Fore.GREEN + 'Saved ' + dataTrainUnscaledName)
+    if drawPlots:
+        trainHistogramsPath = outputDir + '/trainUnscaledHistograms'
+        print (format('Output directory: ' + Fore.GREEN + trainHistogramsPath), checkCreateDir(trainHistogramsPath))
+        DrawVariablesHisto(data_train, InputFeatures, trainHistogramsPath, fileCommonName, jetCollection, analysis, channel, signal, background, preselectionCuts)
+
+    ### Saving unscaled masses
+    m_train_unscaled = data_train['mass']
     m_test_unscaled = data_test['mass']
-    mTestUnscaledName = inputOutputDir + '/m_test_unscaled_' + fileCommonName + '.pkl' 
+    mTrainUnscaledName = outputDir + '/m_train_unscaled_' + fileCommonName + '.pkl' 
+    mTestUnscaledName = outputDir + '/m_test_unscaled_' + fileCommonName + '.pkl' 
+    m_train_unscaled.to_pickle(mTrainUnscaledName)
     m_test_unscaled.to_pickle(mTestUnscaledName)
+    print(Fore.GREEN + 'Saved ' + mTrainUnscaledName)
     print(Fore.GREEN + 'Saved ' + mTestUnscaledName)
 
-    ### Saving list of columns names
-    columnsNames = data_train.columns
-    origin_train = np.array(data_train['origin'].values)
-    weights, _, _, _ = weightEvents(origin_train, str(signal))
-
     ### Scaling InputFeatures of train and test set
-    data_train_copy = data_train.copy()
-    for column in InputFeatures:
-        data_train_copy[column] *= weights
-        median = data_train_copy[column].median()
-        q75, q25 = np.percentile(data_train_copy[column], [75, 25])
-        iqr = q75 - q25
-        data_train[column] = (data_train[column] - median) / iqr
-        data_test[column] = (data_test[column] - median) / iqr
+    data_train, data_test = ComputeStat(data_train, data_test, InputFeatures, outputDir)
 
-    '''
-    scaler_train = ct.fit(data_train, None)
-    data_train = scaler_train.transform(data_train)
-    data_test = scaler_train.transform(data_test)
-    print(scaler_train.mean_)
-    print(scaler_train.var_)
-    seaborn.histplot(data = data_train['lep2_eta'], x = data_train['lep2_eta'], hue = dataFrame['origin'], common_norm = False, stat = statType, legend = True)
-    plt.show()
-    exit()
-    '''
-    ### Converting numpy arrays into pandas dataframes
-    #data_train = pd.DataFrame(data_train, columns = columnsNames)
-    #data_test = pd.DataFrame(data_test, columns = columnsNames)
-    
+    if drawPlots:
+        scaledHistogramsPath = outputDir + '/trainScaledHistograms'
+        print (format('Output directory: ' + Fore.GREEN + scaledHistogramsPath), checkCreateDir(scaledHistogramsPath))
+        DrawVariablesHisto(data_train, InputFeatures, scaledHistogramsPath, fileCommonName, jetCollection, analysis, channel, signal, background, preselectionCuts)
+
     ### Saving scaled dataframes
-    dataTrainName = inputOutputDir + '/data_train_' + fileCommonName + '.pkl'
+    dataTrainName = outputDir + '/data_train_' + fileCommonName + '.pkl'
     data_train.to_pickle(dataTrainName)
     print(Fore.GREEN + 'Saved ' + dataTrainName)
-    dataTestName = inputOutputDir + '/data_test_' + fileCommonName + '.pkl'
+    dataTestName = outputDir + '/data_test_' + fileCommonName + '.pkl'
     data_test.to_pickle(dataTestName)
     print(Fore.GREEN + 'Saved ' + dataTestName)
 

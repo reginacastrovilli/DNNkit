@@ -366,31 +366,7 @@ def ComputeTrainWeights(dataSetSignal, dataSetBackground, massesSignalList, outp
     
 
 ### Computing weighted median and IQR range
-def ComputeStat(dataFrameColumn, trainWeights, perc1, perc2, name):
-    contents, bins, _ = plt.hist(dataFrameColumn, weights = trainWeights, bins = 100)
-    #if name == 'fatjet_m':
-    #    print(bins)
-    plt.clf()
-    binCenters = bins[:-1] + np.diff(bins)/2
-    #if name == 'fatjet_m':
-    #    print(binCenters)
-    pdf = contents / sum(contents)
-    cdf = np.cumsum(pdf)
-    plt.plot(binCenters, cdf, label="CDF")
-    plt.legend()
-    #plt.show()
-    plt.savefig(name + '.png')
-    plt.clf()
-    weightedMedian = np.interp(0.5, cdf, binCenters)
-    print(weightedMedian)
-    q1 = np.interp(perc1, cdf, binCenters) ###0.25
-    q2 = np.interp(perc2, cdf, binCenters) ###0.75
-    iqr = q2 - q1
-    print('IQR: ' + str(iqr))
-    #dataFrameColumnScaled = (dataFrameColumn - weightedMedian) / iqr
-    return weightedMedian, iqr
-
-def ComputeStatNew(dataTrain, dataTest, InputFeatures, outputDir):
+def ComputeStat(dataTrain, dataTest, InputFeatures, outputDir):
     sumTrainWeights = np.array(dataTrain['train_weight']).sum()
     halfTrainWeights = sumTrainWeights / 2
     perc1 = sumTrainWeights * 0.25
