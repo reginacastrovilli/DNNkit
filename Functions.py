@@ -1,10 +1,10 @@
 # Assigning script names to variables
-fileName1 = 'saveToPkl.py'
-fileName2 = 'buildDataset.py'
-fileName3 = 'splitDataset.py'
-fileName4 = 'buildDNN.py'
-#fileName5 = 'buildPDNNtuningHyp.py'
-fileName5 = 'buildPDNN.py'
+fileNameSaveToPkl = 'saveToPkl.py'
+fileNameBuildDataSet = 'buildDataset.py'
+fileNameSplitDataSet = 'splitDataset.py'
+fileNameBuildDNN = 'buildDNN.py'
+#fileNameBuildPDNN = 'buildPDNNtuningHyp.py'
+fileNameBuildPDNN = 'buildPDNN.py'
 #fileName6 = 'tuningHyperparameters.py'
 fileNamePlots = 'drawPlots.py'
 
@@ -18,7 +18,7 @@ def ReadArgParser():
     parser = ArgumentParser()
     parser.add_argument('-a', '--Analysis', help = 'Type of analysis: \'merged\' or \'resolved\'', type = str)
     parser.add_argument('-c', '--Channel', help = 'Channel: \'ggF\' or \'VBF\'', type = str)
-    parser.add_argument('-s', '--Signal', help = 'Signal: \'VBFHVTWZ\', \'Radion\', \'RSG\' or \'VBFRadion\'', type = str)
+    parser.add_argument('-s', '--Signal', help = 'Signal: \'VBFHVTWZ\', \'Radion\', \'RSG\', \'VBFRSG\', \'HVTWZ\' or \'VBFRadion\'', type = str)
     parser.add_argument('-j', '--JetCollection', help = 'Jet collection: \'TCC\', \'UFO_PFLOW\'', type = str, default = 'UFO_PFLOW')
     parser.add_argument('-b', '--Background', help = 'Background: \'Zjets\', \'Wjets\', \'stop\', \'Diboson\', \'ttbar\' or \'all\' (in quotation mark separated by a space)', type = str, default = 'all')
     parser.add_argument('-t', '--TrainingFraction', help = 'Relative size of the training sample, between 0 and 1', default = 0.8)
@@ -37,18 +37,18 @@ def ReadArgParser():
     args = parser.parse_args()
 
     analysis = args.Analysis
-    if args.Analysis is None and sys.argv[0] != fileName1:
+    if args.Analysis is None and sys.argv[0] != fileNameSaveToPkl:
         parser.error(Fore.RED + 'Requested type of analysis (either \'mergered\' or \'resolved\')')
-    elif args.Analysis != 'resolved' and args.Analysis != 'merged' and sys.argv[0] != fileName1:
+    elif args.Analysis != 'resolved' and args.Analysis != 'merged' and sys.argv[0] != fileNameSaveToPkl:
         parser.error(Fore.RED + 'Analysis can be either \'merged\' or \'resolved\'')
     channel = args.Channel
-    if args.Channel is None and sys.argv[0] != fileName1:
+    if args.Channel is None and sys.argv[0] != fileNameSaveToPkl:
         parser.error(Fore.RED + 'Requested channel (either \'ggF\' or \'VBF\')')
-    elif args.Channel != 'ggF' and args.Channel != 'VBF' and sys.argv[0] != fileName1:
+    elif args.Channel != 'ggF' and args.Channel != 'VBF' and sys.argv[0] != fileNameSaveToPkl:
         parser.error(Fore.RED + 'Channel can be either \'ggF\' or \'VBF\'')
     signal = args.Signal
-    if args.Signal is None and sys.argv[0] != fileName1:
-        parser.error(Fore.RED + 'Requested type of signal (\'Radion\', )')
+    if args.Signal is None and sys.argv[0] != fileNameSaveToPkl:
+        parser.error(Fore.RED + 'Requested type of signal (\'VBFHVTWZ\', \'Radion\', \'RSG\', \'VBFRSG\', \'HVTWZ\' or \'VBFRadion\')')
     jetCollection = args.JetCollection
     if args.JetCollection is None:
         parser.error(Fore.RED + 'Requested jet collection (\'TCC\' or \'UFO_PFLOW\')')
@@ -92,22 +92,22 @@ def ReadArgParser():
     loop = int(args.loop)
     tag = args.tag
 
-    if sys.argv[0] == fileName1:
+    if sys.argv[0] == fileNameSaveToPkl:
         print(Fore.BLUE + '           tag = ' + tag)
         print(Fore.BLUE + 'jet collection = ' + jetCollection)
         return tag, jetCollection
 
-    if sys.argv[0] == fileName2:
+    if sys.argv[0] == fileNameBuildDataSet:
         print(Fore.BLUE + '          background(s) = ' + str(backgroundString))
         print(Fore.BLUE + '                 signal = ' + str(signal))
         return tag, jetCollection, analysis, channel, preselectionCuts, signal, backgroundString
 
-    if sys.argv[0] == fileName3 or sys.argv[0] == fileNamePlots:
+    if sys.argv[0] == fileNameSplitDataSet or sys.argv[0] == fileNamePlots:
         print(Fore.BLUE + '       background = ' + str(backgroundString))
         print(Fore.BLUE + 'training fraction = ' + str(trainingFraction))
         return tag, jetCollection, analysis, channel, preselectionCuts, backgroundString, signal, trainingFraction
 
-    if(sys.argv[0] == fileName4 or sys.argv[0] == fileName5 or sys.argv[0] == fileName6):
+    if(sys.argv[0] == fileNameBuildDNN or sys.argv[0] == fileNameBuildPDNN or sys.argv[0] == fileName6):
         print(Fore.BLUE + '          background(s) = ' + str(backgroundString))
         print(Fore.BLUE + '          test mass(es) = ' + str(mass))
         print(Fore.BLUE + '      training fraction = ' + str(trainingFraction))
@@ -153,13 +153,13 @@ def ReadConfig(tag, analysis, jetCollection):
     elif analysis == 'resolved':
         InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesResolved'))
         variablesToSave = ast.literal_eval(config.get('config', 'variablesToSaveResolved'))
-    if sys.argv[0] == fileName2:
+    if sys.argv[0] == fileNameBuildDataSet:
         return inputFiles, rootBranchSubSample, InputFeatures, dfPath, variablesToSave, backgroundsList
     if sys.argv[0] == fileNamePlots:
         return dfPath, InputFeatures
-    if sys.argv[0] == fileName3:
+    if sys.argv[0] == fileNameSplitDataSet:
         return dfPath, InputFeatures, signalsList, backgroundsList
-    if sys.argv[0] == fileName4 or sys.argv[0] == fileName5 or sys.argv[0] == fileName6:
+    if sys.argv[0] == fileNameBuildDNN or sys.argv[0] == fileNameBuildPDNN or sys.argv[0] == fileName6:
         return ntuplePath, dfPath, InputFeatures
 
 ### Checking if the output directory exists. If not, creating it
@@ -267,9 +267,9 @@ def DrawVariablesHisto(dataFrame, InputFeatures, outputDir, outputFileCommonName
             statType = 'count'
             hueType = dataFrame['origin']
             legendBool = False
-        if sys.argv[0] == fileName2:
+        if sys.argv[0] == fileNameBuildDataSet:
             ax = seaborn.histplot(data = dataFrame[feature], x = dataFrame[feature], hue = hueType, common_norm = False, stat = statType, legend = legendBool)#, multiple = 'stack')
-        elif sys.argv[0] == fileName3:
+        elif sys.argv[0] == fileNameSplitDataSet:
             contents, bins, _ = plt.hist(dataFrame[feature], weights = dataFrame['train_weight'], bins = 100)
         labelDict = {}
         labelDict['lep1_E'] = 'lep1 E [GeV]'
@@ -305,7 +305,7 @@ def DrawVariablesHisto(dataFrame, InputFeatures, outputDir, outputFileCommonName
         #plt.figtext(0.77, 0.45, legendText, wrap = True, horizontalalignment = 'left')
         #plt.subplots_adjust(left = 0.1, right = 0.75)
         plt.xlabel(labelDict[feature])
-        if sys.argv[0] == fileName3:
+        if sys.argv[0] == fileNameSplitDataSet:
             plt.ylabel('Weighted counts')
         if feature == 'origin':
             plt.yscale('log')
