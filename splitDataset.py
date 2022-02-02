@@ -25,7 +25,7 @@ else:
     testSignal = list(testSignal.split('_'))
 
 foundSignal = 0
-drawPlots = False
+drawPlots = True
 
 for signal in signalsList:
     ### Selecting only the request signal
