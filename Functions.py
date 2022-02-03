@@ -308,7 +308,10 @@ def DrawVariablesHisto(dataFrame, InputFeatures, outputDir, outputFileCommonName
         #plt.figtext(0.35, 0.7, legendText, wrap = True, horizontalalignment = 'left')
         #plt.figtext(0.77, 0.45, legendText, wrap = True, horizontalalignment = 'left')
         #plt.subplots_adjust(left = 0.1, right = 0.75)
-        plt.xlabel(labelDict[feature])
+        if feature in labelDict:
+            plt.xlabel(labelDict[feature])
+        else:
+            plt.xlabel(feature)
         if sys.argv[0] == fileNameSplitDataSet:
             plt.ylabel('Weighted counts')
         if feature == 'origin':
