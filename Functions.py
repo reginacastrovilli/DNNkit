@@ -1,11 +1,12 @@
 # Assigning script names to variables
 fileNameSaveToPkl = 'saveToPkl.py'
 fileNameBuildDataSet = 'buildDataset.py'
+fileNameComputeSignificance = 'computeSignificance.py'
 fileNameSplitDataSet = 'splitDataset.py'
 fileNameBuildDNN = 'buildDNN.py'
 #fileNameBuildPDNN = 'buildPDNNtuningHyp.py'
 fileNameBuildPDNN = 'buildPDNN.py'
-#fileName6 = 'tuningHyperparameters.py'
+fileName6 = 'tuningHyperparameters.py'
 fileNamePlots = 'tests/drawPlots.py'
 
 ### Reading the command line
@@ -33,19 +34,25 @@ def ReadArgParser():
     parser.add_argument('--doTest', help = 'If 1 the test will be performed, if 0 it won\'t', default = 1)
     parser.add_argument('--loop', help = 'How many times the code will be executed', default = 1)
     parser.add_argument('--tag', help = 'CxAOD tag', default = 'r33-22')
+    parser.add_argument('-r', '--regime', help = '')#, default = 'r33-22'
+    parser.add_argument('-f', '--FeatureToPlot', help = 'Feature to plot to compute significance', default = 'score')
     
     args = parser.parse_args()
 
     analysis = args.Analysis
-    if args.Analysis is None and sys.argv[0] != fileNameSaveToPkl:
+    '''
+    if args.Analysis is None and (sys.argv[0] != fileNameSaveToPkl or sys.argv[0] != fileNameComputeSignificance):
         parser.error(Fore.RED + 'Requested type of analysis (either \'mergered\' or \'resolved\')')
     elif args.Analysis != 'resolved' and args.Analysis != 'merged' and sys.argv[0] != fileNameSaveToPkl:
         parser.error(Fore.RED + 'Analysis can be either \'merged\' or \'resolved\'')
+    '''
     channel = args.Channel
+    '''
     if args.Channel is None and sys.argv[0] != fileNameSaveToPkl:
         parser.error(Fore.RED + 'Requested channel (either \'ggF\' or \'VBF\')')
     elif args.Channel != 'ggF' and args.Channel != 'VBF' and sys.argv[0] != fileNameSaveToPkl:
         parser.error(Fore.RED + 'Channel can be either \'ggF\' or \'VBF\'')
+    '''
     signal = args.Signal
     if args.Signal is None and sys.argv[0] != fileNameSaveToPkl:
         parser.error(Fore.RED + 'Requested type of signal (\'VBFHVTWZ\', \'Radion\', \'RSG\', \'VBFRSG\', \'HVTWZ\' or \'VBFRadion\')')
@@ -91,13 +98,17 @@ def ReadArgParser():
         parser.error(Fore.RED + 'doTest can only be 1 (to perform the test) or 0')
     loop = int(args.loop)
     tag = args.tag
+    regime = args.regime#.split()
+    if args.regime:
+        regime = regime.split()
+    feature = args.FeatureToPlot
 
     if sys.argv[0] == fileNameSaveToPkl:
         print(Fore.BLUE + '           tag = ' + tag)
         print(Fore.BLUE + 'jet collection = ' + jetCollection)
         return tag, jetCollection
 
-    if sys.argv[0] == fileNameBuildDataSet:
+    if sys.argv[0] == fileNameBuildDataSet:# or sys.argv[0] == fileNameBuildDataSet2:
         print(Fore.BLUE + '          background(s) = ' + str(backgroundString))
         print(Fore.BLUE + '                 signal = ' + str(signal))
         return tag, jetCollection, analysis, channel, preselectionCuts, signal, backgroundString
@@ -119,6 +130,9 @@ def ReadArgParser():
         print(Fore.BLUE + '                doTrain = ' + str(doTrain))
         print(Fore.BLUE + '                 doTest = ' + str(doTest))
         return tag, jetCollection, analysis, channel, preselectionCuts, backgroundString, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, mass, doTrain, doTest, loop
+
+    if sys.argv[0] == fileNameComputeSignificance:
+        return tag, jetCollection, regime, preselectionCuts, signal, backgroundString#, feature
 
 ### Reading from the configuration file
 import configparser, ast
@@ -153,7 +167,7 @@ def ReadConfig(tag, analysis, jetCollection):
     elif analysis == 'resolved':
         InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesResolved'))
         variablesToSave = ast.literal_eval(config.get('config', 'variablesToSaveResolved'))
-    if sys.argv[0] == fileNameBuildDataSet:
+    if sys.argv[0] == fileNameBuildDataSet or sys.argv[0] == fileNameComputeSignificance:
         return inputFiles, rootBranchSubSample, InputFeatures, dfPath, variablesToSave, backgroundsList
     if sys.argv[0] == fileNamePlots:
         return dfPath, InputFeatures
@@ -164,6 +178,7 @@ def ReadConfig(tag, analysis, jetCollection):
 
 ### Checking if the output directory exists. If not, creating it
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'} ---> '3' to suppress INFO, WARNING, and ERROR messages in Tensorflow
 
 def checkCreateDir(dir):
     if not os.path.isdir(dir):
@@ -171,6 +186,12 @@ def checkCreateDir(dir):
         return Fore.RED + ' (created)'
     else:
         return Fore.RED + ' (already there)'
+
+### Functions to enable or disable 'print' calls
+def blockPrint():
+    sys.stdout = open(os.devnull, 'w')
+def enablePrint():
+    sys.stdout = sys.__stdout__
 
 ### Loading input data
 import pandas as pd
@@ -219,6 +240,20 @@ def SelectEvents(dataFrame, channel, analysis, preselectionCuts):
         elif analysis == 'resolved':
             selection = selectionResolvedVBF
     dataFrame = dataFrame.query(selection)
+
+    ### Applying preselection cuts (if any)
+    if preselectionCuts != 'none':
+        dataFrame = dataFrame.query(preselectionCuts)
+
+    return dataFrame
+
+def SelectRegime(dataFrame, preselectionCuts, regime, channel):
+    ### Selecting events according to the regime
+    if channel == 'ggF':
+        isVBF = 'False'
+    elif channel == 'VBF':
+        isVBF = 'True'
+    dataFrame = dataFrame.query('Pass_isVBF == ' + isVBF + ' and ' + regime + ' == True')
 
     ### Applying preselection cuts (if any)
     if preselectionCuts != 'none':
@@ -275,29 +310,7 @@ def DrawVariablesHisto(dataFrame, InputFeatures, outputDir, outputFileCommonName
             ax = seaborn.histplot(data = dataFrame[feature], x = dataFrame[feature], hue = hueType, common_norm = False, stat = statType, legend = legendBool)#, multiple = 'stack')
         elif sys.argv[0] == fileNameSplitDataSet:
             contents, bins, _ = plt.hist(dataFrame[feature], weights = dataFrame['train_weight'], bins = 100)
-        labelDict = {}
-        labelDict['lep1_E'] = 'lep1 E [GeV]'
-        labelDict['lep1_m'] = 'lep1 m [GeV]'
-        labelDict['lep1_pt'] = r'lep1 p$_T$ [GeV]'
-        labelDict['lep1_eta'] = r'lep1 $\eta$'        
-        labelDict['lep1_phi'] = r'lep1 $\phi$'
-        labelDict['lep2_E'] = 'lep2 E [GeV]'
-        labelDict['lep2_m'] = 'lep2 m [GeV]'
-        labelDict['lep2_pt'] = r'lep2 p$_t$ [GeV]'
-        labelDict['lep2_eta'] = r'lep2 $\eta$'        
-        labelDict['lep2_phi'] = r'lep2 $\phi$'
-        labelDict['fatjet_m'] = 'fatjet m [GeV]'
-        labelDict['fatjet_pt'] = r'fatjet p$_t$ [GeV]'
-        labelDict['fatjet_eta'] = r'fatjet $\eta$'        
-        labelDict['fatjet_phi'] = r'fatjet $\phi$'
-        labelDict['fatjet_D2'] = r'fatjet D$_2$'
-        labelDict['Zcand_m'] = 'Zcand m [GeV]'
-        labelDict['Zcand_pt'] = r'Zcand p$_t$ [GeV]'
-        labelDict['X_boosted_m'] = 'X_boosted m [GeV]'
-        labelDict['mass'] = 'mass [GeV]'
-        labelDict['weight'] = 'weight'
-        labelDict['isSignal'] = 'isSignal'
-        labelDict['origin'] = 'origin'
+        labelDict = {'lep1_E': 'lep1 E [GeV]', 'lep1_m': 'lep1 m [GeV]', 'lep1_pt': r'lep1 p$_T$ [GeV]', 'lep1_eta': r'lep1 $\eta$', 'lep1_phi': r'lep1 $\phi$', 'lep2_E': 'lep2 E [GeV]', 'lep2_m': 'lep2 m [GeV]', 'lep2_pt': r'lep2 p$_t$ [GeV]', 'lep2_eta': r'lep2 $\eta$', 'lep2_phi': r'lep2 $\phi$', 'fatjet_m': 'fatjet m [GeV]', 'fatjet_pt': r'fatjet p$_t$ [GeV]', 'fatjet_eta': r'fatjet $\eta$', 'fatjet_phi': r'fatjet $\phi$', 'fatjet_D2': r'fatjet D$_2$', 'Zcand_m': 'Zcand m [GeV]', 'Zcand_pt': r'Zcand p$_t$ [GeV]', 'X_boosted_m': 'X_boosted m [GeV]', 'mass': 'mass [GeV]', 'weight': 'weight', 'isSignal': 'isSignal', 'origin': 'origin'}
         '''
         if feature in featureLogX:
             ax.set_xscale('log')
@@ -381,8 +394,8 @@ def ComputeStat(dataTrain, dataTest, InputFeatures, outputDir):
     perc2 = sumTrainWeights * 0.75
     variablesFileName = outputDir + '/variables.json'
     variablesFile = open(variablesFileName, 'w')
-    variablesFile.write('{\n')
-    variablesFile.write('  \'inputs\': [\n')
+    variablesFile.write("{\n")
+    variablesFile.write("  \"inputs\": [\n")
     for feature in InputFeatures:
         cumulativeSum = 0
         print('Scaling ' + feature)
@@ -411,18 +424,19 @@ def ComputeStat(dataTrain, dataTest, InputFeatures, outputDir):
         iqr = quartileRight - quartileLeft ### InterQuartile Range
         dataTrain[feature] = (dataTrain[feature] - median) / iqr
         dataTest[feature] = (dataTest[feature] - median) / iqr
-        variablesFile.write('    {\n')
-        variablesFile.write('      \'name\': \'%s\',\n' % feature)
-        variablesFile.write('      \'offset\': %lf,\n' % median) # EJS 2021-05-27: I have compelling reasons to believe this should be -mu
-        variablesFile.write('      \'scale\': %lf\n' % iqr) # EJS 2021-05-27: I have compelling reasons to believe this should be 1/sigma                            
-        variablesFile.write('    }')
-        if feature != dataTrain.columns[len(dataTrain.columns) - 1]:
-            variablesFile.write(',\n')
+        variablesFile.write("    {\n")
+        variablesFile.write("      \"name\": \"%s\",\n" % feature)
+        variablesFile.write("      \"offset\": %lf,\n" % median) # EJS 2021-05-27: I have compelling reasons to believe this should be -mu
+        variablesFile.write("      \"scale\": %lf\n" % iqr) # EJS 2021-05-27: I have compelling reasons to believe this should be 1/sigma                            
+        variablesFile.write("    }")
+        #if feature != dataTrain.columns[len(dataTrain.columns) - 1]:
+        if feature != InputFeatures[len(InputFeatures) - 1]:
+            variablesFile.write(",\n")
         else:
-            variablesFile.write('\n')
-    variablesFile.write('  ],\n')
-    variablesFile.write('  \'class_labels\': [\'BinaryClassificationOutputName\']\n')
-    variablesFile.write('}\n')
+            variablesFile.write("\n")
+    variablesFile.write("  ],\n")
+    variablesFile.write("  \"class_labels\": [\"BinaryClassificationOutputName\"]\n")
+    variablesFile.write("}\n")
     print(Fore.GREEN + 'Saved variables in ' + variablesFileName)
     return dataTrain, dataTest
 
@@ -431,8 +445,8 @@ from keras.models import Model, Sequential
 from keras.layers import Dense, Dropout, Input, BatchNormalization
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.layers.core import Dense, Activation
-import tensorflow as tf
 from sklearn.metrics import log_loss
+import tensorflow as tf
 
 def BuildDNN(N_input, nodesNumber, layersNumber, dropout):
     model = Sequential()
