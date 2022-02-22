@@ -1,4 +1,4 @@
-from Functions import ReadArgParser, checkCreateDir, ReadConfig, SaveFeatureScaling, DrawVariablesHisto, ShufflingData, ComputeTrainWeights, ComputeStat
+from Functions import ReadArgParser, checkCreateDir, ReadConfig, SaveFeatureScaling, DrawVariablesHisto, ShufflingData, ComputeTrainWeights, ScalingFeatures
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -39,7 +39,7 @@ for signal in signalsList:
     data = pd.read_pickle(inputDir + '/MixData_' + fileCommonName + '.pkl') 
     
     ### If not already existing, creating output directory
-    outputDir = inputDir
+    outputDir = inputDir + '_fullStat'
     checkCreateDir(outputDir) 
     fileCommonName += '_' + str(trainingFraction) + 't'
 
@@ -52,9 +52,6 @@ for signal in signalsList:
 
     ### Selecting events according to their origin 
     data_set = data[data['origin'].isin(inputOrigin)]
-
-    nEvents = round(data_set.shape[0] * 2 / 4)
-    #data_set = data_set[:nEvents]
 
     dictOrigin = {}
     for origin in inputOrigin:
@@ -77,7 +74,10 @@ for signal in signalsList:
 
     ### Shuffling the dataframe
     dataFrame = ShufflingData(dataFrame)
-    
+
+    ### Creating a new column in the dataFrame that will store the unscaled mass
+    dataFrame = dataFrame.assign(unscaledMass = dataFrame['mass'])
+
     ### Splitting data into train and test set
     data_train, data_test = train_test_split(dataFrame, train_size = trainingFraction)
 
@@ -86,18 +86,14 @@ for signal in signalsList:
         print (format('Output directory: ' + Fore.GREEN + trainHistogramsPath), checkCreateDir(trainHistogramsPath))
         DrawVariablesHisto(data_train, InputFeatures, trainHistogramsPath, fileCommonName, jetCollection, analysis, channel, signal, background, preselectionCuts)
 
-    ### Saving unscaled masses
-    m_train_unscaled = data_train['mass']
-    m_test_unscaled = data_test['mass']
-    mTrainUnscaledName = outputDir + '/m_train_unscaled_' + fileCommonName + '.pkl' 
-    mTestUnscaledName = outputDir + '/m_test_unscaled_' + fileCommonName + '.pkl' 
-    m_train_unscaled.to_pickle(mTrainUnscaledName)
-    m_test_unscaled.to_pickle(mTestUnscaledName)
-    print(Fore.GREEN + 'Saved ' + mTrainUnscaledName)
-    print(Fore.GREEN + 'Saved ' + mTestUnscaledName)
+    '''
+    ### Slicing data train for statistic test
+    nEvents = int(data_train.shape[0] / 4)
+    data_train = data_train[:nEvents]
+    '''
 
     ### Scaling InputFeatures of train and test set
-    data_train, data_test = ComputeStat(data_train, data_test, InputFeatures, outputDir)
+    data_train, data_test = ScalingFeatures(data_train, data_test, InputFeatures, outputDir)
 
     if drawPlots:
         scaledHistogramsPath = outputDir + '/trainScaledHistograms'
