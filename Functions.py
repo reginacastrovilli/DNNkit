@@ -214,6 +214,20 @@ def LoadData(dfPath, tag, jetCollection, signal, analysis, channel, background, 
     #return X_train, X_test, y_train, y_test, m_Train_unscaled, m_Test_unscaled, w_train
     return data_Train, data_Test, m_Train_unscaled, m_Test_unscaled, w_train
 
+def LoadDataNew(dfPath, tag, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures):
+    fileCommonName = tag + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + str(signal) + '_' + background + '_' + str(trainingFraction) + 't'
+    dataTrain = pd.read_pickle(dfPath + '/data_train_' + fileCommonName + '.pkl')
+    X_train = np.array(dataTrain[InputFeatures].values).astype(np.float32)
+    y_train = np.array(dataTrain['isSignal'].values).astype(np.float32)
+    w_train = dataTrain['train_weight'].values
+    dataTest = pd.read_pickle(dfPath + '/data_test_' + fileCommonName + '.pkl')
+    X_test = np.array(dataTest[InputFeatures].values).astype(np.float32)
+    y_test = np.array(dataTest['isSignal'].values).astype(np.float32)
+    w_test = dataTest['train_weight'].values
+
+    return dataTrain, dataTest, X_train, X_test, y_train, y_test, w_train, w_test
+
+
 ### Writing in the log file
 def WriteLogFile(tag, ntuplePath, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, InputFeatures, dfPath):
     logString = 'CxAOD tag: ' + tag + '\nntuple path: ' + ntuplePath + '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of layers: ' + str(numberOfLayers) + '\nNumber of epochs: ' + str(numberOfEpochs) + '\nValidation fraction: ' + str(validationFraction) + '\nDropout: ' + str(dropout) + '\nInputFeatures: ' + str(InputFeatures) + '\ndfPath: ' + dfPath# + '\nNumber of train events: ' + str(len(data_train)) + ' (' + str(len(data_train_signal)) + ' signal and ' + str(len(data_train_bkg)) + ' background)' + '\nNumber of test events: ' + str(len(data_test)) + ' (' + str(len(data_test_signal)) + ' signal and ' + str(len(data_test_bkg)) + ' background)'
@@ -347,7 +361,8 @@ def ComputeTrainWeights(dataSetSignal, dataSetBackground, massesSignalList, outp
         print(Fore.BLUE + 'Number of events with mass ' + str(signalMass) + ': ' + str(numbersDict[signalMass]))
 
     ### Minimum number of signals with the same mass
-    minNumber = min(numbersDict.values())
+    #minNumber = min(numbersDict.values())
+    minNumber = sum(numbersDict.values()) / len(numbersDict)
     ### New column in the signal dataframe for train_weight
     dataSetSignal = dataSetSignal.assign(train_weight = 0)
     for signalMass in massesSignalList:
@@ -386,7 +401,7 @@ def ComputeTrainWeights(dataSetSignal, dataSetBackground, massesSignalList, outp
     
 
 ### Computing weighted median and IQR range
-def ComputeStat(dataTrain, dataTest, InputFeatures, outputDir):
+def ScalingFeatures(dataTrain, dataTest, InputFeatures, outputDir):
     dataTrainCopy = dataTrain.copy()
     sumTrainWeights = np.array(dataTrainCopy['train_weight']).sum()
     halfTrainWeights = sumTrainWeights / 2
@@ -552,8 +567,8 @@ plt.rcParams["figure.figsize"] = [7,7]
 plt.rcParams.update({'font.size': 16})
 '''
 ### Evaluating the (P)DNN performance
-def EvaluatePerformance(model, X_test, y_test, batchSize):
-    perf = model.evaluate(X_test, y_test, batch_size = batchSize)
+def EvaluatePerformance(model, X_test, y_test, w_test, batchSize):
+    perf = model.evaluate(X_test, y_test, sample_weight = w_test, batch_size = batchSize)
     testLoss = perf[0]
     testAccuracy = perf[1]
     return testLoss, testAccuracy
@@ -678,7 +693,7 @@ def DrawROC(fpr, tpr, AUC, outputDir, NN, unscaledMass, jetCollection, analysis,
 '''
 
 ### Drawing ROC and background rejection vs efficiency
-def DrawROCbkgRejectionScores(fpr, tpr, AUC, outputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName, bkgNumber, yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg):
+def DrawROCbkgRejectionScores(fpr, tpr, AUC, outputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName, yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, wMC_train_signal_mass, wMC_test_signal_mass, wMC_train_bkg, wMC_test_bkg):
 
     ### ROC
     emptyPlot, = plt.plot(fpr[0], tpr[0], color = 'white')
@@ -713,10 +728,10 @@ def DrawROCbkgRejectionScores(fpr, tpr, AUC, outputDir, NN, unscaledMass, jetCol
     
     ### Scores
     Nbins = 1000
-    plt.hist(yhat_train_signal, bins = Nbins, histtype = 'step', lw = 2, color = 'blue', label = [r'Signal train'], density = True)
-    y_signal, bins_1, _ = plt.hist(yhat_test_signal, bins = Nbins, histtype = 'stepfilled', lw = 2, color = 'cyan', alpha = 0.5, label = [r'Signal test'], density = True)
-    plt.hist(yhat_train_bkg, bins = Nbins, histtype = 'step', lw = 2, color = 'red', label = [r'Background train'], density = True)
-    y_bkg, bins_0, _ = plt.hist(yhat_test_bkg, bins = Nbins, histtype = 'stepfilled', lw = 2, color = 'orange', alpha = 0.5, label = [r'Background test'], density = True)
+    plt.hist(yhat_train_signal, weights = wMC_train_signal_mass, bins = Nbins, histtype = 'step', lw = 2, color = 'blue', label = [r'Signal train'], density = True)
+    y_signal, bins_1, _ = plt.hist(yhat_test_signal, weights = wMC_test_signal_mass, bins = Nbins, histtype = 'stepfilled', lw = 2, color = 'cyan', alpha = 0.5, label = [r'Signal test'], density = True)
+    plt.hist(yhat_train_bkg, weights = wMC_train_bkg, bins = Nbins, histtype = 'step', lw = 2, color = 'red', label = [r'Background train'], density = True)
+    y_bkg, bins_0, _ = plt.hist(yhat_test_bkg, weights = wMC_test_bkg, bins = Nbins, histtype = 'stepfilled', lw = 2, color = 'orange', alpha = 0.5, label = [r'Background test'], density = True)
     plt.ylabel('Norm. entries')
     plt.xlabel('Score')
     plt.yscale('log')
@@ -924,9 +939,9 @@ def DrawRejectionVsStat(massVec, fracTrain, WP, bkgRej90Dict, bkgRej94Dict, bkgR
 from sklearn.metrics import confusion_matrix
 import itertools
 
-def DrawCM(yhat_test, y_test, outputDir, mass, background, outputFileCommonName, jetCollection, analysis, channel, preselectionCuts, signal):
+def DrawCM(yhat_test, y_test, w_test, outputDir, mass, background, outputFileCommonName, jetCollection, analysis, channel, preselectionCuts, signal):
     yResult_test_cls = np.array([ int(round(x[0])) for x in yhat_test])
-    cm = confusion_matrix(y_test, yResult_test_cls, normalize = 'true')
+    cm = confusion_matrix(y_test, yResult_test_cls, sample_weight = w_test, normalize = 'true')
     TNR, FPR, FNR, TPR = cm.ravel()
     print(format(Fore.BLUE + 'TNR: '  + str(TNR) + ', FPR: ' + str(FPR) + ', FNR: ' + str(FNR) + ', TPR: ' + str(TPR)))
     classes = ['Background', 'Signal']
