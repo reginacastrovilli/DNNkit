@@ -146,9 +146,10 @@ def ReadConfigSaveToPkl(tag, jetCollection):
     inputFiles = ast.literal_eval(config.get('config', 'inputFiles'))
     dfPath = config.get('config', 'dfPath')
     dfPath += tag + '/' + jetCollection + '/'
+    rootBranchSubSample = ast.literal_eval(config.get('config', 'rootBranchSubSample'))
     print (format('Output directory: ' + Fore.GREEN + dfPath), checkCreateDir(dfPath))
     shutil.copyfile(configurationFile, dfPath + configurationFile)
-    return ntuplePath, inputFiles, dfPath
+    return ntuplePath, inputFiles, dfPath, rootBranchSubSample
 
 def ReadConfig(tag, analysis, jetCollection):
     configurationFile = 'Configuration_' + jetCollection + '_' + tag + '.ini'
@@ -167,7 +168,9 @@ def ReadConfig(tag, analysis, jetCollection):
     elif analysis == 'resolved':
         InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesResolved'))
         variablesToSave = ast.literal_eval(config.get('config', 'variablesToSaveResolved'))
-    if sys.argv[0] == fileNameBuildDataSet or sys.argv[0] == fileNameComputeSignificance:
+    if sys.argv[0] == fileNameBuildDataSet:
+        return rootBranchSubSample, InputFeatures, dfPath, variablesToSave, backgroundsList
+    if sys.argv[0] == fileNameComputeSignificance:
         return inputFiles, rootBranchSubSample, InputFeatures, dfPath, variablesToSave, backgroundsList
     if sys.argv[0] == fileNamePlots:
         return dfPath, InputFeatures
@@ -235,11 +238,11 @@ def WriteLogFile(tag, ntuplePath, numberOfNodes, numberOfLayers, numberOfEpochs,
 
 def SelectEvents(dataFrame, channel, analysis, preselectionCuts):
     ### Selecting events according to type of analysis and channel
-    selectionMergedGGF = 'Pass_MergHP_GGF_ZZ_Tag_SR == True or Pass_MergHP_GGF_ZZ_Untag_SR == True or Pass_MergHP_GGF_WZ_SR == True or Pass_MergLP_GGF_ZZ_Tag_SR == True or Pass_MergLP_GGF_ZZ_Untag_SR == True or Pass_MergHP_GGF_ZZ_Tag_ZCR == True or Pass_MergHP_GGF_WZ_ZCR == True or Pass_MergHP_GGF_ZZ_Untag_ZCR == True or Pass_MergLP_GGF_ZZ_Tag_ZCR == True or Pass_MergLP_GGF_ZZ_Untag_ZCR == True or Pass_MergLP_GGF_WZ_SR == True or Pass_MergLP_GGF_WZ_ZCR == True'
+    selectionMergedGGF = 'Pass_MergHP_GGF_ZZ_Tag_SR == True or Pass_MergHP_GGF_ZZ_Untag_SR == True or Pass_MergHP_GGF_WZ_SR == True or Pass_MergLP_GGF_ZZ_Tag_SR == True or Pass_MergLP_GGF_ZZ_Untag_SR == True or Pass_MergLP_GGF_WZ_SR == True or Pass_MergHP_GGF_ZZ_Tag_ZCR == True or Pass_MergHP_GGF_ZZ_Untag_ZCR == True or Pass_MergHP_GGF_WZ_ZCR == True or Pass_MergLP_GGF_ZZ_Tag_ZCR == True or Pass_MergLP_GGF_ZZ_Untag_ZCR == True or Pass_MergLP_GGF_WZ_ZCR == True'# or Pass_MergHP_GGF_ZZ_Untag_TCR == True or Pass_MergHP_GGF_ZZ_Tag_TCR == True or Pass_MergHP_GGF_WZ_TCR == True or Pass_MergLP_GGF_ZZ_Untag_TCR == True or Pass_MergLP_GGF_ZZ_Tag_TCR == True or Pass_MergLP_GGF_WZ_TCR == True'
     selectionMergedGGFZZLPuntagSR = 'Pass_MergLP_GGF_ZZ_Untag_SR == True and Pass_MergHP_GGF_ZZ_Tag_SR == False and Pass_MergHP_GGF_ZZ_Untag_SR == False and Pass_MergHP_GGF_WZ_SR == False and Pass_MergLP_GGF_ZZ_Tag_SR == False and Pass_MergHP_GGF_ZZ_Tag_ZCR == False and Pass_MergHP_GGF_WZ_ZCR == False and Pass_MergHP_GGF_ZZ_Untag_ZCR == False and Pass_MergLP_GGF_ZZ_Tag_ZCR == False and Pass_MergLP_GGF_ZZ_Untag_ZCR == False and Pass_MergLP_GGF_WZ_SR == False and Pass_MergLP_GGF_WZ_ZCR == False'
-    selectionMergedVBF = 'Pass_MergHP_VBF_WZ_SR == True or Pass_MergHP_VBF_ZZ_SR == True or Pass_MergHP_VBF_WZ_ZCR == True or Pass_MergHP_VBF_ZZ_ZCR == True or Pass_MergLP_VBF_WZ_SR == True or Pass_MergLP_VBF_ZZ_SR == True or Pass_MergLP_VBF_WZ_ZCR == True or Pass_MergLP_VBF_ZZ_ZCR == True'
-    selectionResolvedGGF = 'Pass_Res_GGF_WZ_SR == True or Pass_Res_GGF_WZ_ZCR == True or Pass_Res_GGF_ZZ_Tag_SR == True or Pass_Res_GGF_ZZ_Untag_SR == True or Pass_Res_GGF_ZZ_Tag_ZCR == True or Pass_Res_GGF_ZZ_Untag_ZCR == True'
-    selectionResolvedVBF = 'Pass_Res_VBF_WZ_SR == True or Pass_Res_VBF_WZ_ZCR == True or Pass_Res_VBF_ZZ_SR == True or Pass_Res_VBF_ZZ_ZCR'
+    selectionMergedVBF = 'Pass_MergHP_VBF_WZ_SR == True or Pass_MergHP_VBF_ZZ_SR == True or Pass_MergLP_VBF_WZ_SR == True or Pass_MergLP_VBF_ZZ_SR == True or Pass_MergHP_VBF_WZ_ZCR == True or Pass_MergHP_VBF_ZZ_ZCR == True or Pass_MergLP_VBF_WZ_ZCR == True or Pass_MergLP_VBF_ZZ_ZCR == True'# or Pass_MergHP_VBF_WZ_TCR == True or Pass_MergHP_VBF_ZZ_TCR == True or Pass_MergLP_VBF_WZ_TCR == True or Pass_MergLP_VBF_ZZ_TCR == True'
+    selectionResolvedGGF = '(Pass_Res_GGF_WZ_SR == True or Pass_Res_GGF_ZZ_Tag_SR == True or Pass_Res_GGF_ZZ_Untag_SR == True or Pass_Res_GGF_WZ_ZCR == True or Pass_Res_GGF_ZZ_Tag_ZCR == True or Pass_Res_GGF_ZZ_Untag_ZCR == True) and Pass_MergHP_GGF_ZZ_Tag_SR == False and Pass_MergHP_GGF_ZZ_Untag_SR == False and Pass_MergHP_GGF_WZ_SR == False and Pass_MergLP_GGF_ZZ_Tag_SR == False and Pass_MergLP_GGF_ZZ_Untag_SR == False and Pass_MergLP_GGF_WZ_SR == False and Pass_MergHP_GGF_ZZ_Tag_ZCR == False and Pass_MergHP_GGF_ZZ_Untag_ZCR == False and Pass_MergHP_GGF_WZ_ZCR == False and Pass_MergLP_GGF_ZZ_Tag_ZCR == False and Pass_MergLP_GGF_ZZ_Untag_ZCR == False and Pass_MergLP_GGF_WZ_ZCR == False'# or Pass_Res_GGF_WZ_TCR == True or Pass_Res_GGF_ZZ_Tag_TCR == True or Pass_Res_GGF_ZZ_Untag_TCR == True'
+    selectionResolvedVBF = '(Pass_Res_VBF_WZ_SR == True or Pass_Res_VBF_ZZ_SR == True or Pass_Res_VBF_WZ_ZCR == True or Pass_Res_VBF_ZZ_ZCR == True) and Pass_MergHP_VBF_WZ_SR == False and Pass_MergHP_VBF_ZZ_SR == False and Pass_MergLP_VBF_WZ_SR == False and Pass_MergLP_VBF_ZZ_SR == False and Pass_MergHP_VBF_WZ_ZCR == False and Pass_MergHP_VBF_ZZ_ZCR == False and Pass_MergLP_VBF_WZ_ZCR == False and Pass_MergLP_VBF_ZZ_ZCR == False'# or Pass_Res_VBF_WZ_TCR == True or Pass_Res_VBF_ZZ_TCR == True'
     if channel == 'ggF':
         dataFrame = dataFrame.query('Pass_isVBF == False')
         if analysis == 'merged':
@@ -324,7 +327,7 @@ def DrawVariablesHisto(dataFrame, InputFeatures, outputDir, outputFileCommonName
             ax = seaborn.histplot(data = dataFrame[feature], x = dataFrame[feature], hue = hueType, common_norm = False, stat = statType, legend = legendBool)#, multiple = 'stack')
         elif sys.argv[0] == fileNameSplitDataSet:
             contents, bins, _ = plt.hist(dataFrame[feature], weights = dataFrame['train_weight'], bins = 100)
-        labelDict = {'lep1_E': 'lep1 E [GeV]', 'lep1_m': 'lep1 m [GeV]', 'lep1_pt': r'lep1 p$_T$ [GeV]', 'lep1_eta': r'lep1 $\eta$', 'lep1_phi': r'lep1 $\phi$', 'lep2_E': 'lep2 E [GeV]', 'lep2_m': 'lep2 m [GeV]', 'lep2_pt': r'lep2 p$_t$ [GeV]', 'lep2_eta': r'lep2 $\eta$', 'lep2_phi': r'lep2 $\phi$', 'fatjet_m': 'fatjet m [GeV]', 'fatjet_pt': r'fatjet p$_t$ [GeV]', 'fatjet_eta': r'fatjet $\eta$', 'fatjet_phi': r'fatjet $\phi$', 'fatjet_D2': r'fatjet D$_2$', 'Zcand_m': 'Zcand m [GeV]', 'Zcand_pt': r'Zcand p$_t$ [GeV]', 'X_boosted_m': 'X_boosted m [GeV]', 'mass': 'mass [GeV]', 'weight': 'weight', 'isSignal': 'isSignal', 'origin': 'origin'}
+        labelDict = {'lep1_E': 'lep1 E [GeV]', 'lep1_m': 'lep1 m [GeV]', 'lep1_pt': r'lep1 p$_T$ [GeV]', 'lep1_eta': r'lep1 $\eta$', 'lep1_phi': r'lep1 $\phi$', 'lep2_E': 'lep2 E [GeV]', 'lep2_m': 'lep2 m [GeV]', 'lep2_pt': r'lep2 p$_t$ [GeV]', 'lep2_eta': r'lep2 $\eta$', 'lep2_phi': r'lep2 $\phi$', 'fatjet_m': 'fatjet m [GeV]', 'fatjet_pt': r'fatjet p$_t$ [GeV]', 'fatjet_eta': r'fatjet $\eta$', 'fatjet_phi': r'fatjet $\phi$', 'fatjet_D2': r'fatjet D$_2$', 'Zcand_m': 'Zcand m [GeV]', 'Zcand_pt': r'Zcand p$_t$ [GeV]', 'X_boosted_m': 'X_boosted m [GeV]', 'mass': 'mass [GeV]', 'weight': 'weight', 'isSignal': 'isSignal', 'origin': 'origin', 'Wdijet_m': 'Wdijet m [GeV]', 'Wdijet_pt': 'Wdijet p$_T$ [GeV]', 'Wdijet_eta': 'Wdijet $\eta$', 'Wdijet_phi': 'Wdijet $\phi$', 'Zdijet_m': 'Zdijet m [GeV]', 'Zdijet_pt': 'Zdijet p$_T$ [GeV]', 'Zdijet_eta': 'Zdijet $\eta$', 'Zdijet_phi': 'Zdijet $\phi$', 'sigWJ1_m': 'sigWJ1 m', 'sigWJ1_pt': 'sigWJ1 p$_T$', 'sigWJ1_eta': 'sigWJ1 $\eta$', 'sigWJ1_phi': 'sigWJ1 $\phi$', 'sigWJ2_m': 'sigWJ2 m', 'sigWJ2_pt': 'sigWJ2 p$_T$', 'sigWJ2_eta': 'sigWJ2 $\eta$', 'sigWJ2_phi': 'sigWJ2 $\phi$', 'sigZJ1_m': 'sigZJ1 m', 'sigZJ1_pt': 'sigZJ1 p$_T$', 'sigZJ1_eta': 'sigZJ1 $\eta$', 'sigZJ1_phi': 'sigZJ1 $\phi$', 'sigZJ2_m': 'sigZJ2 m', 'sigZJ2_pt': 'sigZJ2 p$_T$', 'sigZJ2_eta': 'sigZJ2 $\eta$', 'sigZJ2_phi': 'sigZJ2 $\phi$'}
         '''
         if feature in featureLogX:
             ax.set_xscale('log')
@@ -358,7 +361,7 @@ def ComputeTrainWeights(dataSetSignal, dataSetBackground, massesSignalList, outp
     for signalMass in massesSignalList:
         ### Number of signals with each mass value
         numbersDict[signalMass] = dataSetSignal[dataSetSignal['mass'] == signalMass].shape[0]
-        print(Fore.BLUE + 'Number of events with mass ' + str(signalMass) + ': ' + str(numbersDict[signalMass]))
+        print(Fore.BLUE + 'Number of signal events with mass ' + str(signalMass) + ': ' + str(numbersDict[signalMass]))
 
     ### Minimum number of signals with the same mass
     #minNumber = min(numbersDict.values())
