@@ -1,6 +1,7 @@
-# this script just takes the input root files and converts them into pkl
-# using deprecated uproot3 instead of uproot, as we are not needing high performance from this package, just using it to convert the data
-# please neglect warning messages caused by uproot3
+# This script takes the input root files and converts the relevant branches into pkl
+# It is not recommended to convert the whole input tree because the script may crash due to memory issues with large trees 
+# Using deprecated uproot3 instead of uproot, as we are not needing high performance from this package, just using it to convert the data
+# Please neglect warning messages caused by uproot3
 
 import uproot3
 import configparser
@@ -13,7 +14,7 @@ init(autoreset = True)
 tag, jetCollection = ReadArgParser()
 
 ### Reading from config file
-ntuplePath, inputFiles, dfPath = ReadConfigSaveToPkl(tag, jetCollection)
+ntuplePath, inputFiles, dfPath, rootBranchSubSample = ReadConfigSaveToPkl(tag, jetCollection)
 
 ### Creating log file
 logFileName = dfPath + 'EventsNumberNtuples_' + tag + '_' + jetCollection + '.txt'
@@ -24,6 +25,7 @@ logFile.write('\nNumber of events in the input ntuples:\n')
 
 ### Loading, converting and saving each input file
 totalEvents = 0 
+weightedTotalEvents = 0 
 for i in inputFiles:
     inFile = ntuplePath + i + '.root'
     print('Loading ' + inFile)
@@ -31,18 +33,20 @@ for i in inputFiles:
     tree = theFile['Nominal']
     Nevents = tree.numentries
     totalEvents += Nevents
-    print(Fore.BLUE + 'Number of events in ' + inFile, '->\t' + str(Nevents))
-    logFile.write(i + ' -> ' + str(Nevents) + '\n')
     if Nevents == 0:
         print(Fore.RED + 'Ignoring empty file')
         continue
-    DF = tree.pandas.df()
+    DF = tree.pandas.df(rootBranchSubSample)
+    weightedEvents = DF['weight'].sum()
+    weightedTotalEvents += weightedEvents
+    print(Fore.BLUE + 'Number of events in ' + inFile, '->\t' + str(Nevents) + ' (weighted: ' + str(weightedEvents) + ')')
+    logFile.write(i + ' -> ' + str(Nevents) + ' events (weighted: ' + str(weightedEvents) + ')')
     outFile = dfPath + i + '_DF.pkl'
     DF.to_pickle(outFile)
     print(Fore.GREEN + 'Saved ' + outFile)
 
-print(Fore.BLUE + 'Total events: ' + str(totalEvents))
-logFile.write('Number of total events: ' + str(totalEvents))
+print(Fore.BLUE + 'Total events: ' + str(totalEvents) + ' (weighted: ' + str(weightedTotalEvents) + ')')
+logFile.write('Number of total events: ' + str(totalEvents) + ' (weighted: ' + str(weightedTotalEvents) + ')')
 logFile.write('\npkl files saved in ' + dfPath)
 logFile.close()
 print(Fore.GREEN + 'Saved ' + logFileName)
