@@ -7,13 +7,13 @@ from colorama import init, Fore
 init(autoreset = True)
 
 drawPlots = False
-overwriteDataFrame = True
+overwriteDataFrame = False
 
 ### Reading the command line
 tag, jetCollection, analysis, channel, preselectionCuts, signal, background = ReadArgParser()
 
 ### Reading from config file
-rootBranchSubSample, InputFeatures, dfPath, variablesToSave, backgroundsList = ReadConfig(tag, analysis, jetCollection)
+InputFeatures, dfPath, variablesToSave, backgroundsList = ReadConfig(tag, analysis, jetCollection)
 
 ### Creating output directories and logFile
 tmpOutputDir = dfPath + analysis + '/' + channel
@@ -25,7 +25,7 @@ print(format('Second output directory: ' + Fore.GREEN + outputDir), checkCreateD
 fileCommonName = tag + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + signal + '_' + background
 logFileName = outputDir + '/EventsNumberAfterSelection_' + fileCommonName + '.txt'
 logFile = open(logFileName, 'w')
-logFile.write('CxAOD tag: ' + tag + '\nJetCollection: ' + jetCollection + '\nAnalysis: ' + analysis + '\nChannel: ' + channel + '\nPreselection cuts: ' + '\nSignal: ' + signal + '\nBackground: ' + background + '\nInput files path: ' + dfPath)# + '\nInput files and number of events after selection:\n')
+logFile.write('CxAOD tag: ' + tag + '\nJetCollection: ' + jetCollection + '\nAnalysis: ' + analysis + '\nChannel: ' + channel + '\nPreselection cuts: ' + '\nSignal:' + signal + '\nBackground: ' + background + '\nInput files path: ' + dfPath)# + '\nInput files and number of events after selection:\n')
 
 ### Loading DSID-mass map and storing it into a dictionary
 DictDSID = {}
@@ -49,6 +49,7 @@ dataFrameBkg = []
 
 for target in targetOrigins:
     fileName = tmpOutputDir + '/' + target + '_' + tmpFileCommonName + '.pkl'
+
     ### Loading dataframe if found and overwrite flag is false 
     if not overwriteDataFrame:
         if os.path.isfile(fileName):
@@ -58,7 +59,7 @@ for target in targetOrigins:
             else:
                 print(Fore.GREEN + 'Found background dataframe: loading ' + fileName)
                 dataFrameBkg.append(pd.read_pickle(fileName))
-                
+
     ### Creating dataframe if not found or overwrite flag is true
     if overwriteDataFrame or not os.path.isfile(fileName):
         ### Defining local dataframe (we might have found only one among many dataframes)
@@ -68,14 +69,16 @@ for target in targetOrigins:
             if file.startswith(target) and file.endswith('.pkl'):
                 print(Fore.GREEN + 'Loading ' + dfPath + file)
                 inputDf = pd.read_pickle(dfPath + file)
-                ### Selecting events according to merged/resolved regime and ggF/VBF channel
                 '''
                 print(inputDf.shape)
                 inputDf1 = inputDf.query('Pass_MergHP_GGF_ZZ_Tag_SR == False and Pass_MergHP_GGF_ZZ_Untag_SR == False and Pass_MergHP_GGF_WZ_SR == False and Pass_MergLP_GGF_ZZ_Tag_SR == False and Pass_MergLP_GGF_ZZ_Untag_SR == False and Pass_MergLP_GGF_WZ_SR == False and Pass_MergHP_GGF_ZZ_Tag_ZCR == False and Pass_MergHP_GGF_ZZ_Untag_ZCR == False and Pass_MergHP_GGF_WZ_ZCR == False and Pass_MergLP_GGF_ZZ_Tag_ZCR == False and Pass_MergLP_GGF_ZZ_Untag_ZCR == False and Pass_MergLP_GGF_WZ_ZCR == False and Pass_MergHP_GGF_ZZ_Untag_TCR == False and Pass_MergHP_GGF_ZZ_Tag_TCR == False and Pass_MergHP_GGF_WZ_TCR == False and Pass_MergLP_GGF_ZZ_Untag_TCR == False and Pass_MergLP_GGF_ZZ_Tag_TCR == False and Pass_MergLP_GGF_WZ_TCR == False and Pass_Res_GGF_WZ_SR == False and Pass_Res_GGF_ZZ_Tag_SR == False and Pass_Res_GGF_ZZ_Untag_SR == False and Pass_Res_GGF_WZ_ZCR == False and Pass_Res_GGF_ZZ_Tag_ZCR == False and Pass_Res_GGF_ZZ_Untag_ZCR == False and Pass_Res_GGF_WZ_TCR == False and Pass_Res_GGF_ZZ_Tag_TCR == False and Pass_Res_GGF_ZZ_Untag_TCR == False and Pass_MergHP_VBF_WZ_SR == False and Pass_MergHP_VBF_ZZ_SR == False and Pass_MergLP_VBF_WZ_SR == False and Pass_MergLP_VBF_ZZ_SR == False and Pass_MergHP_VBF_WZ_ZCR == False and Pass_MergHP_VBF_ZZ_ZCR == False and Pass_MergLP_VBF_WZ_ZCR == False and Pass_MergLP_VBF_ZZ_ZCR == False and Pass_MergHP_VBF_WZ_TCR == False and Pass_MergHP_VBF_ZZ_TCR == False and Pass_MergLP_VBF_WZ_TCR == False and Pass_MergLP_VBF_ZZ_TCR == False and Pass_Res_VBF_WZ_SR == False and Pass_Res_VBF_ZZ_SR == False and Pass_Res_VBF_WZ_ZCR == False and Pass_Res_VBF_ZZ_ZCR == False and Pass_Res_VBF_WZ_TCR == False and Pass_Res_VBF_ZZ_TCR == False')
                 print(inputDf1.shape)       
                 exit()
                 '''
+                ### Selecting events according to merged/resolved regime and ggF/VBF channel
                 inputDf = SelectEvents(inputDf, channel, analysis, preselectionCuts)
+                #weighted_sum = inputDf['weight'].sum()
+                #print('weighted sum: ' + str(weighted_sum))
                 ### Creating new column in the dataframe with the origin
                 inputDf = inputDf.assign(origin = target)
                 ### Filling signal/background dataframes
@@ -113,7 +116,7 @@ dataFrameSignal = dataFrameSignal.assign(mass = massesSignal)
 dataFrameSignal = CutMasses(dataFrameSignal, analysis)
 massesSignalList = list(set(list(dataFrameSignal['mass'])))
 print(Fore.BLUE + 'Masses in the signal sample: ' + str(np.sort(np.array(massesSignalList))))
-logFile.write('\nMasses in the signal sample: ' + str(np.sort(np.array(massesSignalList))))
+#logFile.write('\nMasses in the signal sample: ' + str(np.sort(np.array(massesSignalList))))
 
 '''
 ### Assigning a random mass to background events according to the signal mass distribution 

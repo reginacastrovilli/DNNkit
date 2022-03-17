@@ -169,7 +169,7 @@ def ReadConfig(tag, analysis, jetCollection):
         InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesResolved'))
         variablesToSave = ast.literal_eval(config.get('config', 'variablesToSaveResolved'))
     if sys.argv[0] == fileNameBuildDataSet:
-        return rootBranchSubSample, InputFeatures, dfPath, variablesToSave, backgroundsList
+        return InputFeatures, dfPath, variablesToSave, backgroundsList
     if sys.argv[0] == fileNameComputeSignificance:
         return inputFiles, rootBranchSubSample, InputFeatures, dfPath, variablesToSave, backgroundsList
     if sys.argv[0] == fileNamePlots:
