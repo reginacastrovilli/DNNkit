@@ -181,7 +181,8 @@ def ReadConfig(tag, analysis, jetCollection):
 
 ### Checking if the output directory exists. If not, creating it
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'} ---> '3' to suppress INFO, WARNING, and ERROR messages in Tensorflow
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'} ---> '3' to suppress INFO, WARNING, and ERROR messages in Tensorflow
 
 def checkCreateDir(dir):
     if not os.path.isdir(dir):
@@ -241,8 +242,8 @@ def SelectEvents(dataFrame, channel, analysis, preselectionCuts):
     selectionMergedGGF = 'Pass_MergHP_GGF_ZZ_Tag_SR == True or Pass_MergHP_GGF_ZZ_Untag_SR == True or Pass_MergHP_GGF_WZ_SR == True or Pass_MergLP_GGF_ZZ_Tag_SR == True or Pass_MergLP_GGF_ZZ_Untag_SR == True or Pass_MergLP_GGF_WZ_SR == True or Pass_MergHP_GGF_ZZ_Tag_ZCR == True or Pass_MergHP_GGF_ZZ_Untag_ZCR == True or Pass_MergHP_GGF_WZ_ZCR == True or Pass_MergLP_GGF_ZZ_Tag_ZCR == True or Pass_MergLP_GGF_ZZ_Untag_ZCR == True or Pass_MergLP_GGF_WZ_ZCR == True'# or Pass_MergHP_GGF_ZZ_Untag_TCR == True or Pass_MergHP_GGF_ZZ_Tag_TCR == True or Pass_MergHP_GGF_WZ_TCR == True or Pass_MergLP_GGF_ZZ_Untag_TCR == True or Pass_MergLP_GGF_ZZ_Tag_TCR == True or Pass_MergLP_GGF_WZ_TCR == True'
     selectionMergedGGFZZLPuntagSR = 'Pass_MergLP_GGF_ZZ_Untag_SR == True and Pass_MergHP_GGF_ZZ_Tag_SR == False and Pass_MergHP_GGF_ZZ_Untag_SR == False and Pass_MergHP_GGF_WZ_SR == False and Pass_MergLP_GGF_ZZ_Tag_SR == False and Pass_MergHP_GGF_ZZ_Tag_ZCR == False and Pass_MergHP_GGF_WZ_ZCR == False and Pass_MergHP_GGF_ZZ_Untag_ZCR == False and Pass_MergLP_GGF_ZZ_Tag_ZCR == False and Pass_MergLP_GGF_ZZ_Untag_ZCR == False and Pass_MergLP_GGF_WZ_SR == False and Pass_MergLP_GGF_WZ_ZCR == False'
     selectionMergedVBF = 'Pass_MergHP_VBF_WZ_SR == True or Pass_MergHP_VBF_ZZ_SR == True or Pass_MergLP_VBF_WZ_SR == True or Pass_MergLP_VBF_ZZ_SR == True or Pass_MergHP_VBF_WZ_ZCR == True or Pass_MergHP_VBF_ZZ_ZCR == True or Pass_MergLP_VBF_WZ_ZCR == True or Pass_MergLP_VBF_ZZ_ZCR == True'# or Pass_MergHP_VBF_WZ_TCR == True or Pass_MergHP_VBF_ZZ_TCR == True or Pass_MergLP_VBF_WZ_TCR == True or Pass_MergLP_VBF_ZZ_TCR == True'
-    selectionResolvedGGF = '(Pass_Res_GGF_WZ_SR == True or Pass_Res_GGF_ZZ_Tag_SR == True or Pass_Res_GGF_ZZ_Untag_SR == True or Pass_Res_GGF_WZ_ZCR == True or Pass_Res_GGF_ZZ_Tag_ZCR == True or Pass_Res_GGF_ZZ_Untag_ZCR == True) and Pass_MergHP_GGF_ZZ_Tag_SR == False and Pass_MergHP_GGF_ZZ_Untag_SR == False and Pass_MergHP_GGF_WZ_SR == False and Pass_MergLP_GGF_ZZ_Tag_SR == False and Pass_MergLP_GGF_ZZ_Untag_SR == False and Pass_MergLP_GGF_WZ_SR == False and Pass_MergHP_GGF_ZZ_Tag_ZCR == False and Pass_MergHP_GGF_ZZ_Untag_ZCR == False and Pass_MergHP_GGF_WZ_ZCR == False and Pass_MergLP_GGF_ZZ_Tag_ZCR == False and Pass_MergLP_GGF_ZZ_Untag_ZCR == False and Pass_MergLP_GGF_WZ_ZCR == False'# or Pass_Res_GGF_WZ_TCR == True or Pass_Res_GGF_ZZ_Tag_TCR == True or Pass_Res_GGF_ZZ_Untag_TCR == True'
-    selectionResolvedVBF = '(Pass_Res_VBF_WZ_SR == True or Pass_Res_VBF_ZZ_SR == True or Pass_Res_VBF_WZ_ZCR == True or Pass_Res_VBF_ZZ_ZCR == True) and Pass_MergHP_VBF_WZ_SR == False and Pass_MergHP_VBF_ZZ_SR == False and Pass_MergLP_VBF_WZ_SR == False and Pass_MergLP_VBF_ZZ_SR == False and Pass_MergHP_VBF_WZ_ZCR == False and Pass_MergHP_VBF_ZZ_ZCR == False and Pass_MergLP_VBF_WZ_ZCR == False and Pass_MergLP_VBF_ZZ_ZCR == False'# or Pass_Res_VBF_WZ_TCR == True or Pass_Res_VBF_ZZ_TCR == True'
+    selectionResolvedGGF = 'Pass_Res_GGF_WZ_SR == True or Pass_Res_GGF_ZZ_Tag_SR == True or Pass_Res_GGF_ZZ_Untag_SR == True or Pass_Res_GGF_WZ_ZCR == True or Pass_Res_GGF_ZZ_Tag_ZCR == True or Pass_Res_GGF_ZZ_Untag_ZCR == True'# or Pass_Res_GGF_WZ_TCR == True or Pass_Res_GGF_ZZ_Tag_TCR == True or Pass_Res_GGF_ZZ_Untag_TCR == True'
+    selectionResolvedVBF = 'Pass_Res_VBF_WZ_SR == True or Pass_Res_VBF_ZZ_SR == True or Pass_Res_VBF_WZ_ZCR == True or Pass_Res_VBF_ZZ_ZCR == True'# or Pass_Res_VBF_WZ_TCR == True or Pass_Res_VBF_ZZ_TCR == True'
     if channel == 'ggF':
         dataFrame = dataFrame.query('Pass_isVBF == False')
         if analysis == 'merged':
@@ -298,6 +299,7 @@ def ShufflingData(dataFrame):
 import seaborn
 import matplotlib
 import matplotlib.pyplot as plt
+plt.ioff()
 plt.rcParams["figure.figsize"] = [7,7]
 plt.rcParams.update({'font.size': 16})
 
@@ -352,6 +354,7 @@ def DrawVariablesHisto(dataFrame, InputFeatures, outputDir, outputFileCommonName
         print(Fore.GREEN + 'Saved ' + outputDir + pltName)
         plt.clf()
     dataFrame['isSignal'].replace(to_replace = ['Background', 'Signal'], value = [0, 1], inplace = True)
+    plt.close()
     #plt.subplots_adjust(left = 0.15, right = 0.95)
     return
 
@@ -400,6 +403,7 @@ def ComputeTrainWeights(dataSetSignal, dataSetBackground, massesSignalList, outp
     plt.savefig(pltName)
     print(Fore.GREEN + 'Saved ' + pltName)
     plt.clf()
+    plt.close()
     return dataSetSignal, dataSetBackground
     
 
@@ -608,6 +612,7 @@ def DrawCorrelationMatrix(dataFrame, InputFeatures, outputDir, outputFileCommonN
     plt.savefig(CorrelationMatrixName)
     print(Fore.GREEN + 'Saved ' + CorrelationMatrixName)
     plt.clf()
+    plt.close()
 
 ### Drawing Accuracy
 def DrawAccuracy(modelMetricsHistory, testAccuracy, patienceValue, outputDir, NN, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, outputFileCommonName, mass = 0):
@@ -643,7 +648,7 @@ def DrawAccuracy(modelMetricsHistory, testAccuracy, patienceValue, outputDir, NN
     plt.savefig(AccuracyPltName)
     print(Fore.GREEN + 'Saved ' + AccuracyPltName)
     plt.clf()
-        
+    plt.close()
 ### Drawing Loss
 def DrawLoss(modelMetricsHistory, testLoss, patienceValue, outputDir, NN, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, outputFileCommonName, mass = 0):
     plt.plot(modelMetricsHistory.history['loss'], label = 'Training')
@@ -677,6 +682,7 @@ def DrawLoss(modelMetricsHistory, testLoss, patienceValue, outputDir, NN, jetCol
     plt.savefig(LossPltName)
     print(Fore.GREEN + 'Saved ' + LossPltName)
     plt.clf()
+    plt.close()
 
 from sklearn.metrics import roc_curve, auc, roc_auc_score, classification_report
 '''
@@ -728,6 +734,7 @@ def DrawROCbkgRejectionScores(fpr, tpr, AUC, outputDir, NN, unscaledMass, jetCol
     plt.savefig(ROCPltName)#, bbox_inches = 'tight')
     print(Fore.GREEN + 'Saved ' + ROCPltName)
     plt.clf()
+    plt.close()
     
     ### Scores
     Nbins = 1000
@@ -744,7 +751,7 @@ def DrawROCbkgRejectionScores(fpr, tpr, AUC, outputDir, NN, unscaledMass, jetCol
     plt.savefig(ScoresPltName)
     print(Fore.GREEN + 'Saved ' + ScoresPltName)
     plt.clf()
-
+    plt.close()
     ### Background rejection vs efficiency
     tprCut = tpr[tpr > 0.85]
     fprCut = fpr[tpr > 0.85]
@@ -774,7 +781,7 @@ def DrawROCbkgRejectionScores(fpr, tpr, AUC, outputDir, NN, unscaledMass, jetCol
     plt.savefig(EffPltName)#, bbox_inches = 'tight')
     print(Fore.GREEN + 'Saved ' + EffPltName)
     plt.clf()
-
+    plt.close()
     return WP, bkgRejections
 
 
@@ -813,7 +820,7 @@ def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_tes
         plt.savefig(ScoresPltName)
         print(Fore.GREEN + 'Saved ' + ScoresPltName)
         plt.clf()
-
+    plt.close()
     ### ROC
     Nsignal = integral(y_signal, 0, bins_1)
     Nbkg = integral(y_bkg, 0, bins_0)
@@ -850,7 +857,7 @@ def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_tes
         plt.savefig(ROCPltName)
         print(Fore.GREEN + 'Saved ' + ROCPltName)
         plt.clf()
-
+    plt.close()
     ### Background rejection vs efficiency
     WP=[0.90,0.94,0.97,0.99]
     rej=1./bkg_eff
@@ -879,6 +886,7 @@ def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_tes
         plt.savefig(EffPltName)
         print(Fore.GREEN + 'Saved ' + EffPltName)
         plt.clf()
+        plt.close()
     return Area, WP, WP_rej 
 
 def DrawRejectionVsMass(massVec, WP, bkgRej90, bkgRej94, bkgRej97, bkgRej99, outputDir, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName):
@@ -907,6 +915,7 @@ def DrawRejectionVsMass(massVec, WP, bkgRej90, bkgRej94, bkgRej97, bkgRej99, out
     plt.savefig(pltName)#, bbox_inches = 'tight')
     print(Fore.GREEN + 'Saved ' + pltName)
     plt.subplots_adjust(left = 0.15, right = 0.95)
+    plt.close()
 
 def DrawRejectionVsStat(massVec, fracTrain, WP, bkgRej90Dict, bkgRej94Dict, bkgRej97Dict, bkgRej99Dict, outputDir, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName):
     emptyPlot, = plt.plot(massVec[0], bkgRej90Dict[fracTrain[0]], color = 'white')
@@ -937,6 +946,7 @@ def DrawRejectionVsStat(massVec, fracTrain, WP, bkgRej90Dict, bkgRej94Dict, bkgR
     plt.savefig(pltName)#, bbox_inches = 'tight')
     print(Fore.GREEN + 'Saved ' + pltName)
     plt.subplots_adjust(left = 0.15, right = 0.95)
+    plt.close()
 
 
 from sklearn.metrics import confusion_matrix
@@ -977,6 +987,7 @@ def DrawCM(yhat_test, y_test, w_test, outputDir, mass, background, outputFileCom
     print(Fore.GREEN + 'Saved ' + CMPltName)
     plt.subplots_adjust(left = 0.15, right = 0.95)
     plt.clf()
+    plt.close()
     return TNR, FPR, FNR, TPR
 
 def weightEventsOld(origin_train):
