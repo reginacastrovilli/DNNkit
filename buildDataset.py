@@ -115,7 +115,7 @@ dataFrameSignal = dataFrameSignal.assign(mass = massesSignal)
 ### Cutting signal events according to their mass and the type of analysis
 dataFrameSignal = CutMasses(dataFrameSignal, analysis)
 massesSignalList = list(set(list(dataFrameSignal['mass'])))
-print(Fore.BLUE + 'Masses in the signal sample: ' + str(np.sort(np.array(massesSignalList))))
+print(Fore.BLUE + 'Masses in the signal sample: ' + str(np.sort(np.array(massesSignalList))) + ' GeV')
 #logFile.write('\nMasses in the signal sample: ' + str(np.sort(np.array(massesSignalList))))
 
 '''

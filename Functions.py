@@ -182,7 +182,7 @@ def ReadConfig(tag, analysis, jetCollection):
 ### Checking if the output directory exists. If not, creating it
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'} ---> '3' to suppress INFO, WARNING, and ERROR messages in Tensorflow
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'} ---> '3' to suppress INFO, WARNING, and ERROR messages in Tensorflow
 
 def checkCreateDir(dir):
     if not os.path.isdir(dir):
@@ -649,6 +649,7 @@ def DrawAccuracy(modelMetricsHistory, testAccuracy, patienceValue, outputDir, NN
     print(Fore.GREEN + 'Saved ' + AccuracyPltName)
     plt.clf()
     plt.close()
+
 ### Drawing Loss
 def DrawLoss(modelMetricsHistory, testLoss, patienceValue, outputDir, NN, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, outputFileCommonName, mass = 0):
     plt.plot(modelMetricsHistory.history['loss'], label = 'Training')
@@ -752,6 +753,7 @@ def DrawROCbkgRejectionScores(fpr, tpr, AUC, outputDir, NN, unscaledMass, jetCol
     print(Fore.GREEN + 'Saved ' + ScoresPltName)
     plt.clf()
     plt.close()
+
     ### Background rejection vs efficiency
     tprCut = tpr[tpr > 0.85]
     fprCut = fpr[tpr > 0.85]
@@ -1055,3 +1057,51 @@ def cutEvents(data_train_mass):
         data_train_mass_cut = pd.concat([data_train_mass_cut, data_train_mass_origin], ignore_index = True)
     return data_train_mass_cut
 '''
+
+def defineBins(regime):
+    #print(regime)
+    bins = []
+    if (all(x in regime for x in ['SR', 'Res', 'GGF', 'Tag'])):
+        bins = [300, 320, 350, 380, 410, 440, 480, 520, 560, 600, 650, 700, 750, 810, 870, 940, 1010, 1090, 1170, 1260, 1360, 1460, 1650, 3000]
+        #print(Fore.RED + 'found1')
+    if (all(x in regime for x in ['SR', 'Res', 'GGF', 'Untag'])):
+        bins = [300, 320, 350, 380, 410, 440, 480, 520, 560, 600, 650, 700, 750, 810, 870, 940, 1010, 1090, 1170, 1260, 1360, 1460, 1570, 1690, 1820, 1960, 2110, 3000]
+        #print(Fore.RED + 'found2')
+    if (all(x in regime for x in ['SR', 'Res', 'GGF', 'WZ'])):
+        bins = [300, 320, 350, 380, 410, 440, 470, 500, 530, 560, 600, 640, 680, 720, 770, 820, 870, 930, 990, 1060, 1130, 1210, 1290, 1380, 1470, 1570, 1680, 1790, 2140, 3000]
+        #print(Fore.RED + 'found11')
+    if (all(x in regime for x in ['SR', 'Res', 'VBF', 'ZZ'])):
+        bins = [300, 320, 350, 380, 410, 440, 470, 500, 540, 580, 620, 660, 710, 760, 810, 870, 930, 990, 1060, 1130, 1210, 1290, 1380, 1470, 1630, 1790, 3000]
+        #print(Fore.RED + 'found3')
+    if (all(x in regime for x in ['SR', 'Res', 'VBF', 'ZZ'])):
+        bins = [300, 320, 350, 380, 410, 440, 470, 500, 540, 580, 620, 660, 710, 760, 810, 870, 930, 990, 1060, 1130, 1210, 1290, 1380, 1470, 1630, 1790, 3000]
+        #print(Fore.RED + 'found14')
+    if (all(x in regime for x in ['SR', 'Merg', 'GGF', 'Tag'])):
+        #print(Fore.RED + 'found4')
+        bins = [500, 530, 570, 610, 650, 690, 730, 770, 810, 850, 890, 930, 970, 1020, 1070, 1120, 1170, 1220, 1270, 1330, 1480, 1630, 1780, 1930, 2080, 2380, 6000]
+    if (all(x in regime for x in ['SR', 'Merg', 'GGF', 'Untag'])):
+        #print(Fore.RED + 'found5')
+        bins = [500, 530, 570, 610, 650, 690, 730, 770, 810, 850, 890, 930, 970, 1020, 1070, 1120, 1170, 1220, 1270, 1330, 1390, 1450, 1510, 1570, 1640, 1710, 1780, 1850, 1920, 2000, 2080, 2160, 2250, 2340, 2430, 2520, 2620, 2720, 2820, 3120, 3420, 4910, 6000]
+    if (all(x in regime for x in ['SR', 'Merg', 'GGF', 'WZ'])):
+        #print(Fore.RED + 'found12')
+        bins = [500, 530, 570, 610, 650, 690, 730, 770, 810, 850, 890, 930, 970, 1010, 1050, 1100, 1150, 1200, 1250, 1300, 1350, 1410, 1470, 1530, 1590, 1650, 1720, 1790, 1860, 1930, 2000, 2080, 2160, 2240, 2330, 2510, 2690, 2870, 3320, 3770, 6000]
+    if (all(x in regime for x in ['SR', 'Merg', 'VBF', 'ZZ'])):
+        #print(Fore.RED + 'found6')
+        bins = [500, 530, 570, 610, 650, 690, 730, 770, 810, 860, 910, 960, 1010, 1070, 1130, 1190, 1260, 1340, 1420, 1530, 1680, 1830, 1980, 6000]
+    if (all(x in regime for x in ['SR', 'Merg', 'VBF', 'WZ'])):
+        #print(Fore.RED + 'found13')
+        bins = [500, 530, 570, 610, 650, 690, 730, 770, 810, 850, 890, 930, 970, 1010, 1050, 1090, 1130, 1170, 1210, 1250, 1300, 1350, 1410, 1470, 1630, 2000, 2370, 6000]
+    if (all(x in regime for x in ['CR', 'Res', 'GGF', 'ZCR'])):
+        #print(Fore.RED + 'found7')
+        bins = [300, 320, 350, 380, 410, 440, 470, 500, 530, 570, 610, 660, 740, 900, 3000]
+    if (all(x in regime for x in ['CR', 'Res', 'VBF', 'ZCR'])):
+        #print(Fore.RED + 'found8')
+        bins = [300,  3000]
+    if (all(x in regime for x in ['CR', 'Merg', 'GGF', 'ZCR'])):
+        #print(Fore.RED + 'found9')
+        bins = [500, 6000]
+    if (all(x in regime for x in ['CR', 'Merg', 'VBF', 'ZCR'])):
+        #print(Fore.RED + 'found10')
+        bins = [500, 6000]
+
+    return bins
