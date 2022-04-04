@@ -6,11 +6,10 @@ import os.path
 from colorama import init, Fore
 init(autoreset = True)
 
-drawPlots = False
 overwriteDataFrame = False
 
 ### Reading the command line
-tag, jetCollection, analysis, channel, preselectionCuts, signal, background = ReadArgParser()
+tag, jetCollection, analysis, channel, preselectionCuts, signal, background, drawPlots = ReadArgParser()
 
 ### Reading from config file
 InputFeatures, dfPath, variablesToSave, backgroundsList = ReadConfig(tag, analysis, jetCollection)
@@ -23,9 +22,9 @@ tmpFileCommonName = tag + '_' + jetCollection + '_' + analysis + '_' + channel +
 outputDir = dfPath + analysis + '/' + channel + '/' + signal + '/' + background
 print(format('Second output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
 fileCommonName = tag + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + signal + '_' + background
-logFileName = outputDir + '/EventsNumberAfterSelection_' + fileCommonName + '.txt'
+logFileName = outputDir + '/logFileBuildDataset_' + fileCommonName + '.txt'
 logFile = open(logFileName, 'w')
-logFile.write('CxAOD tag: ' + tag + '\nJetCollection: ' + jetCollection + '\nAnalysis: ' + analysis + '\nChannel: ' + channel + '\nPreselection cuts: ' + '\nSignal:' + signal + '\nBackground: ' + background + '\nInput files path: ' + dfPath)# + '\nInput files and number of events after selection:\n')
+logFile.write('Input files path: ' + dfPath + 'CxAOD tag: ' + tag + '\nJet collection: ' + jetCollection + '\nAnalysis: ' + analysis + '\nChannel: ' + channel + '\nPreselection cuts: ' + preselectionCuts + '\nSignal: ' + signal + '\nBackground: ' + background)
 
 ### Loading DSID-mass map and storing it into a dictionary
 DictDSID = {}
@@ -36,18 +35,18 @@ for line in lines:
 
 ### Creating the list of the origins selected (signal + background)
 if background == 'all':
-    originsBkgTest = backgroundsList.copy()
+    inputOrigins = backgroundsList.copy()
+    backgroundLegend = backgroundsList.copy()
+    logFile.write(' (' + str(backgroundsList) + ')')
 else:
-    originsBkgTest = list(background.split('_'))
-
-targetOrigins = originsBkgTest.copy()
-targetOrigins.insert(0, signal)
+    inputOrigins = list(background.split('_'))
+inputOrigins.append(signal)
 
 ### Creating empty signal and background dataframe 
 dataFrameSignal = []
 dataFrameBkg = []
 
-for target in targetOrigins:
+for target in inputOrigins:
     fileName = tmpOutputDir + '/' + target + '_' + tmpFileCommonName + '.pkl'
 
     ### Loading dataframe if found and overwrite flag is false 
@@ -69,16 +68,8 @@ for target in targetOrigins:
             if file.startswith(target) and file.endswith('.pkl'):
                 print(Fore.GREEN + 'Loading ' + dfPath + file)
                 inputDf = pd.read_pickle(dfPath + file)
-                '''
-                print(inputDf.shape)
-                inputDf1 = inputDf.query('Pass_MergHP_GGF_ZZ_Tag_SR == False and Pass_MergHP_GGF_ZZ_Untag_SR == False and Pass_MergHP_GGF_WZ_SR == False and Pass_MergLP_GGF_ZZ_Tag_SR == False and Pass_MergLP_GGF_ZZ_Untag_SR == False and Pass_MergLP_GGF_WZ_SR == False and Pass_MergHP_GGF_ZZ_Tag_ZCR == False and Pass_MergHP_GGF_ZZ_Untag_ZCR == False and Pass_MergHP_GGF_WZ_ZCR == False and Pass_MergLP_GGF_ZZ_Tag_ZCR == False and Pass_MergLP_GGF_ZZ_Untag_ZCR == False and Pass_MergLP_GGF_WZ_ZCR == False and Pass_MergHP_GGF_ZZ_Untag_TCR == False and Pass_MergHP_GGF_ZZ_Tag_TCR == False and Pass_MergHP_GGF_WZ_TCR == False and Pass_MergLP_GGF_ZZ_Untag_TCR == False and Pass_MergLP_GGF_ZZ_Tag_TCR == False and Pass_MergLP_GGF_WZ_TCR == False and Pass_Res_GGF_WZ_SR == False and Pass_Res_GGF_ZZ_Tag_SR == False and Pass_Res_GGF_ZZ_Untag_SR == False and Pass_Res_GGF_WZ_ZCR == False and Pass_Res_GGF_ZZ_Tag_ZCR == False and Pass_Res_GGF_ZZ_Untag_ZCR == False and Pass_Res_GGF_WZ_TCR == False and Pass_Res_GGF_ZZ_Tag_TCR == False and Pass_Res_GGF_ZZ_Untag_TCR == False and Pass_MergHP_VBF_WZ_SR == False and Pass_MergHP_VBF_ZZ_SR == False and Pass_MergLP_VBF_WZ_SR == False and Pass_MergLP_VBF_ZZ_SR == False and Pass_MergHP_VBF_WZ_ZCR == False and Pass_MergHP_VBF_ZZ_ZCR == False and Pass_MergLP_VBF_WZ_ZCR == False and Pass_MergLP_VBF_ZZ_ZCR == False and Pass_MergHP_VBF_WZ_TCR == False and Pass_MergHP_VBF_ZZ_TCR == False and Pass_MergLP_VBF_WZ_TCR == False and Pass_MergLP_VBF_ZZ_TCR == False and Pass_Res_VBF_WZ_SR == False and Pass_Res_VBF_ZZ_SR == False and Pass_Res_VBF_WZ_ZCR == False and Pass_Res_VBF_ZZ_ZCR == False and Pass_Res_VBF_WZ_TCR == False and Pass_Res_VBF_ZZ_TCR == False')
-                print(inputDf1.shape)       
-                exit()
-                '''
                 ### Selecting events according to merged/resolved regime and ggF/VBF channel
                 inputDf = SelectEvents(inputDf, channel, analysis, preselectionCuts)
-                #weighted_sum = inputDf['weight'].sum()
-                #print('weighted sum: ' + str(weighted_sum))
                 ### Creating new column in the dataframe with the origin
                 inputDf = inputDf.assign(origin = target)
                 ### Filling signal/background dataframes
@@ -115,8 +106,8 @@ dataFrameSignal = dataFrameSignal.assign(mass = massesSignal)
 ### Cutting signal events according to their mass and the type of analysis
 dataFrameSignal = CutMasses(dataFrameSignal, analysis)
 massesSignalList = list(set(list(dataFrameSignal['mass'])))
-print(Fore.BLUE + 'Masses in the signal sample: ' + str(np.sort(np.array(massesSignalList))) + ' GeV')
-#logFile.write('\nMasses in the signal sample: ' + str(np.sort(np.array(massesSignalList))))
+print(Fore.BLUE + 'Masses in the signal sample: ' + str(np.sort(np.array(massesSignalList))) + ' GeV (' + str(len(massesSignalList)) + ')')
+logFile.write('\nMasses in the signal sample: ' + str(np.sort(np.array(massesSignalList))) + ' GeV (' + str(len(massesSignalList)) + ')')
 
 '''
 ### Assigning a random mass to background events according to the signal mass distribution 
@@ -139,13 +130,13 @@ dataFrame = dataFrame[variablesToSave]
 dataFrame = ShufflingData(dataFrame)
 
 ### Saving number of events for each origin
-for origin in targetOrigins:
+for origin in inputOrigins:
     logFile.write('\nNumber of ' + origin + ' events: ' + str(dataFrame[dataFrame['origin'] == origin].shape[0]))
     print(Fore.BLUE + 'Number of ' + origin + ' events: ' + str(dataFrame[dataFrame['origin'] == origin].shape[0]))
     
 ### Saving the combined dataframe
 outputFileName = '/MixData_' + fileCommonName + '.pkl'
-dataFrame.to_pickle(outputDir + outputFileName)
+#dataFrame.to_pickle(outputDir + outputFileName)
 print(Fore.GREEN + 'Saved ' + outputDir + outputFileName)
 logFile.write('\nSaved combined (signal and background) dataframe in ' + outputDir + outputFileName)
 
@@ -157,6 +148,6 @@ print(Fore.GREEN + 'Saved ' + logFileName)
 if drawPlots:
     histoOutputDir = outputDir + '/trainTestHistograms'
     checkCreateDir(histoOutputDir)
-    DrawVariablesHisto(dataFrame, InputFeatures, histoOutputDir, fileCommonName, jetCollection, analysis, channel, signal, background, preselectionCuts)
-    DrawCorrelationMatrix(dataFrame, InputFeatures, outputDir, fileCommonName, analysis, channel, signal, background)
+    DrawVariablesHisto(dataFrame, InputFeatures, histoOutputDir, fileCommonName, jetCollection, analysis, channel, signal, backgroundLegend, preselectionCuts)
+    DrawCorrelationMatrix(dataFrame, InputFeatures, outputDir, fileCommonName, analysis, channel, signal, backgroundLegend)
 
