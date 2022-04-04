@@ -1,3 +1,9 @@
+### This script takes as input the pkl files resulting from the conversion of the ntuples produced by the Reader, 
+### selects the events according to the regime (merged/resolved) and channel (ggF/VBF) requested, add some useful information to each event (origin, isSignal, mass)
+### and saves the resulting dataframe. 
+### A cut on the mass value is performed according to the regime selected.
+### Histograms and a correlation matrix of the relevat variables can be saved.
+
 from Functions import ReadArgParser, ReadConfig, checkCreateDir, ShufflingData, SelectEvents, CutMasses, DrawVariablesHisto, DrawCorrelationMatrix
 import pandas as pd
 import numpy as np
@@ -136,7 +142,7 @@ for origin in inputOrigins:
     
 ### Saving the combined dataframe
 outputFileName = '/MixData_' + fileCommonName + '.pkl'
-#dataFrame.to_pickle(outputDir + outputFileName)
+dataFrame.to_pickle(outputDir + outputFileName)
 print(Fore.GREEN + 'Saved ' + outputDir + outputFileName)
 logFile.write('\nSaved combined (signal and background) dataframe in ' + outputDir + outputFileName)
 

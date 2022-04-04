@@ -1,3 +1,8 @@
+### This script takes as input the dataframes produced in the previous step (buildDataset), computes train weights to compensate for different
+### statistics for each signal mass value and for signal/background, scales each feature according to median and interquartile range 
+### and splits the resulting dataframe in train and test samples.
+### Histograms of scaled and unscaled variables can be saved
+
 from Functions import ReadArgParser, checkCreateDir, ReadConfig, DrawVariablesHisto, ShufflingData, ComputeTrainWeights, ScalingFeatures#, SaveFeatureScaling,
 import numpy as np
 import pandas as pd
