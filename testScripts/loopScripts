@@ -1,3 +1,6 @@
+### This script performs the chain of scripts that prepare the dataframes and train the PDNN for all different signal, 
+### analysis (merged or resolved) and channels (ggF or VBF)
+
 #!/bin/bash
 
 for signal in Radion, RSG, HVTWZ;

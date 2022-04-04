@@ -1,3 +1,6 @@
+### This script merges the ntuples produced by the Reader into one file per process type.
+### e.g., all 'Radion-XX.root' files from mc16a collection will be merged into one 'Radion-mc16a.root' file
+
 #!/bin/bash
 for mc16collection in mc16a mc16d mc16e;
 do
