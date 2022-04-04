@@ -1,0 +1,17 @@
+#!/bin/bash
+
+for signal in Radion, RSG, HVTWZ;
+do
+    echo $signal
+    for analysis in merged resolved;
+    do
+	echo $analysis
+	for channel in ggF VBF;
+	do
+	    echo $channel
+	    python buildDataset.py -a $analysis -c $channel -s $signal
+	    python splitDataset.py -a $analysis -c $channel -s $signal
+	    python buildPDNN.py -a $analysis -c $channel -s $signal
+	done
+    done
+done

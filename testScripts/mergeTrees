@@ -1,0 +1,10 @@
+#!/bin/bash
+for mc16collection in mc16a mc16d mc16e;
+do
+    echo $mc16collection
+    for iOrigin in ttbar stop Diboson Wjets Zjets Radion RSG HVTWZ VBFHVTWZ VBFRadion VBFRSG;
+    do
+	echo $iOrigin
+	hadd -f /nfs/kloe/einstein4/HDBS/NNoutput/r33-22/UFO_PFLOW/$iOrigin-$mc16collection.root /nfs/kloe/einstein4/HDBS/ReaderOutput/reader_${mc16collection}_VV_2lep_PFlow_UFO/fetch/data-MVATree/$iOrigin*
+    done
+done
