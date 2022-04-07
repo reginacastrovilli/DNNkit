@@ -3,13 +3,15 @@
 
 #!/bin/bash
 
-for signal in Radion, RSG, HVTWZ;
+cd ..
+
+for signal in HVTWZ #Radion RSG HVTWZ
 do
     echo $signal
-    for analysis in merged resolved;
+    for analysis in resolved # merged
     do
 	echo $analysis
-	for channel in ggF VBF;
+	for channel in VBF #ggF VBF
 	do
 	    echo $channel
 	    python buildDataset.py -a $analysis -c $channel -s $signal
