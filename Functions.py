@@ -1,7 +1,7 @@
 # Assigning script names to variables
 fileNameSaveToPkl = 'saveToPkl.py'
 fileNameBuildDataSet = 'buildDataset.py'
-fileNameComputeSignificance = 'computeSignificance_tmp.py'
+fileNameComputeSignificance = 'computeSignificance.py'
 fileNameSplitDataSet = 'splitDataset.py'
 fileNameBuildDNN = 'buildDNN.py'
 #fileNameBuildPDNN = 'buildPDNNtuningHyp.py'
@@ -48,7 +48,7 @@ def ReadArgParser():
     elif args.Analysis and analysis != 'resolved' and analysis != 'merged':
         parser.error(Fore.RED + 'Analysis can be either \'merged\' or \'resolved\'')
     channel = args.Channel
-    if args.Channel is None and fileNameSaveToPkl not in sys.argv[0]:
+    if args.Channel is None and fileNameSaveToPkl not in sys.argv[0] and fileNameComputeSignificance not in sys.argv[0]:
         parser.error(Fore.RED + 'Requested channel (either \'ggF\' or \'VBF\')')
     elif args.Channel and channel != 'ggF' and channel != 'VBF':
         parser.error(Fore.RED + 'Channel can be either \'ggF\' or \'VBF\'')

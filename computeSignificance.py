@@ -27,6 +27,7 @@ if 'GGF' in regime[0]:
     channel = 'ggF'
 elif 'VBF' in regime[0]:
     channel = 'VBF'
+    signal = channel + signal
 
 if len(regime) > 1:
     regimeString = '_'.join(regime)
@@ -125,7 +126,6 @@ for regimeToTest in regime:
     dataFrameSignal = CutMasses(dataFrameSignal, analysis)
     massesSignalList = list(dict.fromkeys(list(dataFrameSignal['mass'])))
     print(Fore.BLUE + 'Masses in the signal sample: ' + str(np.sort(np.array(massesSignalList))) + ' GeV')
-    #logFile.write('\nMasses in the signal sample: ' + str(np.sort(np.array(massesSignalList))))
     
     ### Saving MC weights
     signalMCweights = dataFrameSignal['weight']
@@ -138,6 +138,7 @@ for regimeToTest in regime:
     ### Assigning a random mass to background events
     massesBkg = np.random.choice(massesSignalList, dataFrameBkg.shape[0])
     dataFrameBkg = dataFrameBkg.assign(mass = massesBkg)
+    print('Number of background events: ' + str(dataFrameBkg.shape[0]))
 
     ### Selecting in the dataframe only the variables that will be used as input for the NN
     dataFrameSignal = dataFrameSignal[InputFeatures]
@@ -186,6 +187,8 @@ for regimeToTest in regime:
             scaledMass = massesDictionary[mass]
             dataFrameSignalMass = dataFrameSignal[dataFrameSignal['mass'] == scaledMass]
             signalMCweightsMass = signalMCweights[dataFrameSignal['mass'] == scaledMass]
+            print('Number of signal events with mass ' + str(mass) + ' GeV: ' + str(dataFrameSignalMass.shape[0]))
+
             if feature == 'Scores':
                 dataFrameBkg = dataFrameBkg.assign(mass = np.full(len(dataFrameBkg), scaledMass))
                 hist_signal = model.predict(np.array(dataFrameSignalMass.values).astype(np.float32), batch_size = batchSize)
@@ -200,16 +203,18 @@ for regimeToTest in regime:
                 Bins = defineBins(regimeToTest)
             binContentsSignal, binEdgesSignal, _ = plt.hist(hist_signal, weights = signalMCweightsMass, bins = Bins, histtype = 'step', lw = 2, color = 'blue', label = [r'Signal'])#, density = True) ###### density???
             binContentsBkg, binEdgesBkg, _ = plt.hist(hist_bkg, weights = bkgMCweights, bins = Bins, histtype = 'step', lw = 2, color = 'red', label = [r'Background'])#, density = True)
-            if feature == 'Invariant mass': 
-                plt.xlabel('Invariant mass [GeV]')
-                plt.ylabel('Weighted counts')
-                plt.yscale('log')
-                legendText = 'Signal: ' + signal + ' (mass ' + str(mass) + ' GeV)\nBackground: ' + str(background) + '\nRegime: ' + regimeToTest
-                plt.figtext(0.3, 0.7, legendText, wrap = True, horizontalalignment = 'left')
-                plt.legend()
+            plt.xlabel(feature)
+            plt.ylabel('Weighted counts')
+            plt.yscale('log')
+            legendText = 'Signal: ' + signal + ' (mass ' + str(mass) + ' GeV)\nBackground: ' + str(background) + '\nRegime: ' + regimeToTest
+            plt.figtext(0.3, 0.7, legendText, wrap = True, horizontalalignment = 'left')
+            plt.legend()
+            if feature == 'Scores':
+                pltName = inputOutputDir + feature + '_' + regimeToTest + '_' + str(mass) + '_' + tag + '_' + jetCollection + '_' + preselectionCuts + '_' + signal + '_' + background + '.png'
+            elif feature == 'Invariant mass':
                 pltName = inputOutputDir + 'InvariantMass_' + regimeToTest + '_' + str(mass) + '_' + tag + '_' + jetCollection + '_' + preselectionCuts + '_' + signal + '_' + background + '.png'
-                plt.savefig(pltName)
-                print(Fore.GREEN + 'Saved ' + pltName)
+            plt.savefig(pltName)
+            print(Fore.GREEN + 'Saved ' + pltName)
             '''
             if feature == 'Invariant mass':
                 print(binContentsSignal)
