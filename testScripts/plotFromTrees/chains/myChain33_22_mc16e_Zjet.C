@@ -1,0 +1,37 @@
+void myChain33_22_mc16e_Zjet(TChain *f)
+{
+  std::string filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO/fetch/data-MVATree/";
+  f->Add((filedir+"/Zjets-0.root").c_str());
+  f->Add((filedir+"/Zjets-10.root").c_str());
+  f->Add((filedir+"/Zjets-11.root").c_str());
+  f->Add((filedir+"/Zjets-12.root").c_str());
+  f->Add((filedir+"/Zjets-13.root").c_str());
+  f->Add((filedir+"/Zjets-14.root").c_str());
+  f->Add((filedir+"/Zjets-15.root").c_str());
+  f->Add((filedir+"/Zjets-16.root").c_str());
+  f->Add((filedir+"/Zjets-17.root").c_str());
+  f->Add((filedir+"/Zjets-18.root").c_str());
+  f->Add((filedir+"/Zjets-19.root").c_str());
+  f->Add((filedir+"/Zjets-20.root").c_str());
+  f->Add((filedir+"/Zjets-21.root").c_str());
+  f->Add((filedir+"/Zjets-22.root").c_str());
+  f->Add((filedir+"/Zjets-23.root").c_str());
+  f->Add((filedir+"/Zjets-24.root").c_str());
+  f->Add((filedir+"/Zjets-25.root").c_str());
+  f->Add((filedir+"/Zjets-26.root").c_str());
+  f->Add((filedir+"/Zjets-27.root").c_str());
+  f->Add((filedir+"/Zjets-28.root").c_str());
+  f->Add((filedir+"/Zjets-29.root").c_str());
+  f->Add((filedir+"/Zjets-2.root").c_str());
+  f->Add((filedir+"/Zjets-30.root").c_str());
+  f->Add((filedir+"/Zjets-31.root").c_str());
+  f->Add((filedir+"/Zjets-32.root").c_str());
+  f->Add((filedir+"/Zjets-33.root").c_str());
+  f->Add((filedir+"/Zjets-3.root").c_str());
+  f->Add((filedir+"/Zjets-4.root").c_str());
+  f->Add((filedir+"/Zjets-5.root").c_str());
+  f->Add((filedir+"/Zjets-6.root").c_str());
+  f->Add((filedir+"/Zjets-7.root").c_str());
+  f->Add((filedir+"/Zjets-8.root").c_str());
+  f->Add((filedir+"/Zjets-9.root").c_str());
+}
