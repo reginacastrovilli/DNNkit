@@ -1,0 +1,37 @@
+void myChain33_22_mc16e_Wjet(TChain *f)
+{
+  std::string filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO/fetch/data-MVATree/";
+  f->Add((filedir+"/Wjets-0.root").c_str());
+  f->Add((filedir+"/Wjets-10.root").c_str());
+  f->Add((filedir+"/Wjets-11.root").c_str());
+  f->Add((filedir+"/Wjets-12.root").c_str());
+  f->Add((filedir+"/Wjets-13.root").c_str());
+  f->Add((filedir+"/Wjets-14.root").c_str());
+  f->Add((filedir+"/Wjets-15.root").c_str());
+  f->Add((filedir+"/Wjets-16.root").c_str());
+  f->Add((filedir+"/Wjets-17.root").c_str());
+  f->Add((filedir+"/Wjets-18.root").c_str());
+  f->Add((filedir+"/Wjets-19.root").c_str());
+  f->Add((filedir+"/Wjets-1.root").c_str());
+  f->Add((filedir+"/Wjets-20.root").c_str());
+  f->Add((filedir+"/Wjets-21.root").c_str());
+  f->Add((filedir+"/Wjets-22.root").c_str());
+  f->Add((filedir+"/Wjets-23.root").c_str());
+  f->Add((filedir+"/Wjets-24.root").c_str());
+  f->Add((filedir+"/Wjets-25.root").c_str());
+  f->Add((filedir+"/Wjets-26.root").c_str());
+  f->Add((filedir+"/Wjets-27.root").c_str());
+  f->Add((filedir+"/Wjets-28.root").c_str());
+  f->Add((filedir+"/Wjets-29.root").c_str());
+  f->Add((filedir+"/Wjets-2.root").c_str());
+  f->Add((filedir+"/Wjets-30.root").c_str());
+  f->Add((filedir+"/Wjets-31.root").c_str());
+  f->Add((filedir+"/Wjets-32.root").c_str());
+  f->Add((filedir+"/Wjets-3.root").c_str());
+  f->Add((filedir+"/Wjets-4.root").c_str());
+  f->Add((filedir+"/Wjets-5.root").c_str());
+  f->Add((filedir+"/Wjets-6.root").c_str());
+  f->Add((filedir+"/Wjets-7.root").c_str());
+  f->Add((filedir+"/Wjets-8.root").c_str());
+  f->Add((filedir+"/Wjets-9.root").c_str());
+}
