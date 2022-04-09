@@ -8,7 +8,7 @@ from Functions import ReadArgParser, ReadConfig, checkCreateDir, ShufflingData, 
 import pandas as pd
 import numpy as np
 import random
-import os.path
+import os
 from colorama import init, Fore
 init(autoreset = True)
 
@@ -34,10 +34,12 @@ logFile.write('Input files path: ' + dfPath + 'CxAOD tag: ' + tag + '\nJet colle
 
 ### Loading DSID-mass map and storing it into a dictionary
 DictDSID = {}
-DSIDfile = open('DSIDtoMass.txt')
-lines = DSIDfile.readlines()
-for line in lines:
-    DictDSID[int(line.split(':')[0])] = int(line.split(':')[1])
+DSIDfileName = 'DSIDtoMass.txt'
+with open(DSIDfileName) as DSIDfile:
+    print(Fore.GREEN + 'Reading DSID - mass correspondance from ' + DSIDfileName)
+    lines = DSIDfile.readlines()
+    for line in lines:
+        DictDSID[int(line.split(':')[0])] = int(line.split(':')[1])
 
 ### Creating the list of the origins selected (signal + background)
 if background == 'all':

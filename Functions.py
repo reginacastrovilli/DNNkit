@@ -1,7 +1,7 @@
 # Assigning script names to variables
 fileNameSaveToPkl = 'saveToPkl.py'
 fileNameBuildDataSet = 'buildDataset.py'
-fileNameComputeSignificance = 'computeSignificance_tmp.py'
+fileNameComputeSignificance = 'computeSignificance.py'
 fileNameSplitDataSet = 'splitDataset.py'
 fileNameBuildDNN = 'buildDNN.py'
 #fileNameBuildPDNN = 'buildPDNNtuningHyp.py'
@@ -17,7 +17,7 @@ from colorama import init, Fore
 init(autoreset = True)
 
 def ReadArgParser():
-    parser = ArgumentParser()
+    parser = ArgumentParser(add_help = False)
     parser.add_argument('-a', '--Analysis', help = 'Type of analysis: \'merged\' or \'resolved\'', type = str)
     parser.add_argument('-c', '--Channel', help = 'Channel: \'ggF\' or \'VBF\'', type = str)
     parser.add_argument('-s', '--Signal', help = 'Signal: \'VBFHVTWZ\', \'Radion\', \'RSG\', \'VBFRSG\', \'HVTWZ\' or \'VBFRadion\'', type = str)
@@ -25,6 +25,7 @@ def ReadArgParser():
     parser.add_argument('-b', '--Background', help = 'Background: \'Zjets\', \'Wjets\', \'stop\', \'Diboson\', \'ttbar\' or \'all\' (in quotation mark separated by a space)', type = str, default = 'all')
     parser.add_argument('-t', '--TrainingFraction', help = 'Relative size of the training sample, between 0 and 1', default = 0.8)
     parser.add_argument('-p', '--PreselectionCuts', help = 'Preselection cut', type = str)
+    parser.add_argument('-h', '--hpOptimization', help = 'If 1 hyperparameters optimization will be performed', default = 0)
     parser.add_argument('-n', '--Nodes', help = 'Number of nodes of the (p)DNN, should always be >= nColumns and strictly positive', default = 128) #32
     parser.add_argument('-l', '--Layers', help = 'Number of hidden layers of the (p)DNN', default = 4) #2
     parser.add_argument('-e', '--Epochs', help = 'Number of epochs for the training', default = 200) #150
@@ -42,17 +43,17 @@ def ReadArgParser():
     args = parser.parse_args()
 
     analysis = args.Analysis
-    if args.Analysis is None and (sys.argv[0] != fileNameSaveToPkl or sys.argv[0] != fileNameComputeSignificance):
+    if args.Analysis is None and fileNameSaveToPkl not in sys.argv[0] and fileNameComputeSignificance not in sys.argv[0]:
         parser.error(Fore.RED + 'Requested type of analysis (either \'mergered\' or \'resolved\')')
-    elif args.Analysis and analysis != 'resolved' and analysis != 'merged':# and sys.argv[0] != fileNameSaveToPkl:
+    elif args.Analysis and analysis != 'resolved' and analysis != 'merged':
         parser.error(Fore.RED + 'Analysis can be either \'merged\' or \'resolved\'')
     channel = args.Channel
-    if args.Channel is None and sys.argv[0] != fileNameSaveToPkl:
+    if args.Channel is None and fileNameSaveToPkl not in sys.argv[0] and fileNameComputeSignificance not in sys.argv[0]:
         parser.error(Fore.RED + 'Requested channel (either \'ggF\' or \'VBF\')')
     elif args.Channel and channel != 'ggF' and channel != 'VBF':
         parser.error(Fore.RED + 'Channel can be either \'ggF\' or \'VBF\'')
     signal = args.Signal
-    if args.Signal is None and sys.argv[0] != fileNameSaveToPkl:
+    if args.Signal is None and fileNameSaveToPkl not in sys.argv[0]:
         parser.error(Fore.RED + 'Requested type of signal (\'VBFHVTWZ\', \'Radion\', \'RSG\', \'VBFRSG\', \'HVTWZ\' or \'VBFRadion\')') ####
     if args.Signal and signal != 'Radion' and signal != 'RSG' and signal != 'HVTWZ':
         parser.error(Fore.RED + 'Signal can be only \'Radion\', \'RSG\' or \'HVTWZ\'')
@@ -76,6 +77,7 @@ def ReadArgParser():
     preselectionCuts = args.PreselectionCuts
     if args.PreselectionCuts is None:
         preselectionCuts = 'none'
+    hpOptimization = bool(int(args.hpOptimization))
     numberOfNodes = int(args.Nodes)
     if args.Nodes and numberOfNodes < 1:
         parser.error(Fore.RED + 'Number of nodes must be integer and strictly positive')
@@ -92,10 +94,10 @@ def ReadArgParser():
     if args.Dropout and (dropout < 0. or dropout > 1.):
         parser.error(Fore.RED + 'Dropout must be between 0 and 1')
     mass = args.Mass.split()
-    doTrain = int(args.doTrain)
+    doTrain = bool(int(args.doTrain))
     if args.doTrain and (doTrain != 0 and doTrain != 1):
         parser.error(Fore.RED + 'doTrain can only be 1 (to perform the training) or 0')
-    doTest = int(args.doTest)
+    doTest = bool(int(args.doTest))
     if args.doTest and (doTest != 0 and doTest != 1):
         parser.error(Fore.RED + 'doTest can only be 1 (to perform the test) or 0')
     loop = int(args.loop)
@@ -106,19 +108,19 @@ def ReadArgParser():
         regime = regime.split()
     feature = args.FeatureToPlot
 
-    if sys.argv[0] == fileNameSaveToPkl:
+    if fileNameSaveToPkl in sys.argv[0]:
         print(Fore.BLUE + '           tag = ' + tag)
         print(Fore.BLUE + 'jet collection = ' + jetCollection)
         return tag, jetCollection
 
-    if sys.argv[0] == fileNameBuildDataSet:# or sys.argv[0] == fileNameBuildDataSet2:
+    if fileNameBuildDataSet in sys.argv[0]:
         print(Fore.BLUE + '                    tag = ' + tag)
         print(Fore.BLUE + '         jet collection = ' + jetCollection)
         print(Fore.BLUE + '          background(s) = ' + str(backgroundString))
         print(Fore.BLUE + '              drawPlots = ' + str(drawPlots))
         return tag, jetCollection, analysis, channel, preselectionCuts, signal, backgroundString, drawPlots
 
-    if sys.argv[0] == fileNameSplitDataSet or sys.argv[0] == fileNamePlots:
+    if fileNameSplitDataSet in sys.argv[0] or fileNamePlots in sys.argv[0]:
         print(Fore.BLUE + '              tag = ' + tag)
         print(Fore.BLUE + '   jet collection = ' + jetCollection)
         print(Fore.BLUE + '       background = ' + str(backgroundString))
@@ -126,23 +128,25 @@ def ReadArgParser():
         print(Fore.BLUE + '        drawPlots = ' + str(drawPlots))
         return tag, jetCollection, analysis, channel, preselectionCuts, backgroundString, signal, trainingFraction, drawPlots
 
-    if(sys.argv[0] == fileNameBuildDNN or sys.argv[0] == fileNameBuildPDNN):# or sys.argv[0] == fileName6):
-        print(Fore.BLUE + '          background(s) = ' + str(backgroundString))
-        print(Fore.BLUE + '          test mass(es) = ' + str(mass))
-        print(Fore.BLUE + '      training fraction = ' + str(trainingFraction))
-        print(Fore.BLUE + '        number of nodes = ' + str(numberOfNodes))
-        print(Fore.BLUE + 'number of hidden layers = ' + str(numberOfLayers))
-        print(Fore.BLUE + '       number of epochs = ' + str(numberOfEpochs))
-        print(Fore.BLUE + '    validation fraction = ' + str(validationFraction))
-        print(Fore.BLUE + '                dropout = ' + str(dropout))
-        print(Fore.BLUE + '                doTrain = ' + str(doTrain))
-        print(Fore.BLUE + '                 doTest = ' + str(doTest))
-        return tag, jetCollection, analysis, channel, preselectionCuts, backgroundString, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, mass, doTrain, doTest, loop
+    if fileNameBuildDNN in sys.argv[0] or fileNameBuildPDNN in sys.argv[0]:# or sys.argv[0] == fileName6):
+        print(Fore.BLUE + '               background(s) = ' + str(backgroundString))
+        print(Fore.BLUE + '               test mass(es) = ' + str(mass))
+        print(Fore.BLUE + '           training fraction = ' + str(trainingFraction))
+        print(Fore.BLUE + 'hyperparameters optimization = ' + str(hpOptimization))
+        print(Fore.BLUE + '                     doTrain = ' + str(doTrain))
+        print(Fore.BLUE + '                      doTest = ' + str(doTest))
+        print(Fore.BLUE + '         validation fraction = ' + str(validationFraction))
+        print(Fore.BLUE + '            number of epochs = ' + str(numberOfEpochs))
+        if not hpOptimization:
+            print(Fore.BLUE + '             number of nodes = ' + str(numberOfNodes))
+            print(Fore.BLUE + '     number of hidden layers = ' + str(numberOfLayers))
+            print(Fore.BLUE + '                     dropout = ' + str(dropout))
+        return tag, jetCollection, analysis, channel, preselectionCuts, backgroundString, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, mass, doTrain, doTest, loop, hpOptimization, drawPlots
 
-    if sys.argv[0] == fileNameComputeSignificance:
-        return tag, jetCollection, regime, preselectionCuts, signal, backgroundString#, feature
+    if fileNameComputeSignificance in sys.argv[0]:
+        return tag, jetCollection, regime, preselectionCuts, signal, backgroundString
 
-    if sys.argv[0] == fileNameCreateScoresBranch:
+    if fileNameCreateScoresBranch in sys.argv[0]:
         print(Fore.BLUE + '          background(s) = ' + str(backgroundString))
         print(Fore.BLUE + '                 signal = ' + str(signal))
         return tag, jetCollection, analysis, channel, signal, backgroundString
@@ -181,20 +185,20 @@ def ReadConfig(tag, analysis, jetCollection):
     elif analysis == 'resolved':
         InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesResolved'))
         variablesToSave = ast.literal_eval(config.get('config', 'variablesToSaveResolved'))
-    if sys.argv[0] == fileNameBuildDataSet:
+    if fileNameBuildDataSet in sys.argv[0]:
         return InputFeatures, dfPath, variablesToSave, backgroundsList
-    if sys.argv[0] == fileNameComputeSignificance:
+    if fileNameComputeSignificance in sys.argv[0]:
         return inputFiles, rootBranchSubSample, InputFeatures, dfPath, variablesToSave, backgroundsList
-    if sys.argv[0] == fileNamePlots:
+    if fileNamePlots in sys.argv[0]:
         return dfPath, InputFeatures
-    if sys.argv[0] == fileNameSplitDataSet:
+    if fileNameSplitDataSet in sys.argv[0]:
         return dfPath, InputFeatures, signalsList, backgroundsList
-    if sys.argv[0] == fileNameBuildDNN or sys.argv[0] == fileNameBuildPDNN or sys.argv[0] == fileName6:
+    if fileNameBuildDNN in sys.argv[0] or fileNameBuildPDNN in sys.argv[0] or fileName6 in sys.argv[0]:
         return ntuplePath, dfPath, InputFeatures
 
 ### Checking if the output directory exists. If not, creating it
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+#os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'} ---> '3' to suppress INFO, WARNING, and ERROR messages in Tensorflow
 
 def checkCreateDir(dir):
@@ -214,7 +218,7 @@ def enablePrint():
 import pandas as pd
 import numpy as np
 
-def LoadData(dfPath, tag, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures):
+def LoadDataOld(dfPath, tag, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures):
     fileCommonName = tag + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + str(signal) + '_' + background + '_' + str(trainingFraction) + 't'
     data_Train = pd.read_pickle(dfPath + '/data_train_' + fileCommonName + '.pkl')
     X_train = np.array(data_Train[InputFeatures].values).astype(np.float32)
@@ -231,7 +235,7 @@ def LoadData(dfPath, tag, jetCollection, signal, analysis, channel, background, 
     #return X_train, X_test, y_train, y_test, m_Train_unscaled, m_Test_unscaled, w_train
     return data_Train, data_Test, m_Train_unscaled, m_Test_unscaled, w_train
 
-def LoadDataNew(dfPath, tag, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures):
+def LoadData(dfPath, tag, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures):
     fileCommonName = tag + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + str(signal) + '_' + background + '_' + str(trainingFraction) + 't'
     dataTrain = pd.read_pickle(dfPath + '/data_train_' + fileCommonName + '.pkl')
     X_train = np.array(dataTrain[InputFeatures].values).astype(np.float32)
@@ -246,8 +250,8 @@ def LoadDataNew(dfPath, tag, jetCollection, signal, analysis, channel, backgroun
 
 
 ### Writing in the log file
-def WriteLogFile(tag, ntuplePath, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, InputFeatures, dfPath):
-    logString = 'CxAOD tag: ' + tag + '\nntuple path: ' + ntuplePath + '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of layers: ' + str(numberOfLayers) + '\nNumber of epochs: ' + str(numberOfEpochs) + '\nValidation fraction: ' + str(validationFraction) + '\nDropout: ' + str(dropout) + '\nInputFeatures: ' + str(InputFeatures) + '\ndfPath: ' + dfPath# + '\nNumber of train events: ' + str(len(data_train)) + ' (' + str(len(data_train_signal)) + ' signal and ' + str(len(data_train_bkg)) + ' background)' + '\nNumber of test events: ' + str(len(data_test)) + ' (' + str(len(data_test_signal)) + ' signal and ' + str(len(data_test_bkg)) + ' background)'
+def WriteLogFile(tag, ntuplePath, InputFeatures, dfPath, hpOptimization, doTrain, doTest, validationFraction, batchSize, patienceValue):
+    logString = 'CxAOD tag: ' + tag + '\nntuple path: ' + ntuplePath + '\nInputFeatures: ' + str(InputFeatures) + '\ndfPath: ' + dfPath + '\nHperparameters optimization: ' + str(hpOptimization) + '\ndoTrain: ' + str(doTrain) + '\ndoTest: ' + str(doTest) + '\nValidation fraction: ' + str(validationFraction) + '\nBatch size: ' + str(batchSize) + '\nPatience value: ' + str(patienceValue)# + '\nNumber of train events: ' + str(len(data_train)) + ' (' + str(len(data_train_signal)) + ' signal and ' + str(len(data_train_bkg)) + ' background)' + '\nNumber of test events: ' + str(len(data_test)) + ' (' + str(len(data_test_signal)) + ' signal and ' + str(len(data_test_bkg)) + ' background)'
     return logString
 
 def SelectEvents(dataFrame, channel, analysis, preselectionCuts):
@@ -326,6 +330,7 @@ def integral(y,x,bins):
 def DrawVariablesHisto(dataFrame, InputFeatures, outputDir, outputFileCommonName, jetCollection, analysis, channel, signal, background, preselectionCuts):
     ### Replacing '0' with 'Background' and '1' with 'Signal' in the 'isOrigin' column
     dataFrame['isSignal'].replace(to_replace = [0, 1], value = ['Background', 'Signal'], inplace = True)
+    print(dataFrame['isSignal'])
     featureLogX = []#'fatjet_D2', 'fatjet_m', 'fatjet_pt', 'lep1_pt', 'lep2_pt', 'Zcand_pt']
     legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + ', '.join(background)
     if (preselectionCuts != 'none'):
@@ -341,16 +346,15 @@ def DrawVariablesHisto(dataFrame, InputFeatures, outputDir, outputFileCommonName
             statType = 'count'
             hueType = dataFrame['origin']
             legendBool = False
-        if sys.argv[0] == fileNameBuildDataSet:
+        if fileNameBuildDataSet in sys.argv[0]:
             ax = seaborn.histplot(data = dataFrame[feature], x = dataFrame[feature], hue = hueType, common_norm = False, stat = statType, legend = legendBool)#, multiple = 'stack')
-        elif sys.argv[0] == fileNameSplitDataSet:
+        elif fileNameSplitDataSet in sys.argv[0]:
             contents, bins, _ = plt.hist(dataFrame[feature], weights = dataFrame['train_weight'], bins = 100, label = legendText)
         labelDict = {'lep1_E': r'lep$_1$ E [GeV]', 'lep1_m': r'lep$_1$ m [GeV]', 'lep1_pt': r'lep$_1$ p$_T$ [GeV]', 'lep1_eta': r'lep$_1$ $\eta$', 'lep1_phi': r'lep$_1$ $\phi$', 'lep2_E': r'lep$_2$ E [GeV]', 'lep2_m': r'lep$_2$ m [GeV]', 'lep2_pt': r'lep$_2$ p$_t$ [GeV]', 'lep2_eta': r'lep$_2$ $\eta$', 'lep2_phi': r'lep$_2$ $\phi$', 'fatjet_m': 'fatjet m [GeV]', 'fatjet_pt': r'fatjet p$_t$ [GeV]', 'fatjet_eta': r'fatjet $\eta$', 'fatjet_phi': r'fatjet $\phi$', 'fatjet_D2': r'fatjet D$_2$', 'Zcand_m': 'Zcand m [GeV]', 'Zcand_pt': r'Zcand p$_t$ [GeV]', 'X_boosted_m': 'X_boosted m [GeV]', 'mass': 'mass [GeV]', 'weight': 'weight', 'isSignal': 'isSignal', 'origin': 'origin', 'Wdijet_m': 'Wdijet m [GeV]', 'Wdijet_pt': 'Wdijet p$_T$ [GeV]', 'Wdijet_eta': 'Wdijet $\eta$', 'Wdijet_phi': 'Wdijet $\phi$', 'Zdijet_m': 'Zdijet m [GeV]', 'Zdijet_pt': 'Zdijet p$_T$ [GeV]', 'Zdijet_eta': 'Zdijet $\eta$', 'Zdijet_phi': 'Zdijet $\phi$', 'sigWJ1_m': 'sigWJ1 m', 'sigWJ1_pt': 'sigWJ1 p$_T$', 'sigWJ1_eta': 'sigWJ1 $\eta$', 'sigWJ1_phi': 'sigWJ1 $\phi$', 'sigWJ2_m': 'sigWJ2 m', 'sigWJ2_pt': 'sigWJ2 p$_T$', 'sigWJ2_eta': 'sigWJ2 $\eta$', 'sigWJ2_phi': 'sigWJ2 $\phi$', 'sigZJ1_m': 'sigZJ1 m', 'sigZJ1_pt': 'sigZJ1 p$_T$', 'sigZJ1_eta': 'sigZJ1 $\eta$', 'sigZJ1_phi': 'sigZJ1 $\phi$', 'sigZJ2_m': 'sigZJ2 m', 'sigZJ2_pt': 'sigZJ2 p$_T$', 'sigZJ2_eta': 'sigZJ2 $\eta$', 'sigZJ2_phi': 'sigZJ2 $\phi$'}
         '''
         if feature in featureLogX:
             ax.set_xscale('log')
         '''
-        plt.legend(handlelength = 0, handletextpad = 0, prop={'size': 15})
         #plt.figtext(0.35, 0.7, legendText, wrap = True, horizontalalignment = 'left')
         #plt.figtext(0.77, 0.45, legendText, wrap = True, horizontalalignment = 'left')
         #plt.subplots_adjust(left = 0.1, right = 0.75)
@@ -358,8 +362,9 @@ def DrawVariablesHisto(dataFrame, InputFeatures, outputDir, outputFileCommonName
             plt.xlabel(labelDict[feature])
         else:
             plt.xlabel(feature)
-        if sys.argv[0] == fileNameSplitDataSet:
+        if fileNameSplitDataSet in sys.argv[0]:
             plt.ylabel('Weighted counts')
+            plt.legend(handlelength = 0, handletextpad = 0, prop={'size': 15})
         if feature == 'origin':
             plt.yscale('log')
         pltName = '/Histo_' + feature + '_' + outputFileCommonName + '.png'
@@ -574,12 +579,6 @@ def SaveFeatureScaling(outputDir, X_input):
         scaling_file.write(' '.join(str(1./float(i)) for i in X_input.std(axis=0)))
         scaling_file.write("]\n")
     print(Fore.GREEN + 'Saved features scaling in ' + outputFeatureScaling)
-'''    
-def SaveModel(model, X_input, outputDir):
-    SaveArchAndWeights(model, outputDir)
-    SaveVariables(outputDir, X_input)
-    SaveFeatureScaling(outputDir, X_input)
-'''
 
 def SaveModel(model, outputDir, NN):
     SaveArchAndWeights(model, outputDir)
@@ -673,6 +672,7 @@ def DrawAccuracy(modelMetricsHistory, testAccuracy, patienceValue, outputDir, NN
     plt.gca().add_artist(legend1)
     #plt.figtext(0.69, 0.28, 'Test accuracy: ' + str(round(testAccuracy, 2)), wrap = True, horizontalalignment = 'left')#, fontsize = 10)
     AccuracyPltName = outputDir + '/Accuracy_' + outputFileCommonName + '.png'
+    plt.tight_layout()
     plt.savefig(AccuracyPltName)
     print(Fore.GREEN + 'Saved ' + AccuracyPltName)
     plt.clf()
@@ -708,6 +708,7 @@ def DrawLoss(modelMetricsHistory, testLoss, patienceValue, outputDir, NN, jetCol
     #legend2 = plt.legend([emptyPlot], [legendText], frameon = False, loc = 'center right')
     #plt.gca().add_artist(legend1)
     LossPltName = outputDir + '/Loss_' + outputFileCommonName + '.png'
+    plt.tight_layout()
     plt.savefig(LossPltName)
     print(Fore.GREEN + 'Saved ' + LossPltName)
     plt.clf()
@@ -731,63 +732,64 @@ def DrawROC(fpr, tpr, AUC, outputDir, NN, unscaledMass, jetCollection, analysis,
 '''
 
 ### Drawing ROC and background rejection vs efficiency
-def DrawROCbkgRejectionScores(fpr, tpr, AUC, outputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName, yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, wMC_train_signal_mass, wMC_test_signal_mass, wMC_train_bkg, wMC_test_bkg):
+def DrawROCbkgRejectionScores(fpr, tpr, AUC, outputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName, yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, wMC_train_signal_mass, wMC_test_signal_mass, wMC_train_bkg, wMC_test_bkg, drawPlots):
 
     ### ROC
-    emptyPlot, = plt.plot(fpr[0], tpr[0], color = 'white')
-    plt.plot(fpr, tpr, color = 'darkorange', label = 'AUC: ' + str(round(AUC, 2)), lw = 2)
-    legend1 = plt.legend(handlelength = 0, handletextpad = 0, loc = 'center right')
-    plt.xlim([-0.05, 1.0])
-    plt.ylim([0.0, 1.05])
-    plt.ylabel('True Positive Rate')
-    plt.xlabel('False Positive Rate')
-    if unscaledMass >= 1000:
-        titleScores = NN + ' scores (mass: ' + str(float(unscaledMass / 1000)) + ' TeV)'#, bkg: ' + background + ')'
-        titleROC = NN + ' ROC curve (mass: ' + str(float(unscaledMass / 1000)) + ' TeV)'#, bkg: ' + background + ')'
-        BkgRejTitle = NN + ' rejection curve (mass: ' + str(float(unscaledMass / 1000)) + ' TeV)'#, bkg: ' + background + ')'
-    else:
-        titleScores = NN + ' scores (mass: ' + str(int(unscaledMass)) + ' GeV)'#, bkg: ' + background + ')'
-        titleROC = NN + ' ROC curve (mass: ' + str(int(unscaledMass)) + ' GeV)'#, bkg: ' + background + ')'
-        BkgRejTitle = NN + ' rejection curve (mass: ' + str(int(unscaledMass)) + ' GeV)'#, bkg: ' + background + ')'
-    plt.title(titleROC)
+    if drawPlots:
+        emptyPlot, = plt.plot(fpr[0], tpr[0], color = 'white')
+        plt.plot(fpr, tpr, color = 'darkorange', label = 'AUC: ' + str(round(AUC, 2)), lw = 2)
+        legend1 = plt.legend(handlelength = 0, handletextpad = 0, loc = 'center right')
+        plt.xlim([-0.05, 1.0])
+        plt.ylim([0.0, 1.05])
+        plt.ylabel('True Positive Rate')
+        plt.xlabel('False Positive Rate')
+        if unscaledMass >= 1000:
+            titleScores = NN + ' scores (mass: ' + str(float(unscaledMass / 1000)) + ' TeV)'#, bkg: ' + background + ')'
+            titleROC = NN + ' ROC curve (mass: ' + str(float(unscaledMass / 1000)) + ' TeV)'#, bkg: ' + background + ')'
+            BkgRejTitle = NN + ' rejection curve (mass: ' + str(float(unscaledMass / 1000)) + ' TeV)'#, bkg: ' + background + ')'
+        else:
+            titleScores = NN + ' scores (mass: ' + str(int(unscaledMass)) + ' GeV)'#, bkg: ' + background + ')'
+            titleROC = NN + ' ROC curve (mass: ' + str(int(unscaledMass)) + ' GeV)'#, bkg: ' + background + ')'
+            BkgRejTitle = NN + ' rejection curve (mass: ' + str(int(unscaledMass)) + ' GeV)'#, bkg: ' + background + ')'
+        plt.title(titleROC)
+        legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(background)
+        if (preselectionCuts != 'none'):
+            legendText += '\npreselection cuts: ' + preselectionCuts
+        legend2 = plt.legend([emptyPlot], [legendText], loc = 'lower right', handlelength = 0, handletextpad = 0)
+        for item in legend2.legendHandles:
+            item.set_visible(False)
 
-    legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(background)
-    if (preselectionCuts != 'none'):
-        legendText += '\npreselection cuts: ' + preselectionCuts
-    legend2 = plt.legend([emptyPlot], [legendText], loc = 'lower right', handlelength = 0, handletextpad = 0)
-    for item in legend2.legendHandles:
-        item.set_visible(False)
-
-    plt.gca().add_artist(legend1)
-    ROCPltName = outputDir + '/ROC_' + outputFileCommonName + '_' + str(unscaledMass) + '.png'
-    plt.savefig(ROCPltName)#, bbox_inches = 'tight')
-    print(Fore.GREEN + 'Saved ' + ROCPltName)
-    plt.clf()
-    plt.close()
+        plt.gca().add_artist(legend1)
+        ROCPltName = outputDir + '/ROC_' + outputFileCommonName + '_' + str(unscaledMass) + '.png'
+        plt.savefig(ROCPltName)#, bbox_inches = 'tight')
+        print(Fore.GREEN + 'Saved ' + ROCPltName)
+        plt.clf()
+        plt.close()
     
-    ### Scores
-    Nbins = 1000
-    plt.hist(yhat_train_signal, weights = wMC_train_signal_mass, bins = Nbins, histtype = 'step', lw = 2, color = 'blue', label = [r'Signal train'], density = True)
-    y_signal, bins_1, _ = plt.hist(yhat_test_signal, weights = wMC_test_signal_mass, bins = Nbins, histtype = 'stepfilled', lw = 2, color = 'cyan', alpha = 0.5, label = [r'Signal test'], density = True)
-    plt.hist(yhat_train_bkg, weights = wMC_train_bkg, bins = Nbins, histtype = 'step', lw = 2, color = 'red', label = [r'Background train'], density = True)
-    y_bkg, bins_0, _ = plt.hist(yhat_test_bkg, weights = wMC_test_bkg, bins = Nbins, histtype = 'stepfilled', lw = 2, color = 'orange', alpha = 0.5, label = [r'Background test'], density = True)
-    plt.ylabel('Norm. entries')
-    plt.xlabel('Score')
-    plt.yscale('log')
-    plt.title(titleScores)
-    plt.legend(loc = 'upper center')
-    ScoresPltName = outputDir + '/Scores_' + outputFileCommonName + '_' + str(unscaledMass) + '.png'
-    plt.savefig(ScoresPltName)
-    print(Fore.GREEN + 'Saved ' + ScoresPltName)
-    plt.clf()
-    plt.close()
+        ### Scores
+        Nbins = 1000
+        plt.hist(yhat_train_signal, weights = wMC_train_signal_mass, bins = Nbins, histtype = 'step', lw = 2, color = 'blue', label = [r'Signal train'], density = True)
+        y_signal, bins_1, _ = plt.hist(yhat_test_signal, weights = wMC_test_signal_mass, bins = Nbins, histtype = 'stepfilled', lw = 2, color = 'cyan', alpha = 0.5, label = [r'Signal test'], density = True)
+        plt.hist(yhat_train_bkg, weights = wMC_train_bkg, bins = Nbins, histtype = 'step', lw = 2, color = 'red', label = [r'Background train'], density = True)
+        y_bkg, bins_0, _ = plt.hist(yhat_test_bkg, weights = wMC_test_bkg, bins = Nbins, histtype = 'stepfilled', lw = 2, color = 'orange', alpha = 0.5, label = [r'Background test'], density = True)
+        plt.ylabel('Norm. entries')
+        plt.xlabel('Score')
+        plt.yscale('log')
+        plt.title(titleScores)
+        plt.legend(loc = 'upper center')
+        ScoresPltName = outputDir + '/Scores_' + outputFileCommonName + '_' + str(unscaledMass) + '.png'
+        plt.savefig(ScoresPltName)
+        print(Fore.GREEN + 'Saved ' + ScoresPltName)
+        plt.clf()
+        plt.close()
 
     ### Background rejection vs efficiency
     tprCut = tpr[tpr > 0.85]
     fprCut = fpr[tpr > 0.85]
     fprCutInverse = 1 / fprCut
-    plt.plot(tprCut, fprCutInverse)
-    emptyPlot, = plt.plot(tprCut[0], fprCutInverse[0] + 30, color = 'white')
+    if drawPlots:
+        plt.plot(tprCut, fprCutInverse)
+        emptyPlot, = plt.plot(tprCut[0], fprCutInverse[0] + 30, color = 'white')
   
     WP = [0.90, 0.94, 0.97, 0.99]
     bkgRejections = np.array([])
@@ -795,23 +797,25 @@ def DrawROCbkgRejectionScores(fpr, tpr, AUC, outputDir, NN, unscaledMass, jetCol
 
     for i in range(0, len(WP)):
         bkgRejections = np.append(bkgRejections, np.interp(WP[i], tprCut, fprCutInverse))
-        plt.axvline(x = WP[i], color = 'Red', linestyle = 'dashed', label = 'Bkg Rejection @ ' + str(WP[i]) + ' WP: ' + str(round(bkgRejections[i], 1)))
+        if drawPlots:
+            plt.axvline(x = WP[i], color = 'Red', linestyle = 'dashed', label = 'Bkg Rejection @ ' + str(WP[i]) + ' WP: ' + str(round(bkgRejections[i], 1)))
 
     print(format(Fore.BLUE + 'Working points: ' + str(WP) + '\nBackground rejection at each working point: ' + str(bkgRejections)))
-    plt.xlabel('Signal efficiency')
-    plt.ylabel('Background rejection')
-    plt.yscale('log')    
-    plt.title(BkgRejTitle)
-    legend1 = plt.legend()
-    legend2 = plt.legend([emptyPlot], [legendText], loc = 'center left', handlelength = 0, handletextpad = 0)
-    for item in legend2.legendHandles:
-        item.set_visible(False)
-    plt.gca().add_artist(legend1)
-    EffPltName = outputDir + '/BkgRejection_' + outputFileCommonName + '_' + str(unscaledMass) + '.png'
-    plt.savefig(EffPltName)#, bbox_inches = 'tight')
-    print(Fore.GREEN + 'Saved ' + EffPltName)
-    plt.clf()
-    plt.close()
+    if drawPlots:
+        plt.xlabel('Signal efficiency')
+        plt.ylabel('Background rejection')
+        plt.yscale('log')    
+        plt.title(BkgRejTitle)
+        legend1 = plt.legend()
+        legend2 = plt.legend([emptyPlot], [legendText], loc = 'center left', handlelength = 0, handletextpad = 0)
+        for item in legend2.legendHandles:
+            item.set_visible(False)
+        plt.gca().add_artist(legend1)
+        EffPltName = outputDir + '/BkgRejection_' + outputFileCommonName + '_' + str(unscaledMass) + '.png'
+        plt.savefig(EffPltName)#, bbox_inches = 'tight')
+        print(Fore.GREEN + 'Saved ' + EffPltName)
+        plt.clf()
+        plt.close()
     return WP, bkgRejections
 
 
@@ -982,42 +986,42 @@ def DrawRejectionVsStat(massVec, fracTrain, WP, bkgRej90Dict, bkgRej94Dict, bkgR
 from sklearn.metrics import confusion_matrix
 import itertools
 
-def DrawCM(yhat_test, y_test, w_test, outputDir, mass, background, outputFileCommonName, jetCollection, analysis, channel, preselectionCuts, signal):
+def DrawCM(yhat_test, y_test, w_test, outputDir, mass, background, outputFileCommonName, jetCollection, analysis, channel, preselectionCuts, signal, drawPlots):
     yResult_test_cls = np.array([ int(round(x[0])) for x in yhat_test])
     cm = confusion_matrix(y_test, yResult_test_cls, sample_weight = w_test, normalize = 'true')
     TNR, FPR, FNR, TPR = cm.ravel()
     print(format(Fore.BLUE + 'TNR: '  + str(TNR) + ', FPR: ' + str(FPR) + ', FNR: ' + str(FNR) + ', TPR: ' + str(TPR)))
-    classes = ['Background', 'Signal']
-    np.set_printoptions(precision = 2)
-    cmap = plt.cm.Oranges
-    plt.imshow(cm, interpolation = 'nearest', cmap = cmap)
-    if mass >= 1000:
-        titleCM = 'Confusion matrix (mass: ' + str(float(mass / 1000)) + ' TeV)'#, bkg: ' + background + ')'
-    else:
-        titleCM = 'Confusion matrix (mass: ' + str(int(mass)) + ' GeV)'#, bkg: ' + background + ')'
-    plt.title(titleCM)
-    #plt.colorbar()
-    tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes)
-    plt.yticks(tick_marks, classes, rotation = 90)
-    #thresh = cm.max() / 2.
-    thresh = 0.5
-    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-        plt.text(j, i, format(cm[i, j], '.2f'), horizontalalignment = "center", color = "white" if cm[i, j] > thresh else "black")
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
-    CMPltName = outputDir + '/ConfusionMatrix_' + outputFileCommonName + '_' + str(mass) + '.png'
-
-    legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(background)
-    if (preselectionCuts != 'none'):
-        legendText += '\npreselection cuts: ' + preselectionCuts
-    plt.figtext(0.77, 0.45, legendText, wrap = True, horizontalalignment = 'left')
-    plt.subplots_adjust(left = 0.1, right = 0.75)
-    plt.savefig(CMPltName)#, bbox_inches = 'tight')
-    print(Fore.GREEN + 'Saved ' + CMPltName)
-    plt.subplots_adjust(left = 0.15, right = 0.95)
-    plt.clf()
-    plt.close()
+    if drawPlots:
+        classes = ['Background', 'Signal']
+        np.set_printoptions(precision = 2)
+        cmap = plt.cm.Oranges
+        plt.imshow(cm, interpolation = 'nearest', cmap = cmap)
+        if mass >= 1000:
+            titleCM = 'Confusion matrix (mass: ' + str(float(mass / 1000)) + ' TeV)'#, bkg: ' + background + ')'
+        else:
+            titleCM = 'Confusion matrix (mass: ' + str(int(mass)) + ' GeV)'#, bkg: ' + background + ')'
+        plt.title(titleCM)
+        #plt.colorbar()
+        tick_marks = np.arange(len(classes))
+        plt.xticks(tick_marks, classes)
+        plt.yticks(tick_marks, classes, rotation = 90)
+        #thresh = cm.max() / 2.
+        thresh = 0.5
+        for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+            plt.text(j, i, format(cm[i, j], '.2f'), horizontalalignment = "center", color = "white" if cm[i, j] > thresh else "black")
+        plt.ylabel('True label')
+        plt.xlabel('Predicted label')
+        CMPltName = outputDir + '/ConfusionMatrix_' + outputFileCommonName + '_' + str(mass) + '.png'
+        legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(background)
+        if (preselectionCuts != 'none'):
+            legendText += '\npreselection cuts: ' + preselectionCuts
+        plt.figtext(0.77, 0.45, legendText, wrap = True, horizontalalignment = 'left')
+        plt.subplots_adjust(left = 0.1, right = 0.75)
+        plt.savefig(CMPltName)#, bbox_inches = 'tight')
+        print(Fore.GREEN + 'Saved ' + CMPltName)
+        plt.subplots_adjust(left = 0.15, right = 0.95)
+        plt.clf()
+        plt.close()
     return TNR, FPR, FNR, TPR
 
 def weightEventsOld(origin_train):
@@ -1133,3 +1137,41 @@ def defineBins(regime):
         bins = [500, 6000]
 
     return bins
+
+
+### Copmuting weighted F1 score ---> WRONG!!!
+from tensorflow.keras import backend as K
+def computeWeightedMetrics(y_true, y_pred):
+    dataTrainInput = pd.read_pickle(dfPath + '/data_train_' + tag + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + str(signal) + '_' + background + '_' + str(trainingFraction) + 't.pkl')
+    w_train = dataTrainInput['train_weight'].values ### how can I pass the vector here?
+    y_true_len = int(len(y_true))
+    print('\ny_true_len: ' + str(y_true_len))
+    if(y_true_len > int(len(w_train) / 2)): ### Safe assumption (I think) NO!
+        print(Fore.BLUE + '-------------------- Evaluation on the train sample ------------------------')
+        w_train = w_train[:y_true_len]
+    else:
+        print(Fore.BLUE + '\n-------------------- Evaluation on the validation sample -------------------------')
+        w_train = w_train[(y_true_len + 1):]
+    print('Y_true from backend\n', K.get_value(y_true))
+    print('Y_pred from backend\n', K.get_value(y_pred))
+    print('w_train: ' + str(w_train))
+    true_positives = 0
+    possible_positives = 0
+    predicted_positives = 0
+    for event in range(y_true_len):
+        true_positives += y_true[event] * K.round(y_pred[event]) * w_train[event] ##serve clip?
+        possible_positives += y_true[event] * w_train[event] ##serve clip? sono i positive da LABEL
+        predicted_positives += K.round(y_pred[event]) * w_train[event]
+    recall = true_positives / (possible_positives + K.epsilon()) ### can I safely ignore K.epsilon()?
+    precision = true_positives / (predicted_positives + K.epsilon())
+    print(Fore.BLUE + 'True positives: '  + str(true_positives))
+    print(Fore.BLUE + 'Possible (MC) positives: '  + str(possible_positives))
+    print(Fore.BLUE + 'Predicted positives: '  + str(predicted_positives))
+    print(Fore.BLUE + 'Recall (TP / possible positives): ' + str(recall))
+    print(Fore.BLUE + 'Precision (TP / predicted positives): ' + str(precision))
+    return precision, recall
+
+### Metric definition
+def f1_score(y_true, y_pred):
+    precision, recall = computeWeightedMetrics(y_true, y_pred)
+    return 2 * ((precision * recall) / (precision + recall + K.epsilon()))
