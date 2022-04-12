@@ -42,8 +42,8 @@ def findDSID(region, signal, mass):
     '''
     dsidmap={"HVTWZ_200":307360, "HVTWZ_400":307362, "HVTWZ_500":302216, "HVTWZ_600":302217, "HVTWZ_700":302218, "HVTWZ_800":302219, "HVTWZ_1000":302221, "HVTWZ_1200":302223, "HVTWZ_1400":302225, "HVTWZ_1500":302226, "HVTWZ_1600":302227, "HVTWZ_1800":302229, "HVTWZ_2000":302231, "HVTWZ_2400":302233, "HVTWZ_2600":302234, "HVTWZ_3000":302236, "HVTWZ_3500":302237, "HVTWZ_4000":302238, "HVTWZ_4500":302239, "HVTWZ_5000":302240, "HVTWZVBF_250":307674, "HVTWZVBF_300":307675, "HVTWZVBF_400":307676, "HVTWZVBF_600":307678, "HVTWZVBF_700":307679, "HVTWZVBF_800":307680, "HVTWZVBF_1000":307682, "HVTWZVBF_1200":307684, "HVTWZVBF_1500":307687, "HVTWZVBF_1800":307690, "HVTWZVBF_2000":307692, "HVTWZVBF_2400":307694, "HVTWZVBF_2600":307695, "HVTWZVBF_3000":307697, "HVTWZVBF_3500":307698, "HVTWZVBF_4000":307699, "Rad_300":309991, "Rad_700":309992, "Rad_1000":309993, "Rad_2000":309994, "Rad_3000":309995, "Rad_4000":309996, "Rad_5000":309997, "Rad_6000":309998, "RadVBF_300":309999, "RadVBF_700":310000, "RadVBF_1000":310001, "RadVBF_2000":310002, "RadVBF_3000":310003, "RadVBF_4000":310004, "RadVBF_5000":310005, "RadVBF_6000":310006, "RSG_200":307476, "RSG_300":307477, "RSG_400":307478, "RSG_600":303278, "RSG_700":303279, "RSG_800":303280, "RSG_1000":303282, "RSG_1200":303284, "RSG_1500":303287, "RSG_1800":303290, "RSG_2000":303292, "RSG_2400":303294, "RSG_2600":303295, "RSG_3000":303297, "RSG_3500":303298, "RSG_4000":303299, "RSG_4500":303300, "RSG_5000":303301, "RSGVBF_300":309983, "RSGVBF_700":309984, "RSGVBF_1000":309985, "RSGVBF_2000":309986, "RSGVBF_3000":309987, "RSGVBF_4000":309988, "RSGVBF_5000":309989, "RSGVBF_6000":309990}
     '''
-    dsidmap={"HVTWZ_200":307360, "HVTWZ_400":307362, "HVTWZ_500":302216, "HVTWZ_600":302217, "HVTWZ_700":302218, "HVTWZ_800":302219, "HVTWZ_1000":302221, "HVTWZ_1200":302223, "HVTWZ_1400":302225, "HVTWZ_1500":302226, "HVTWZ_1600":302227, "HVTWZ_1800":302229, "HVTWZ_2000":302231, "HVTWZ_2400":302233, "HVTWZ_2600":302234, "HVTWZ_3000":302236, "HVTWZ_3500":302237, "HVTWZ_4000":302238, "HVTWZ_4500":302239, "HVTWZ_5000":302240, "HVTWZVBF_250":307674, "HVTWZVBF_300":307675, "HVTWZVBF_400":307676, "HVTWZVBF_600":307678, "HVTWZVBF_700":307679, "HVTWZVBF_800":307680, "HVTWZVBF_1000":307682, "HVTWZVBF_1200":307684, "HVTWZVBF_1500":307687, "HVTWZVBF_1800":307690, "HVTWZVBF_2000":307692, "HVTWZVBF_2400":307694, "HVTWZVBF_2600":307695, "HVTWZVBF_3000":307697, "HVTWZVBF_3500":307698, "HVTWZVBF_4000":307699,
-             "Radion_300":451141,
+    ## based on https://docs.google.com/spreadsheets/d/1qNuJjF1pUx7a5WO-gggqPJz_dDzwQgErI2sxELGXTI8/edit#gid=1662908075 HIGG2D4
+    dsidmap={"Radion_300":451141,
              "Radion_400":451142,
              "Radion_500":451143,
              "Radion_600":451144,
@@ -64,7 +64,106 @@ def findDSID(region, signal, mass):
              "Radion_4500":451159,
              "Radion_5000":451160,
              "Radion_6000":451161,
-             "RadVBF_300":309999, "RadVBF_700":310000, "RadVBF_1000":310001, "RadVBF_2000":310002, "RadVBF_3000":310003, "RadVBF_4000":310004, "RadVBF_5000":310005, "RadVBF_6000":310006, "RSG_200":307476, "RSG_300":307477, "RSG_400":307478, "RSG_600":303278, "RSG_700":303279, "RSG_800":303280, "RSG_1000":303282, "RSG_1200":303284, "RSG_1500":303287, "RSG_1800":303290, "RSG_2000":303292, "RSG_2400":303294, "RSG_2600":303295, "RSG_3000":303297, "RSG_3500":303298, "RSG_4000":303299, "RSG_4500":303300, "RSG_5000":303301, "RSGVBF_300":309983, "RSGVBF_700":309984, "RSGVBF_1000":309985, "RSGVBF_2000":309986, "RSGVBF_3000":309987, "RSGVBF_4000":309988, "RSGVBF_5000":309989, "RSGVBF_6000":309990}
+             "VBFRadion_300":451162,
+             "VBFRadion_400":451163,
+             "VBFRadion_500":451164,
+             "VBFRadion_600":451165,
+             "VBFRadion_700":451166,
+             "VBFRadion_800":451167,
+             "VBFRadion_1000":451168,
+             "VBFRadion_1200":451169,
+             "VBFRadion_1400":451170,
+             "VBFRadion_1500":451171,
+             "VBFRadion_1600":451172,
+             "VBFRadion_1800":451173,
+             "VBFRadion_2000":451174,
+             "VBFRadion_2400":451175,
+             "VBFRadion_2600":451176,
+             "VBFRadion_3000":451177,
+             "VBFRadion_3500":451178,
+             "VBFRadion_4000":451179,
+             "VBFRadion_4500":451180,
+             "VBFRadion_5000":451181,
+             "VBFRadion_6000":451182,
+             "HVTWZ_250":307360,
+             "HVTWZ_400":307362,
+             "HVTWZ_500":302216,
+             "HVTWZ_600":302217,
+             "HVTWZ_700":302218,
+             "HVTWZ_800":302219,
+             "HVTWZ_900":302220,
+             "HVTWZ_1000":302221,
+             "HVTWZ_1200":302223,
+             "HVTWZ_1400":302225,
+             "HVTWZ_1500":302226,
+             "HVTWZ_1600":302227,
+             "HVTWZ_1800":302229,
+             "HVTWZ_2000":302231,
+             "HVTWZ_2400":302233,
+             "HVTWZ_2600":302234,
+             "HVTWZ_3000":302236,
+             "HVTWZ_3500":302237,
+             "HVTWZ_4000":302238,
+             "HVTWZ_4500":302239,
+             "HVTWZ_5000":302240,
+             "HVTWZ_6000":451279,
+             "HVTWZ_7000":451280,
+             "HVTWZ_8000":451281, 
+             "VBFHVTWZ_300 ":307675,
+             "VBFHVTWZ_400 ":307676,
+             "VBFHVTWZ_600 ":307678,
+             "VBFHVTWZ_700 ":307679,
+             "VBFHVTWZ_800 ":307680,
+             "VBFHVTWZ_1000":307682,
+             "VBFHVTWZ_1200":307684,
+             "VBFHVTWZ_1500":307687,
+             "VBFHVTWZ_1800":307690,
+             "VBFHVTWZ_2000":307692,
+             "VBFHVTWZ_2400":307694,
+             "VBFHVTWZ_2600":307695,
+             "VBFHVTWZ_3000":307697,
+             "VBFHVTWZ_3500":307698,
+             "VBFHVTWZ_4000":307699,
+             "RSG_300":450872,
+             "RSG_400":450873,
+             "RSG_300":307477,
+             "RSG_400":307478,
+             "RSG_600":303278,
+             "RSG_700":303279,
+             "RSG_800":303280,
+             "RSG_1000":303282,
+             "RSG_1200":303284,
+             "RSG_1500":303287,
+             "RSG_1800":303290,
+             "RSG_2000":303292,
+             "RSG_2400":303294,
+             "RSG_2600":303295,
+             "RSG_3000":303297,
+             "RSG_3500":303298,
+             "RSG_4000":303299,
+             "RSG_4500":303300,
+             "RSG_5000":303301,
+             "VBFRSG_300":451120,
+             "VBFRSG_400":451121,
+             "VBFRSG_500":451122,
+             "VBFRSG_600":451123,
+             "VBFRSG_700":451124,
+             "VBFRSG_800":451125,
+             "VBFRSG_1000":451126,
+             "VBFRSG_1200":451127,
+             "VBFRSG_1400":451128,
+             "VBFRSG_1500":451129,
+             "VBFRSG_1600":451130,
+             "VBFRSG_1800":451131,
+             "VBFRSG_2000":451132,
+             "VBFRSG_2400":451133,
+             "VBFRSG_2600":451134,
+             "VBFRSG_3000":451135,
+             "VBFRSG_3500":451136,
+             "VBFRSG_4000":451137,
+             "VBFRSG_4500":451138,
+             "VBFRSG_5000":451139,
+             "VBFRSG_6000":451140}
     
   if signal+"_"+str(mass) in dsidmap:
     print("DSID found is ",str(dsidmap[signal+"_"+str(mass)])) 
@@ -79,7 +178,7 @@ if __name__ == "__main__":
   ####################################################
 
   #Example of how to grab an option from the command line
-  tag="test200IntNoteArch"
+  tag="test_MergHP_GGF_Untag"
   # EJS, 2021-10-29
   # Here I'm putting the Reader's output obtained by running Alessandra's pDNN (first training with loose pDNN configuration)
   # Gabriele needs these files to do tests on the pDNN scores directly from the Nominal tree
@@ -88,8 +187,8 @@ if __name__ == "__main__":
   ### same processing as before but re-run to let all job complete successfully (recover some statistics)
   #basedirectory="/nfs/kloe/einstein4/HDBS/PDNNTestAGS/ntuples" # as before but from Lecce
   #basedirectory="/nfs/kloe/einstein4/HDBS/ReaderOutputWithScores/reader_mc16a_VV_2lep_PFlow_UFO_withScores/fetch/data-MVATree" #reader on r33-22, scores from  Radion_ggF_Merged_ATL-COM-PHYS-2018-1549
-  basedirectory="/nfs/kloe/einstein4/stefania/CxAODReaderProd/tmp" #link to previous one with Wjets-0.root and data removed 
-  
+  #basedirectory="/nfs/kloe/einstein4/stefania/CxAODReaderProd/tmp" #link to previous one with Wjets-0.root and data removed 
+  basedirectory="/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/ggF/Radion/"
 
   usePNN=False
   use0L=False
@@ -207,9 +306,9 @@ if __name__ == "__main__":
     if useSR: 
       if useMerg:
         regions["L2_MergHP_GGF_ZZ_Untag_SR"]=[useData, "Pass_MergHP_GGF_ZZ_Untag_SR", findBinning("L2_MergHP_GGF_ZZ_Untag_SR",usePNN), "X_boosted_m", "weight"]
-        regions["L2_MergLP_GGF_ZZ_Untag_SR"]=[useData, "Pass_MergLP_GGF_ZZ_Untag_SR", findBinning("L2_MergLP_GGF_ZZ_Untag_SR",usePNN), "X_boosted_m", "weight"]
-        regions["L2_MergHP_GGF_ZZ_Tag_SR"  ]=[useData, "Pass_MergHP_GGF_ZZ_Tag_SR",   findBinning("L2_MergHP_GGF_ZZ_Tag_SR",  usePNN), "X_boosted_m", "weight"]
-        regions["L2_MergLP_GGF_ZZ_Tag_SR"  ]=[useData, "Pass_MergLP_GGF_ZZ_Tag_SR",   findBinning("L2_MergLP_GGF_ZZ_Tag_SR",  usePNN), "X_boosted_m", "weight"]
+        #regions["L2_MergLP_GGF_ZZ_Untag_SR"]=[useData, "Pass_MergLP_GGF_ZZ_Untag_SR", findBinning("L2_MergLP_GGF_ZZ_Untag_SR",usePNN), "X_boosted_m", "weight"]
+        #regions["L2_MergHP_GGF_ZZ_Tag_SR"  ]=[useData, "Pass_MergHP_GGF_ZZ_Tag_SR",   findBinning("L2_MergHP_GGF_ZZ_Tag_SR",  usePNN), "X_boosted_m", "weight"]
+        #regions["L2_MergLP_GGF_ZZ_Tag_SR"  ]=[useData, "Pass_MergLP_GGF_ZZ_Tag_SR",   findBinning("L2_MergLP_GGF_ZZ_Tag_SR",  usePNN), "X_boosted_m", "weight"]
       if useRes:
         regions["L2_Resolved_GGF_ZZ_Untag_SR"]=[useData, "Pass_Resolved_GGF_ZZ_Untag_SR", findBinning("L2_Resolved_GGF_ZZ_Untag_SR",usePNN), "X_resolved_WZ_m", "weight"]
         regions["L2_Resolved_GGF_ZZ_Tag_SR"  ]=[useData, "Pass_Resolved_GGF_ZZ_Tag_SR",   findBinning("L2_Resolved_GGF_ZZ_Tag_SR"  ,usePNN), "X_resolved_WZ_m", "weight"]
@@ -229,24 +328,22 @@ if __name__ == "__main__":
       #regions[region][3]="pDNNScore"+str(masses[0])
       regions[region][3]="pDNNScore"+str(massIndex[0])
 
-  print("Variable to use is  <"+regions[region][3]+">")
-
 
   samples = {
       # sample   : [ path, filter, name, minmu , maxmu ,constrianType]
-      "Diboson"  : [ "Diboson-*.root", "", "XS_Diboson", 0.94, 1.06, RF.MultiplicativeFactor.GAUSSIAN],
-      "stop"     : [ "stop-*.root", "", "XS_stop", 0.80, 1.20, RF.MultiplicativeFactor.GAUSSIAN],
+      "Diboson"  : [ "Scores_Diboson-*.root", "", "XS_Diboson", 0.94, 1.06, RF.MultiplicativeFactor.GAUSSIAN],
+      "stop"     : [ "Scores_stop-*.root", "", "XS_stop", 0.80, 1.20, RF.MultiplicativeFactor.GAUSSIAN],
     }
-  if useZCR: samples["Zjets"]=[ "Zjets-*.root", "", "XS_Zjets", 0.5, 1.5, RF.MultiplicativeFactor.FREE]
-  else: samples["Zjets"]=[ "Zjets-*.root", "", "XS_Zjets", 0.8, 1.2, RF.MultiplicativeFactor.GAUSSIAN]
+  if useZCR: samples["Zjets"]=[ "Scores_Zjets-*.root", "", "XS_Zjets", 0.5, 1.5, RF.MultiplicativeFactor.FREE]
+  else: samples["Zjets"]=[ "Scores_Zjets-*.root", "", "XS_Zjets", 0.8, 1.2, RF.MultiplicativeFactor.GAUSSIAN]
   if useWCR: samples["Wjets"]=[ "Wjets-*.root", "", "XS_Wjets", 0.5, 1.5, RF.MultiplicativeFactor.FREE]
-  else: samples["Wjets"]=[ "Wjets-*.root", "", "XS_Wjets", 0.8, 1.2, RF.MultiplicativeFactor.GAUSSIAN]
+  else: samples["Wjets"]=[ "Scores_Wjets-*.root", "", "XS_Wjets", 0.8, 1.2, RF.MultiplicativeFactor.GAUSSIAN]
   if useTCR: samples["ttbar"]=[ "ttbar-*.root", "", "XS_ttbar", 0.5, 1.5, RF.MultiplicativeFactor.FREE]
-  else: samples["ttbar"]=[ "ttbar-*.root", "", "XS_ttbar", 0.8, 1.2, RF.MultiplicativeFactor.GAUSSIAN]
+  else: samples["ttbar"]=[ "Scores_ttbar-*.root", "", "XS_ttbar", 0.8, 1.2, RF.MultiplicativeFactor.GAUSSIAN]
 
   signals = {} #signal=[path, signalType, mass]
   for mass in masses:
-    signals[signalType+"_"+str(mass)]=[signalType+"-*.root",signalType,mass]
+    signals[signalType+"_"+str(mass)]=["Scores_"+signalType+"-*.root",signalType,mass]
 
   variations=[]
 
@@ -254,6 +351,7 @@ if __name__ == "__main__":
   for region in regions:
     #path=basedirectory+"/inputVV_"+str(regions[region][2])+"lep/fetch/"
     path=basedirectory+"/"
+    print("Variable to use is  <"+regions[region][3]+">")
 
     #Add channel (aka a region) to model
     print("Adding channel: ", region)
