@@ -2,8 +2,6 @@
 # It is not recommended to convert the whole input tree because the script may crash due to memory issues with large trees 
 
 import uproot
-import configparser
-import ast
 from Functions import ReadArgParser, ReadConfigSaveToPkl
 from colorama import init, Fore
 init(autoreset = True)
@@ -24,6 +22,7 @@ logFile.write('\nNumber of events in the input ntuples:\n')
 ### Loading, converting and saving each input file
 totalEvents = 0 
 weightedTotalEvents = 0 
+
 for i in inputFiles:
     inFile = ntuplePath + i + '.root'
     print('Loading ' + inFile)
@@ -34,12 +33,17 @@ for i in inputFiles:
         if Nevents == 0:
             print(Fore.RED + 'Ignoring empty file')
             continue
+
+        ### Converting to pandas dataframe only the variables listed in rootBranchSubSample
         DF = tree.arrays(rootBranchSubSample, library = 'pd')
+
         weightedEvents = DF['weight'].sum()
         weightedTotalEvents += weightedEvents
         print(Fore.BLUE + 'Number of events in ' + inFile, '->\t' + str(Nevents) + ' (weighted: ' + str(weightedEvents) + ')')
         logFile.write(i + ' -> ' + str(Nevents) + ' events (weighted: ' + str(weightedEvents) + ')\n')
         outFile = dfPath + i + '_DF.pkl'
+        
+        ### Saving output dataframe
         DF.to_pickle(outFile)
     print(Fore.GREEN + 'Saved ' + outFile)
 
