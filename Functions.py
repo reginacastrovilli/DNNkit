@@ -1,14 +1,14 @@
 # Assigning script names to variables
 fileNameSaveToPkl = 'saveToPkl.py'
 fileNameBuildDataSet = 'buildDataset.py'
-fileNameComputeSignificance = 'computeSignificance.py'
+fileNameComputeSignificance = 'computeSignificance.py'#New.py' ##2
 fileNameSplitDataSet = 'splitDataset.py'
 fileNameBuildDNN = 'buildDNN.py'
 #fileNameBuildPDNN = 'buildPDNNtuningHyp.py'
 fileNameBuildPDNN = 'buildPDNN.py'
 fileName6 = 'tuningHyperparameters.py'
 fileNamePlots = 'tests/drawPlots.py'
-fileNameCreateScoresBranch = 'createScoresBranch.py'
+fileNameCreateScoresBranch = 'addScoreBranch.py'#'createScoresBranch.py'
 
 ### Reading the command line
 from argparse import ArgumentParser
@@ -35,7 +35,7 @@ def ReadArgParser():
     parser.add_argument('--doTrain', help = 'If 1 the training will be performed, if 0 it won\'t', default = 1)
     parser.add_argument('--doTest', help = 'If 1 the test will be performed, if 0 it won\'t', default = 1)
     parser.add_argument('--loop', help = 'How many times the code will be executed', default = 1)
-    parser.add_argument('--tag', help = 'CxAOD tag', default = 'r33-22')
+    parser.add_argument('--tag', help = 'CxAOD tag', default = 'r33-24')
     parser.add_argument('--drawPlots', help = 'If 1 all plots will be saved', default = 0)
     parser.add_argument('-r', '--regime', help = '')
     parser.add_argument('-f', '--FeatureToPlot', help = 'Feature to plot to compute significance', default = 'score')
@@ -54,7 +54,7 @@ def ReadArgParser():
         parser.error(Fore.RED + 'Channel can be either \'ggF\' or \'VBF\'')
     signal = args.Signal
     if args.Signal is None and fileNameSaveToPkl not in sys.argv[0]:
-        parser.error(Fore.RED + 'Requested type of signal (\'VBFHVTWZ\', \'Radion\', \'RSG\', \'VBFRSG\', \'HVTWZ\' or \'VBFRadion\')') ####
+        parser.error(Fore.RED + 'Requested type of signal (\'Radion\', \'RSG\', \'HVTWZ\')')
     if args.Signal and signal != 'Radion' and signal != 'RSG' and signal != 'HVTWZ':
         parser.error(Fore.RED + 'Signal can be only \'Radion\', \'RSG\' or \'HVTWZ\'')
     if args.Channel and channel == 'VBF':
@@ -149,7 +149,7 @@ def ReadArgParser():
     if fileNameCreateScoresBranch in sys.argv[0]:
         print(Fore.BLUE + '          background(s) = ' + str(backgroundString))
         print(Fore.BLUE + '                 signal = ' + str(signal))
-        return tag, jetCollection, analysis, channel, signal, backgroundString
+        return tag, jetCollection, analysis, channel, preselectionCuts, signal, backgroundString
 
 ### Reading from the configuration file
 import configparser, ast
@@ -157,6 +157,7 @@ import shutil
 
 def ReadConfigSaveToPkl(tag, jetCollection):
     configurationFile = 'Configuration_' + jetCollection + '_' + tag + '.ini'
+    print(Fore.GREEN  + 'Reading configuration file: ' + configurationFile)
     config = configparser.ConfigParser()
     config.read(configurationFile)
     ntuplePath = config.get('config', 'ntuplePath')
@@ -164,12 +165,13 @@ def ReadConfigSaveToPkl(tag, jetCollection):
     dfPath = config.get('config', 'dfPath')
     dfPath += tag + '/' + jetCollection + '/'
     rootBranchSubSample = ast.literal_eval(config.get('config', 'rootBranchSubSample'))
-    print (format('Output directory: ' + Fore.GREEN + dfPath), checkCreateDir(dfPath))
-    shutil.copyfile(configurationFile, dfPath + configurationFile)
+    #print (format('Output directory: ' + Fore.GREEN + dfPath), checkCreateDir(dfPath))
+    #shutil.copyfile(configurationFile, dfPath + configurationFile)
     return ntuplePath, inputFiles, dfPath, rootBranchSubSample
 
-def ReadConfig(tag, analysis, jetCollection):
+def ReadConfig(tag, analysis, jetCollection, signal):
     configurationFile = 'Configuration_' + jetCollection + '_' + tag + '.ini'
+    print(Fore.GREEN  + 'Reading configuration file: ' + configurationFile)
     config = configparser.ConfigParser()
     config.read(configurationFile)
     inputFiles = ast.literal_eval(config.get('config', 'inputFiles'))
@@ -183,11 +185,16 @@ def ReadConfig(tag, analysis, jetCollection):
         InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesMerged'))
         variablesToSave = ast.literal_eval(config.get('config', 'variablesToSaveMerged'))
     elif analysis == 'resolved':
-        InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesResolved'))
-        variablesToSave = ast.literal_eval(config.get('config', 'variablesToSaveResolved'))
+        #if signal == 'Radion' or signal == 'RSG':
+        if 'Radion' in signal or 'RSG' in signal:
+            InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesResolvedRadionRSG'))
+            variablesToSave = ast.literal_eval(config.get('config', 'variablesToSaveResolvedRadionRSG'))
+        else:
+            InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesResolvedHVT'))
+            variablesToSave = ast.literal_eval(config.get('config', 'variablesToSaveResolvedHVT'))
     if fileNameBuildDataSet in sys.argv[0]:
         return InputFeatures, dfPath, variablesToSave, backgroundsList
-    if fileNameComputeSignificance in sys.argv[0]:
+    if fileNameComputeSignificance in sys.argv[0] or fileNameCreateScoresBranch in sys.argv[0]:
         return inputFiles, rootBranchSubSample, InputFeatures, dfPath, variablesToSave, backgroundsList
     if fileNamePlots in sys.argv[0]:
         return dfPath, InputFeatures
@@ -218,29 +225,24 @@ def enablePrint():
 import pandas as pd
 import numpy as np
 
-def LoadDataOld(dfPath, tag, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures):
-    fileCommonName = tag + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + str(signal) + '_' + background + '_' + str(trainingFraction) + 't'
-    data_Train = pd.read_pickle(dfPath + '/data_train_' + fileCommonName + '.pkl')
-    X_train = np.array(data_Train[InputFeatures].values).astype(np.float32)
-    y_train = np.array(data_Train['isSignal'].values).astype(np.float32)
-    m_Train_unscaled = pd.read_pickle(dfPath + '/m_train_unscaled_' + fileCommonName + '.pkl').values
-    w_train = data_Train['train_weight'].values
-    data_Test = pd.read_pickle(dfPath + '/data_test_' + fileCommonName + '.pkl')
-    X_test = np.array(data_Test[InputFeatures].values).astype(np.float32)
-    y_test = np.array(data_Test['isSignal'].values).astype(np.float32)
-    #X_Train_unscaled =  data_Train_unscaled[InputFeatures]
-    m_Test_unscaled = pd.read_pickle(dfPath + '/m_test_unscaled_' + fileCommonName + '.pkl').values
-    #m_Train_unscaled = data_Train_unscaled['mass'].values
-
-    #return X_train, X_test, y_train, y_test, m_Train_unscaled, m_Test_unscaled, w_train
-    return data_Train, data_Test, m_Train_unscaled, m_Test_unscaled, w_train
-
 def LoadData(dfPath, tag, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures):
     fileCommonName = tag + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + str(signal) + '_' + background + '_' + str(trainingFraction) + 't'
+    print(Fore.GREEN + 'Loading ' + dfPath + 'data_train_' + fileCommonName + '.pkl')
     dataTrain = pd.read_pickle(dfPath + '/data_train_' + fileCommonName + '.pkl')
+    #dataTrain = dataTrain.query('Pass_MergHP_GGF_WZ_SR == True or Pass_MergLP_GGF_WZ_SR == True or Pass_MergHP_VBF_WZ_SR == True or Pass_MergLP_VBF_WZ_SR == True')
+    print('# of events in dataTrain: ' + str(len(dataTrain)))
+    '''
+    passCols = ['Pass_MergHP_GGF_ZZ_Tag_ZCR', 'Pass_MergHP_GGF_ZZ_Untag_ZCR', 'Pass_MergLP_GGF_ZZ_Tag_ZCR', 'Pass_MergLP_GGF_ZZ_Untag_ZCR', 'Pass_MergHP_GGF_WZ_ZCR', 'Pass_MergLP_GGF_WZ_ZCR', 'Pass_MergHP_VBF_WZ_ZCR', 'Pass_MergHP_VBF_ZZ_ZCR', 'Pass_MergLP_VBF_WZ_ZCR', 'Pass_MergLP_VBF_ZZ_ZCR']
+    for col in passCols:
+        dataTrain[col].replace(to_replace = [False, True], value = [0, 1], inplace = True)
+        sumCol = dataTrain[col].sum()
+        print(col + ' -> ' + str(sumCol))
+    exit()
+    '''
     X_train = np.array(dataTrain[InputFeatures].values).astype(np.float32)
     y_train = np.array(dataTrain['isSignal'].values).astype(np.float32)
     w_train = dataTrain['train_weight'].values
+    print(Fore.GREEN + 'Loading ' + dfPath + 'data_test_' + fileCommonName + '.pkl')
     dataTest = pd.read_pickle(dfPath + '/data_test_' + fileCommonName + '.pkl')
     X_test = np.array(dataTest[InputFeatures].values).astype(np.float32)
     y_test = np.array(dataTest['isSignal'].values).astype(np.float32)
@@ -254,22 +256,25 @@ def WriteLogFile(tag, ntuplePath, InputFeatures, dfPath, hpOptimization, doTrain
     logString = 'CxAOD tag: ' + tag + '\nntuple path: ' + ntuplePath + '\nInputFeatures: ' + str(InputFeatures) + '\ndfPath: ' + dfPath + '\nHperparameters optimization: ' + str(hpOptimization) + '\ndoTrain: ' + str(doTrain) + '\ndoTest: ' + str(doTest) + '\nValidation fraction: ' + str(validationFraction) + '\nBatch size: ' + str(batchSize) + '\nPatience value: ' + str(patienceValue)# + '\nNumber of train events: ' + str(len(data_train)) + ' (' + str(len(data_train_signal)) + ' signal and ' + str(len(data_train_bkg)) + ' background)' + '\nNumber of test events: ' + str(len(data_test)) + ' (' + str(len(data_test_signal)) + ' signal and ' + str(len(data_test_bkg)) + ' background)'
     return logString
 
-def SelectEvents(dataFrame, channel, analysis, preselectionCuts):
+def SelectEvents(dataFrame, channel, analysis, preselectionCuts, signal):
     ### Selecting events according to type of analysis and channel
-    selectionMergedGGF = 'Pass_MergHP_GGF_ZZ_Tag_SR == True or Pass_MergHP_GGF_ZZ_Untag_SR == True or Pass_MergHP_GGF_WZ_SR == True or Pass_MergLP_GGF_ZZ_Tag_SR == True or Pass_MergLP_GGF_ZZ_Untag_SR == True or Pass_MergLP_GGF_WZ_SR == True or Pass_MergHP_GGF_ZZ_Tag_ZCR == True or Pass_MergHP_GGF_ZZ_Untag_ZCR == True or Pass_MergHP_GGF_WZ_ZCR == True or Pass_MergLP_GGF_ZZ_Tag_ZCR == True or Pass_MergLP_GGF_ZZ_Untag_ZCR == True or Pass_MergLP_GGF_WZ_ZCR == True'# or Pass_MergHP_GGF_ZZ_Untag_TCR == True or Pass_MergHP_GGF_ZZ_Tag_TCR == True or Pass_MergHP_GGF_WZ_TCR == True or Pass_MergLP_GGF_ZZ_Untag_TCR == True or Pass_MergLP_GGF_ZZ_Tag_TCR == True or Pass_MergLP_GGF_WZ_TCR == True'
-    selectionMergedGGFZZLPuntagSR = 'Pass_MergLP_GGF_ZZ_Untag_SR == True and Pass_MergHP_GGF_ZZ_Tag_SR == False and Pass_MergHP_GGF_ZZ_Untag_SR == False and Pass_MergHP_GGF_WZ_SR == False and Pass_MergLP_GGF_ZZ_Tag_SR == False and Pass_MergHP_GGF_ZZ_Tag_ZCR == False and Pass_MergHP_GGF_WZ_ZCR == False and Pass_MergHP_GGF_ZZ_Untag_ZCR == False and Pass_MergLP_GGF_ZZ_Tag_ZCR == False and Pass_MergLP_GGF_ZZ_Untag_ZCR == False and Pass_MergLP_GGF_WZ_SR == False and Pass_MergLP_GGF_WZ_ZCR == False'
-    selectionMergedVBF = 'Pass_MergHP_VBF_WZ_SR == True or Pass_MergHP_VBF_ZZ_SR == True or Pass_MergLP_VBF_WZ_SR == True or Pass_MergLP_VBF_ZZ_SR == True or Pass_MergHP_VBF_WZ_ZCR == True or Pass_MergHP_VBF_ZZ_ZCR == True or Pass_MergLP_VBF_WZ_ZCR == True or Pass_MergLP_VBF_ZZ_ZCR == True'# or Pass_MergHP_VBF_WZ_TCR == True or Pass_MergHP_VBF_ZZ_TCR == True or Pass_MergLP_VBF_WZ_TCR == True or Pass_MergLP_VBF_ZZ_TCR == True'
-    selectionResolvedGGF = 'Pass_Res_GGF_WZ_SR == True or Pass_Res_GGF_ZZ_Tag_SR == True or Pass_Res_GGF_ZZ_Untag_SR == True or Pass_Res_GGF_WZ_ZCR == True or Pass_Res_GGF_ZZ_Tag_ZCR == True or Pass_Res_GGF_ZZ_Untag_ZCR == True'# or Pass_Res_GGF_WZ_TCR == True or Pass_Res_GGF_ZZ_Tag_TCR == True or Pass_Res_GGF_ZZ_Untag_TCR == True'
+    selectionMergedGGF = 'Pass_MergHP_GGF_ZZ_2btag_SR == True or Pass_MergHP_GGF_ZZ_01btag_SR == True or Pass_MergHP_GGF_WZ_SR == True or Pass_MergLP_GGF_ZZ_2btag_SR == True or Pass_MergLP_GGF_ZZ_01btag_SR == True or Pass_MergLP_GGF_WZ_SR == True or Pass_MergHP_GGF_ZZ_2btag_ZCR == True or Pass_MergHP_GGF_ZZ_01btag_ZCR == True or Pass_MergHP_GGF_WZ_ZCR == True or Pass_MergLP_GGF_ZZ_2btag_ZCR == True or Pass_MergLP_GGF_ZZ_01btag_ZCR == True or Pass_MergLP_GGF_WZ_ZCR == True'# or Pass_MergHP_GGF_ZZ_01btag_TCR == True or Pass_MergHP_GGF_ZZ_2btag_TCR == True or Pass_MergHP_GGF_WZ_TCR == True or Pass_MergLP_GGF_ZZ_01btag_TCR == True or Pass_MergLP_GGF_ZZ_2btag_TCR == True or Pass_MergLP_GGF_WZ_TCR == True'
+    selectionMergedGGFZZLPuntagSR = 'Pass_MergLP_GGF_ZZ_01btag_SR == True and Pass_MergHP_GGF_ZZ_2btag_SR == False and Pass_MergHP_GGF_ZZ_01btag_SR == False and Pass_MergHP_GGF_WZ_SR == False and Pass_MergLP_GGF_ZZ_2btag_SR == False and Pass_MergHP_GGF_ZZ_2btag_ZCR == False and Pass_MergHP_GGF_WZ_ZCR == False and Pass_MergHP_GGF_ZZ_01btag_ZCR == False and Pass_MergLP_GGF_ZZ_2btag_ZCR == False and Pass_MergLP_GGF_ZZ_01btag_ZCR == False and Pass_MergLP_GGF_WZ_SR == False and Pass_MergLP_GGF_WZ_ZCR == False'
+    #selectionMergedVBF = 'Pass_MergHP_VBF_WZ_SR == True or Pass_MergHP_VBF_ZZ_SR == True or Pass_MergLP_VBF_WZ_SR == True or Pass_MergLP_VBF_ZZ_SR == True or Pass_MergHP_VBF_WZ_ZCR == True or Pass_MergHP_VBF_ZZ_ZCR == True or Pass_MergLP_VBF_WZ_ZCR == True or Pass_MergLP_VBF_ZZ_ZCR == True'# or Pass_MergHP_VBF_WZ_TCR == True or Pass_MergHP_VBF_ZZ_TCR == True or Pass_MergLP_VBF_WZ_TCR == True or Pass_MergLP_VBF_ZZ_TCR == True'
+    selectionMergedVBF = 'Pass_MergHP_VBF_ZZ_SR == True or Pass_MergLP_VBF_ZZ_SR == True or Pass_MergHP_VBF_ZZ_ZCR == True or Pass_MergLP_VBF_ZZ_ZCR == True'# or Pass_MergHP_VBF_WZ_TCR == True or Pass_MergHP_VBF_ZZ_TCR == True or Pass_MergLP_VBF_WZ_TCR == True or Pass_MergLP_VBF_ZZ_TCR == True'
+    selectionResolvedGGF = 'Pass_Res_GGF_WZ_SR == True or Pass_Res_GGF_ZZ_2btag_SR == True or Pass_Res_GGF_ZZ_01btag_SR == True or Pass_Res_GGF_WZ_ZCR == True or Pass_Res_GGF_ZZ_2btag_ZCR == True or Pass_Res_GGF_ZZ_01btag_ZCR == True'# or Pass_Res_GGF_WZ_TCR == True or Pass_Res_GGF_ZZ_2btag_TCR == True or Pass_Res_GGF_ZZ_01btag_TCR == True'
     selectionResolvedVBF = 'Pass_Res_VBF_WZ_SR == True or Pass_Res_VBF_ZZ_SR == True or Pass_Res_VBF_WZ_ZCR == True or Pass_Res_VBF_ZZ_ZCR == True'# or Pass_Res_VBF_WZ_TCR == True or Pass_Res_VBF_ZZ_TCR == True'
+    
     if channel == 'ggF':
-        dataFrame = dataFrame.query('Pass_isVBF == False')
+        #dataFrame = dataFrame.query('Pass_isVBF == False')
         if analysis == 'merged':
             selection = selectionMergedGGF
             #selection = selectionMergedGGFZZLPuntagSR            
         elif analysis == 'resolved':
             selection = selectionResolvedGGF
+
     elif channel == 'VBF':
-        dataFrame = dataFrame.query('Pass_isVBF == True')
+        #dataFrame = dataFrame.query('Pass_isVBF == True')
         if analysis == 'merged':
             selection = selectionMergedVBF
         elif analysis == 'resolved':
@@ -278,7 +283,14 @@ def SelectEvents(dataFrame, channel, analysis, preselectionCuts):
 
     ### Applying preselection cuts (if any)
     if preselectionCuts != 'none':
-        dataFrame = dataFrame.query(preselectionCuts)
+        #dataFrame = dataFrame.query(preselectionCuts)
+        if preselectionCuts == 'looseEventsSelection':
+            if 'HVT' in signal:
+                print('Loose events selection for HVT')
+                dataFrame = dataFrame.query('Pass_SFLeptons == True and Pass_Trigger == True and Pass_FatJet == True and fatjet_pt > 200 and lep1_pt > 30 and lep2_pt > 30 and Pass_WTaggerSubStructCutLP == True')
+            else:
+                print('Loose events selection for Radion and RSG')
+                dataFrame = dataFrame.query('Pass_SFLeptons == True and Pass_Trigger == True and Pass_FatJet == True and fatjet_pt > 200 and lep1_pt > 30 and lep2_pt > 30 and Pass_ZTaggerSubStructCutLP == True')
 
     return dataFrame
 
@@ -288,12 +300,24 @@ def SelectRegime(dataFrame, preselectionCuts, regime, channel):
         isVBF = 'False'
     elif channel == 'VBF':
         isVBF = 'True'
-    dataFrame = dataFrame.query('Pass_isVBF == ' + isVBF + ' and ' + regime + ' == True')
 
+    if regime == 'allMerged':
+        dataFrame = dataFrame.query('Pass_isVBF == ' + isVBF)
+        print('aaaaa')
+        dataFrame = dataFrame.query('Pass_MergHP_GGF_ZZ_2btag_SR == True or Pass_MergLP_GGF_ZZ_2btag_SR == True or Pass_MergHP_GGF_ZZ_01btag_SR == True or Pass_MergLP_GGF_ZZ_01btag_SR == True')
+    if regime == 'allMergedZCRs':
+        dataFrame = dataFrame.query('Pass_isVBF == ' + isVBF)
+        selectionMergedGGF = 'Pass_MergHP_GGF_ZZ_2btag_SR == True or Pass_MergHP_GGF_ZZ_01btag_SR == True or Pass_MergHP_GGF_WZ_SR == True or Pass_MergLP_GGF_ZZ_2btag_SR == True or Pass_MergLP_GGF_ZZ_01btag_SR == True or Pass_MergLP_GGF_WZ_SR == True or Pass_MergHP_GGF_ZZ_2btag_ZCR == True or Pass_MergHP_GGF_ZZ_01btag_ZCR == True or Pass_MergHP_GGF_WZ_ZCR == True or Pass_MergLP_GGF_ZZ_2btag_ZCR == True or Pass_MergLP_GGF_ZZ_01btag_ZCR == True or Pass_MergLP_GGF_WZ_ZCR == True'# or Pass_MergHP_GGF_ZZ_01btag_TCR == True or Pass_MergHP_GGF_ZZ_2btag_TCR == True or Pass_MergHP_GGF_WZ_TCR == True or Pass_MergLP_GGF_ZZ_01btag_TCR == True or Pass_MergLP_GGF_ZZ_2btag_TCR == True or Pass_MergLP_GGF_WZ_TCR == True'
+        dataFrame = dataFrame.query(selectionMergedGGF)
+    
+    #else:
+    if 'allMerged' not in regime:
+        dataFrame = dataFrame.query('Pass_isVBF == ' + isVBF + ' and ' + regime + ' == True')
+    '''
     ### Applying preselection cuts (if any)
     if preselectionCuts != 'none':
         dataFrame = dataFrame.query(preselectionCuts)
-
+    '''
     return dataFrame
 
 ### Selecting signal events according to their mass and type of analysis
@@ -327,30 +351,53 @@ def integral(y,x,bins):
         s=s+y[i]*(bins[i+1]-bins[i])
     return s
 
-def DrawVariablesHisto(dataFrame, InputFeatures, outputDir, outputFileCommonName, jetCollection, analysis, channel, signal, background, preselectionCuts):
+def DrawVariablesHisto(dataFrame, InputFeatures, outputDir, outputFileCommonName, jetCollection, analysis, channel, signal, background, preselectionCuts, scaled = False):
     ### Replacing '0' with 'Background' and '1' with 'Signal' in the 'isOrigin' column
     dataFrame['isSignal'].replace(to_replace = [0, 1], value = ['Background', 'Signal'], inplace = True)
-    print(dataFrame['isSignal'])
-    featureLogX = []#'fatjet_D2', 'fatjet_m', 'fatjet_pt', 'lep1_pt', 'lep2_pt', 'Zcand_pt']
+    dataFrameSignal = dataFrame[dataFrame['isSignal'] == 'Signal']
+    dataFrameBkg = dataFrame[dataFrame['isSignal'] == 'Background']
+    print(list(set(list(dataFrameBkg['origin']))))
+    if 'VBF' in signal:
+        signalLabel = signal.replace('VBF', '')
+        dataFrame['origin'].replace(to_replace = [signal], value = [signalLabel], inplace = True)
+    else:
+        signalLabel = signal
+    featureLogX = ['fatjet_D2', 'fatjet_m', 'fatjet_pt', 'lep1_pt', 'lep2_pt', 'Zcand_pt']
     legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + ', '.join(background)
     if (preselectionCuts != 'none'):
         legendText += '\npreselection cuts: ' + preselectionCuts
     for feature in dataFrame.columns:
-        #if feature == 'train_weight' or feature == 'weight' or feature == 'isSignal':
-        if feature not in InputFeatures and feature != 'origin':
+        if feature not in InputFeatures and feature != 'origin' and feature != 'weight' and feature != 'DNNScore_t':
             continue
-        statType = 'probability'
-        hueType = dataFrame['isSignal']
+        print(feature)
+        statType = 'density'#'probability'
+        #hueType = dataFrame['isSignal']
+        hueType = dataFrameBkg['origin']#dataFrame['isSignal']
         legendBool = True
-        if feature == 'origin':
+        if feature == 'origin' or feature == 'weight':
             statType = 'count'
             hueType = dataFrame['origin']
             legendBool = False
-        if fileNameBuildDataSet in sys.argv[0]:
-            ax = seaborn.histplot(data = dataFrame[feature], x = dataFrame[feature], hue = hueType, common_norm = False, stat = statType, legend = legendBool)#, multiple = 'stack')
-        elif fileNameSplitDataSet in sys.argv[0]:
-            contents, bins, _ = plt.hist(dataFrame[feature], weights = dataFrame['train_weight'], bins = 100, label = legendText)
-        labelDict = {'lep1_E': r'lep$_1$ E [GeV]', 'lep1_m': r'lep$_1$ m [GeV]', 'lep1_pt': r'lep$_1$ p$_T$ [GeV]', 'lep1_eta': r'lep$_1$ $\eta$', 'lep1_phi': r'lep$_1$ $\phi$', 'lep2_E': r'lep$_2$ E [GeV]', 'lep2_m': r'lep$_2$ m [GeV]', 'lep2_pt': r'lep$_2$ p$_t$ [GeV]', 'lep2_eta': r'lep$_2$ $\eta$', 'lep2_phi': r'lep$_2$ $\phi$', 'fatjet_m': 'fatjet m [GeV]', 'fatjet_pt': r'fatjet p$_t$ [GeV]', 'fatjet_eta': r'fatjet $\eta$', 'fatjet_phi': r'fatjet $\phi$', 'fatjet_D2': r'fatjet D$_2$', 'Zcand_m': 'Zcand m [GeV]', 'Zcand_pt': r'Zcand p$_t$ [GeV]', 'X_boosted_m': 'X_boosted m [GeV]', 'mass': 'mass [GeV]', 'weight': 'weight', 'isSignal': 'isSignal', 'origin': 'origin', 'Wdijet_m': 'Wdijet m [GeV]', 'Wdijet_pt': 'Wdijet p$_T$ [GeV]', 'Wdijet_eta': 'Wdijet $\eta$', 'Wdijet_phi': 'Wdijet $\phi$', 'Zdijet_m': 'Zdijet m [GeV]', 'Zdijet_pt': 'Zdijet p$_T$ [GeV]', 'Zdijet_eta': 'Zdijet $\eta$', 'Zdijet_phi': 'Zdijet $\phi$', 'sigWJ1_m': 'sigWJ1 m', 'sigWJ1_pt': 'sigWJ1 p$_T$', 'sigWJ1_eta': 'sigWJ1 $\eta$', 'sigWJ1_phi': 'sigWJ1 $\phi$', 'sigWJ2_m': 'sigWJ2 m', 'sigWJ2_pt': 'sigWJ2 p$_T$', 'sigWJ2_eta': 'sigWJ2 $\eta$', 'sigWJ2_phi': 'sigWJ2 $\phi$', 'sigZJ1_m': 'sigZJ1 m', 'sigZJ1_pt': 'sigZJ1 p$_T$', 'sigZJ1_eta': 'sigZJ1 $\eta$', 'sigZJ1_phi': 'sigZJ1 $\phi$', 'sigZJ2_m': 'sigZJ2 m', 'sigZJ2_pt': 'sigZJ2 p$_T$', 'sigZJ2_eta': 'sigZJ2 $\eta$', 'sigZJ2_phi': 'sigZJ2 $\phi$'}
+        binsDict = {'lep1_m': np.linspace(0, 0.12, 4), 'lep1_pt': np.linspace(0, 2000, 51), 'lep1_eta': np.linspace(-3, 3, 21), 'lep1_phi': np.linspace(-3.5, 3.5, 21), 'lep2_m': np.linspace(0, 0.12, 4), 'lep2_pt': np.linspace(0, 2000, 51), 'lep2_eta': np.linspace(-3, 3, 21), 'lep2_phi': np.linspace(-3.5, 3.5, 21), 'fatjet_m': np.linspace(0, 500, 51), 'fatjet_pt': np.linspace(0, 3000, 51), 'fatjet_eta': np.linspace(-3, 3, 21), 'fatjet_phi': np.linspace(-3.5, 3.5, 21), 'fatjet_D2': np.linspace(0, 15, 51), 'Zcand_m': np.linspace(60, 140, 21), 'Zcand_pt': np.linspace(0, 7000, 31), 'mass': 'auto', 'origin': 'auto', 'Zdijet_m': np.linspace(60, 140, 21), 'Zdijet_pt': 'auto', 'Zdijet_eta': np.linspace(-4, 4, 11), 'Zdijet_phi': np.linspace(-3.5, 3.5, 11), 'sigZJ1_m': np.linspace(0, 120, 21), 'sigZJ1_pt': np.linspace(0, 1000, 11), 'sigZJ1_eta': np.linspace(-3, 3, 21), 'sigZJ1_phi': np.linspace(-3.5, 3.5, 21), 'sigZJ2_m': np.linspace(0, 40, 16), 'sigZJ2_pt': np.linspace(0, 300, 11), 'sigZJ2_eta': np.linspace(-3, 3, 21), 'sigZJ2_phi': np.linspace(-3.5, 3.5, 21), 'DNNScore_W': np.linspace(0, 1, 21), 'DNNScore_Z': np.linspace(0, 1, 21), 'DNNScore_h': np.linspace(0, 1, 21), 'DNNScore_t': np.linspace(0, 1, 21), 'DNNScore_qg': np.linspace(0, 1, 21)} ## for Radion merged ggF
+        if feature not in binsDict:
+            binsDict[feature] = 'auto'
+        if feature == 'weight':
+            ax = seaborn.histplot(data = dataFrame['weight'], x = dataFrame['weight'], hue = dataFrame['isSignal'], common_norm = False, stat = statType, legend = True) 
+        else:
+            if scaled == False and feature in binsDict:
+                ax = seaborn.histplot(data = dataFrameBkg[feature], x = dataFrameBkg[feature], weights = dataFrameBkg['weight'], bins = np.array(binsDict[feature]), hue = hueType, legend = legendBool, multiple = 'stack', stat = 'probability', common_norm = True) #stat = statType
+            if scaled == False and feature not in binsDict:
+                ax = seaborn.histplot(data = dataFrame[feature], x = dataFrame[feature], weights = dataFrame['weight'], hue = hueType, common_norm = False, stat = statType, legend = legendBool)#, multiple = 'stack')
+            elif scaled == True:
+                ax = seaborn.histplot(data = dataFrame[feature], x = dataFrame[feature], weights = dataFrame['weight'], hue = hueType, common_norm = False, stat = statType, legend = legendBool)#, multiple = 'stack')
+        seaborn.histplot(data = dataFrameSignal[feature], x = dataFrameSignal[feature], weights = dataFrameSignal['weight'], bins = np.array(binsDict[feature]), element = 'step', fill = False, stat = 'probability')#, lw = 2, color = 'blue', label = signalLabel)#, density = True)
+        #elif fileNameSplitDataSet in sys.argv[0]:
+        ''' histogram of train_weight without bins is slow 
+            if feature == 'train_weight':
+                ax = seaborn.histplot(data = dataFrame['weight'], x = dataFrame['weight'], hue = dataFrame['isSignal'], common_norm = False, stat = 'count', legend = True)
+        '''
+        #    contents, bins, _ = plt.hist(dataFrame[feature], weights = dataFrame['train_weight'], bins = 100, label = legendText)
+        labelDict = {'lep1_E': r'lep$_1$ E [GeV]', 'lep1_m': r'lep$_1$ m [GeV]', 'lep1_pt': r'lep$_1$ p$_T$ [GeV]', 'lep1_eta': r'lep$_1$ $\eta$', 'lep1_phi': r'lep$_1$ $\phi$', 'lep2_E': r'lep$_2$ E [GeV]', 'lep2_m': r'lep$_2$ m [GeV]', 'lep2_pt': r'lep$_2$ p$_t$ [GeV]', 'lep2_eta': r'lep$_2$ $\eta$', 'lep2_phi': r'lep$_2$ $\phi$', 'fatjet_m': 'fat jet m [GeV]', 'fatjet_pt': r'fat jet p$_t$ [GeV]', 'fat jet_eta': r'fat jet $\eta$', 'fat jet_phi': r'fat jet $\phi$', 'fat jet_D2': r'fat jet D$_2$', 'Zcand_m': 'Z$_{cand}$ m [GeV]', 'Zcand_pt': r'Z$_{cand}$ p$_t$ [GeV]', 'X_boosted_m': 'X_boosted m [GeV]', 'mass': 'mass [GeV]', 'weight': 'weight', 'isSignal': 'isSignal', 'origin': 'origin', 'Wdijet_m': 'Wdijet m [GeV]', 'Wdijet_pt': 'Wdijet p$_T$ [GeV]', 'Wdijet_eta': 'Wdijet $\eta$', 'Wdijet_phi': 'Wdijet $\phi$', 'Zdijet_m': 'Z$_{dijet}$ m [GeV]', 'Zdijet_pt': 'Z$_{dijet}$ p$_T$ [GeV]', 'Zdijet_eta': 'Z$_{dijet}$ $\eta$', 'Zdijet_phi': 'Z$_{dijet}$ $\phi$', 'sigWJ1_m': 'sigWJ1 m', 'sigWJ1_pt': 'sigWJ1 p$_T$', 'sigWJ1_eta': 'sigWJ1 $\eta$', 'sigWJ1_phi': 'sigWJ1 $\phi$', 'sigWJ2_m': 'sigWJ2 m', 'sigWJ2_pt': 'sigWJ2 p$_T$', 'sigWJ2_eta': 'sigWJ2 $\eta$', 'sigWJ2_phi': 'sigWJ2 $\phi$', 'sigZJ1_m': 'sigZJ1 m', 'sigZJ1_pt': 'sigZJ1 p$_T$', 'sigZJ1_eta': 'sigZJ1 $\eta$', 'sigZJ1_phi': 'sigZJ1 $\phi$', 'sigZJ2_m': 'sigZJ2 m', 'sigZJ2_pt': 'sigZJ2 p$_T$', 'sigZJ2_eta': 'sigZJ2 $\eta$', 'sigZJ2_phi': 'sigZJ2 $\phi$'}
         '''
         if feature in featureLogX:
             ax.set_xscale('log')
@@ -359,20 +406,39 @@ def DrawVariablesHisto(dataFrame, InputFeatures, outputDir, outputFileCommonName
         #plt.figtext(0.77, 0.45, legendText, wrap = True, horizontalalignment = 'left')
         #plt.subplots_adjust(left = 0.1, right = 0.75)
         if feature in labelDict:
-            plt.xlabel(labelDict[feature])
+            if scaled == True:
+                plt.xlabel('scaled ' + labelDict[feature])
+            else:
+                plt.xlabel(labelDict[feature])
         else:
-            plt.xlabel(feature)
+            if scaled == True and feature != 'origin':
+                plt.xlabel('scaled ' + feature)
+            if scaled == False or feature == 'origin':
+                plt.xlabel(feature)
+        '''
         if fileNameSplitDataSet in sys.argv[0]:
             plt.ylabel('Weighted counts')
             plt.legend(handlelength = 0, handletextpad = 0, prop={'size': 15})
+        if fileNameBuildDataSet in sys.argv[0]:
+            plt.ylabel('Weighted probability (MC weights)')
+            if feature == 'weight':
+                plt.ylabel('Counts')
+        '''
+        plt.ylabel('Weighted probability (MC weights)')                                                                                                           
+        if feature == 'weight':
+            plt.ylabel('Counts')
+        #plt.legend(handlelength = 0, handletextpad = 0, prop={'size': 15})
         if feature == 'origin':
             plt.yscale('log')
+        plt.title('SRs + ZCRs, ' + signalLabel + ', ' + analysis + ', ' + channel)
         pltName = '/Histo_' + feature + '_' + outputFileCommonName + '.png'
         plt.tight_layout()
         plt.savefig(outputDir + pltName)
         print(Fore.GREEN + 'Saved ' + outputDir + pltName)
         plt.clf()
     dataFrame['isSignal'].replace(to_replace = ['Background', 'Signal'], value = [0, 1], inplace = True)
+    if 'VBF' in signal:
+        dataFrame['origin'].replace(to_replace = [signalLabel], value = [signal], inplace = True)
     plt.close()
     #plt.subplots_adjust(left = 0.15, right = 0.95)
     return
@@ -384,8 +450,6 @@ def ComputeTrainWeights(dataSetSignal, dataSetBackground, massesSignalList, outp
     for signalMass in massesSignalList:
         ### Number of signals with each mass value
         numbersDict[signalMass] = dataSetSignal[dataSetSignal['mass'] == signalMass].shape[0]
-        print(Fore.BLUE + 'Number of signal events with mass ' + str(signalMass) + ' GeV: ' + str(numbersDict[signalMass]))
-        logString += '\nNumber of signal events with mass ' + str(signalMass) + ' GeV: ' + str(numbersDict[signalMass])
 
     ### Minimum number of signals with the same mass
     #minNumber = min(numbersDict.values())
@@ -426,7 +490,7 @@ def ComputeTrainWeights(dataSetSignal, dataSetBackground, massesSignalList, outp
         pltName = outputDir + '/WeightedEvents_' + fileCommonName + '.png'
         plt.savefig(pltName)
         print(Fore.GREEN + 'Saved ' + pltName)
-        logString += '\nSaved ' + pltName
+        logString = '\nSaved ' + pltName
         plt.clf()
         plt.close()
     return dataSetSignal, dataSetBackground, logString
@@ -444,6 +508,8 @@ def ScalingFeatures(dataTrain, dataTest, InputFeatures, outputDir):
     variablesFile.write("{\n")
     variablesFile.write("  \"inputs\": [\n")
     for feature in InputFeatures:
+        if 'DNN' in feature:
+            continue
         cumulativeSum = 0
         print('Scaling ' + feature)
         dataTrainCopy = dataTrainCopy.sort_values(by = [feature])
@@ -476,7 +542,6 @@ def ScalingFeatures(dataTrain, dataTest, InputFeatures, outputDir):
         variablesFile.write("      \"offset\": %lf,\n" % median) # EJS 2021-05-27: I have compelling reasons to believe this should be -mu
         variablesFile.write("      \"scale\": %lf\n" % iqr) # EJS 2021-05-27: I have compelling reasons to believe this should be 1/sigma                            
         variablesFile.write("    }")
-        #if feature != dataTrain.columns[len(dataTrain.columns) - 1]:
         if feature != InputFeatures[len(InputFeatures) - 1]:
             variablesFile.write(",\n")
         else:
@@ -498,19 +563,19 @@ import tensorflow as tf
 
 def BuildDNN(N_input, nodesNumber, layersNumber, dropout):
     model = Sequential()
-    model.add(Dense(units = nodesNumber, input_dim = N_input))
-    model.add(Activation('relu'))
+    model.add(Dense(units = nodesNumber, input_dim = N_input, activation = 'relu'))
+    #model.add(Activation('relu'))
     if dropout > 0:
         model.add(Dropout(dropout))
     for i in range(0, layersNumber):
-        model.add(Dense(nodesNumber))
-        model.add(Activation('relu'))
+        model.add(Dense(nodesNumber, activation = 'relu'))
+    #    model.add(Activation('relu'))
         model.add(Dropout(dropout))
     model.add(Dense(1, activation = 'sigmoid'))
     #model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', metrics = ['accuracy'])
     Loss = 'binary_crossentropy'
     Metrics = ['accuracy']
-    learningRate = 0.0003 #0.001
+    learningRate = 0.0001#0.001#0.0003 #0.001
     Optimizer = tf.keras.optimizers.Adam(learning_rate = learningRate) #Adam
     return model, Loss, Metrics, learningRate, Optimizer
 
@@ -583,9 +648,10 @@ def SaveFeatureScaling(outputDir, X_input):
 def SaveModel(model, outputDir, NN):
     SaveArchAndWeights(model, outputDir)
     variablesFileName = '/variables.json'
-    previousDir = outputDir.replace(NN, '')
+    #previousDir = outputDir.replace('loose' + NN, '') ###########aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    previousDir = outputDir.replace(NN, '') ###########aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     print(previousDir)
-    shutil.copyfile(previousDir + variablesFileName, outputDir + variablesFileName)
+    #shutil.copyfile(previousDir + variablesFileName, outputDir + variablesFileName)
 
 '''
 import matplotlib
@@ -1139,6 +1205,232 @@ def defineBins(regime):
     return bins
 
 
+def defineFixBins(lowerEdge, upperEdge, percLeft, percRight, mass):
+    Bins2 = np.linspace(percLeft, percRight, 8)
+    '''
+    if mass == 500:
+        Bins1 = np.linspace(lowerEdge, percRight, 8)
+        Bins2 = np.array([])
+        Bins3 = np.linspace(percRight, upperEdge, 11)
+    if mass == 600 or mass == 700 or mass == 800:
+        Bins1 = np.linspace(lowerEdge, percLeft, 2)
+        Bins3 = np.linspace(percRight, upperEdge, 10)        
+    if mass == 1000 or mass == 1200:
+        Bins1 = np.linspace(lowerEdge, percLeft, 3)
+        Bins3 = np.linspace(percRight, upperEdge, 9)
+    if mass == 1400 or mass == 1500 or mass == 1600 or mass == 1800 or mass == 2000:
+        Bins1 = np.linspace(lowerEdge, percLeft, 4)
+        Bins3 = np.linspace(percRight, upperEdge, 8)
+    if mass == 2400 or mass == 2600:
+        Bins1 = np.linspace(lowerEdge, percLeft, 5)
+        Bins3 = np.linspace(percRight, upperEdge, 7)
+    if mass == 3000:
+        Bins1 = np.linspace(lowerEdge, percLeft, 9)
+        Bins3 = np.linspace(percRight, upperEdge, 3)
+    if mass == 3500:
+        Bins1 = np.linspace(lowerEdge, percLeft, 10)
+        Bins3 = np.linspace(percRight, upperEdge, 2)
+    if mass == 4000:
+        Bins1 = np.linspace(lowerEdge, percRight, 11)
+        Bins2 = np.array([])
+        Bins3 = np.linspace(percRight, upperEdge, 8)
+    Bins = np.array([])
+    Bins = np.append(Bins, Bins1)
+    Bins = np.append(Bins, Bins2)
+    Bins = np.append(Bins, Bins3)
+    Bins = np.sort(np.array(list(set(Bins))))
+    print(Bins)
+    binPercLeft = np.digitize(percLeft, Bins)
+    binPercRight = np.digitize(percRight, Bins)
+    '''
+    Bins = np.linspace(percLeft, percRight, 8)
+    return Bins#, binPercLeft, binPercRight
+
+def sortColumns(values, weights, Reverse = False):
+    zipped_lists = zip(list(values), list(weights))
+    sorted_zipped_lists = sorted(zipped_lists, reverse = Reverse)
+    sortedValues = [value for value, _ in sorted_zipped_lists]
+    sortedWeights = [weights for _, weights in sorted_zipped_lists]
+    return sortedValues, sortedWeights
+
+import math
+def defineVariableBins(bkgEvents, weightsBkgEvents, lowerMass, upperMass, resolutionRangeLeft, resolutionRangeRight, feature, nBinsMass = None, bkgEventsInResolution= None):
+    if feature == 'Scores':
+        bkgEvents, weightsBkgEvents = sortColumns(bkgEvents, weightsBkgEvents, True)
+    bkgErrorSquared = 0
+    resolution = (resolutionRangeRight - resolutionRangeLeft) / 6
+    print('Resolution: ' + str(resolution))
+    if feature == 'InvariantMass':
+        #leftEdge = lowerMass
+        leftEdge = resolutionRangeLeft
+        #Bins = np.array([resolutionRangeLeft])
+        Bins = np.array([leftEdge])
+        bkgMassEventsInResolution = 0
+    elif feature == 'Scores':
+        leftEdge = upperMass
+        Bins = np.array([leftEdge])
+        bkgScoresEventsInResolution = 0
+    
+    weightsSum = 0.
+    bkgUncertainty = 0.7
+    weightsSumSquared = 0.
+
+    bkgEventsResolutionArray = []
+    weightsBkgEventsResolutionArray = []
+    for bkg, weight in zip(bkgEvents, weightsBkgEvents):
+        if bkg >= resolutionRangeLeft and bkg <= resolutionRangeRight:
+        #if bkg >= lowerMass and bkg <= upperMass:
+            bkgEventsResolutionArray.insert(len(bkgEventsResolutionArray), bkg)
+            weightsBkgEventsResolutionArray.insert(len(weightsBkgEventsResolutionArray), weight)
+    if feature == 'InvariantMass':
+        bkgMassEventsInResolution = sum(weightsBkgEventsResolutionArray)
+        print('# weighted bkg events in resolution range ' + str(bkgMassEventsInResolution))
+        print('# raw bkg events in resolution range:', len(bkgEventsResolutionArray))
+    elif feature == 'Scores':
+        bkgScoresEventsInResolution = sum(weightsBkgEventsResolutionArray)
+
+    '''
+    for bkg, weight in zip(bkgEvents, weightsBkgEvents):
+    #for bkg, weight in zip(bkgEventsResolutionArray, weightsBkgEventsResolutionArray):
+        weightsSum += weight# * weight
+        if weightsSum <= 0:
+            continue
+        bkgError = 1 / math.sqrt(weightsSum)
+        if feature == 'InvariantMass':
+            
+            if bkg >= resolutionRangeLeft and bkg <= resolutionRangeRight:
+                bkgMassEventsInResolution += weight ### non posso metterlo qui se ho il continue prima? 
+                #print(bkgMassEventsInResolution)
+            
+            if bkg >= resolutionRangeLeft and abs(bkg - leftEdge) >= resolution and bkgError <= bkgUncertainty and bkg <= resolutionRangeRight:# and bkg < upperMass: ## main
+                Bins = np.append(Bins, bkg)
+                print(Fore.RED + 'Found bin edgeeeeeeeeeeeeeeeeeeeeeeeeee: ' + str(bkg))
+                print('Left edge: ' + str(leftEdge))
+                print('Difference: ' + str(abs(bkg - leftEdge))) ###???
+                print('Error: ' + str(bkgError))
+                print('weightSum: ' + str(weightsSum))
+                print(Bins)
+                weightsSum = 0
+                leftEdge = bkg
+        elif feature == 'Scores':
+            if bkg >= resolutionRangeLeft and bkg <= resolutionRangeRight:
+                bkgScoresEventsInResolution += weight
+            
+    if feature == 'InvariantMass':
+        #Bins = np.append(Bins, upperMass)
+        Bins = np.append(Bins, resolutionRangeRight)
+        print('bins after resolutionRangeRight: ' + str(Bins))
+        #Bins = np.append(Bins, np.linspace(resolutionRangeRight, upperMass, 4))
+    elif feature == 'Scores':
+        #Bins = np.append(Bins, lowerMass)
+        #Bins = np.append(Bins, resolutionRangeLeft)
+        print(nBinsMass)
+        print(bkgScoresEventsInResolution)
+        print(bkgEventsInResolution)
+        nBins = round(nBinsMass * bkgScoresEventsInResolution / bkgEventsInResolution)
+        if nBins == 0:
+            nBins = 1
+        print(nBins)
+        Bins = np.linspace(resolutionRangeLeft, resolutionRangeRight, nBins + 1)
+    Bins = np.sort(Bins)
+        #Bins = np.append(Bins, np.linspace(lowerMass, resolutionRangeLeft, 11))
+        #Bins = np.sort(np.array(list(set(list(Bins)))))
+    '''
+
+    if feature == 'InvariantMass':# or feature == 'Scores':
+        for bkg, weight in zip(bkgEventsResolutionArray, weightsBkgEventsResolutionArray):
+            #print('bkg:', bkg)
+            #print('weight:', weight)
+            #weightsSum += weight --> eventi bkg attesi secondo il MC che nei dati fluttuerà come sqrt(weightsSum) 
+            weightsSumSquared += weight * weight # --> errore sulla predizione MC sul numero di eventi 
+            weightsSum += weight
+            if weightsSum <= 0:
+                continue
+            #bkgError = 1 / math.sqrt(weightsSum)        
+            relativeBkgError = (math.sqrt(weightsSumSquared)) / weightsSum
+
+            ''' ## Rob
+            sumWeightsSquared = 0.
+            sumWeightsSquared += weight * weight
+            if weightsSum <= 0:
+                continue
+            relativeBkgError = 1 / math.sqrt(weightsSum)
+            '''
+
+            #if bkg >= resolutionRangeLeft and abs(bkg - leftEdge) >= resolution and bkgError <= bkgUncertainty and bkg <= resolutionRangeRight:# and bkg < upperMass: ## main
+            if (bkg - leftEdge) >= resolution and relativeBkgError <= bkgUncertainty:
+                Bins = np.append(Bins, bkg)
+                print('Left edge: ' + str(leftEdge))
+                print('Difference: ' + str(abs(bkg - leftEdge))) ###???
+                print('Error: ' + str(relativeBkgError))
+                print('weightSum: ' + str(weightsSum))
+                print(Bins)
+                weightsSum = 0
+                weightsSumSquared = 0
+                leftEdge = bkg
+        Bins = np.append(Bins, resolutionRangeRight)
+        print(Fore.RED + 'Bins: ' + str(Bins))
+        return Bins, bkgMassEventsInResolution
+
+
+    elif feature == 'Scores':
+        print('nBinsMass: ', nBinsMass)
+        print('bkgScoresEventsInResolution:', bkgScoresEventsInResolution)
+        print('bkgEventsInResolution:', bkgEventsInResolution)
+        if bkgEventsInResolution <= 0 or bkgScoresEventsInResolution <= 0:
+            nBins = 1
+        else:
+            nBins = round(nBinsMass * bkgScoresEventsInResolution / bkgEventsInResolution)
+            if nBins == 0:
+                nBins = 1
+        print('nBins:', nBins)
+        Bins = np.linspace(resolutionRangeLeft, resolutionRangeRight, nBins + 1)
+        print(Fore.RED + 'Bins: ' + str(Bins))
+        return(Bins)
+
+    '''
+    #Bins = np.sort(Bins)
+    #print(Bins)
+    if feature == 'InvariantMass':
+        Bins = np.append(Bins, upperMass)
+        return Bins, bkgMassEventsInResolution
+    else:
+        Bins = np.append(Bins, 0)
+        Bins = np.sort(Bins)
+        return Bins
+    '''
+def defineVariableBinsOld(bkgEvents, weightsBkgEvents, lowerMass, upperMass, resolutionRangeLeft, resolutionRangeRight):
+    resolution = resolutionRangeRight - resolutionRangeLeft
+    zipped_lists = zip(list(bkgEvents), list(weightsBkgEvents))
+    print('sorting')
+    sorted_zipped_lists = sorted(zipped_lists)
+    print('done sorting')
+    bkgErrorSquared = 0
+    #Bins1 = np.linspace(lowerMass, resolutionRangeLeft, 6)
+    #Bins = np.array([lowerMass, resolutionRangeLeft])
+    leftEdge = lowerMass
+    Bins = np.array([lowerMass])
+    '''
+    for bkg, weight in zip(valuesSorted, weightsSorted):
+        bkgErrorSquared += weight ** 2
+        print(str(bkg - leftEdge) + ' --- ' + str(bkgErrorSquared))
+    '''
+    for bkg, weight in sorted_zipped_lists:
+        bkgErrorSquared += weight ** 2
+        #if (bkg - leftEdge) >= resolution and bkgErrorSquared <= 0.5 ** 2 and bkg <= upperMass: ### TODO check the last end with high mass
+        #if (bkg - leftEdge) >= resolution and bkgErrorSquared <= 0.7 ** 2 and bkg <= resolutionRangeRight: ### TODO check the last end with high mass
+        if (bkg - leftEdge) >= resolution and bkgErrorSquared <= 0.7 ** 2 and bkg <= upperMass:
+            #print(Fore.RED + 'Found bin')
+            Bins = np.append(Bins, bkg)
+            bkgErrorSquared = 0
+            leftEdge = bkg
+    Bins = np.append(Bins, upperMass)
+    #Bins = np.append(Bins, np.linspace(resolutionRangeRight, upperMass, 4))
+    #print(Bins)
+    
+    return Bins
+
+
 ### Copmuting weighted F1 score ---> WRONG!!!
 from tensorflow.keras import backend as K
 def computeWeightedMetrics(y_true, y_pred):
@@ -1175,3 +1467,152 @@ def computeWeightedMetrics(y_true, y_pred):
 def f1_score(y_true, y_pred):
     precision, recall = computeWeightedMetrics(y_true, y_pred)
     return 2 * ((precision * recall) / (precision + recall + K.epsilon()))
+
+def weighted_percentileOld(values, weights, percentileLeft, percentileRight = 100): ### TODO BETTER! USING ZIP TO SORT
+    valuesList = list(values)
+    valuesCopy = values.copy()
+    valuesSorted = np.sort(valuesCopy)
+    weightsSorted = np.array([])
+    for value in valuesSorted:
+        valueIndex = valuesList.index(value)
+        weightsSorted = np.append(weightsSorted, weights.iloc[valueIndex])        
+    sumWeights = weights.sum()
+    areaLeft = sumWeights * percentileLeft / 100
+    areaRight = sumWeights * percentileRight / 100
+    cumulativeSum = 0
+    resolutionSum = 0
+    for index in range(len(weightsSorted)):
+        #cumulativeSum += weightsSorted[index]
+        if cumulativeSum <= areaLeft:
+            cumulativeSum += weightsSorted[index]
+            percentileLeftIndex = index
+        if resolutionSum <= 17.5 * sumWeights / 100:
+            resolutionSum += weightsSorted[index]
+            resolutionRangeLeft = index
+        if percentileRight != 100 and resolutionSum >= (16 * sumWeights / 100) and resolutionSum <= (84 * sumWeights / 100):
+            resolutionRangeRight = index
+            resolutionSum += weightsSorted[index]
+        if percentileRight != 100 and cumulativeSum >= areaLeft and cumulativeSum <= areaRight:
+            cumulativeSum += weightsSorted[index]
+            percentileRightIndex = index
+        #else:
+        #    break
+
+    percentileXleft = valuesSorted[percentileLeftIndex]
+    resolutionXleft = valuesSorted[resolutionRangeLeft]
+    if percentileRight != 100:
+        percentileXright = valuesSorted[percentileRightIndex]
+        resolutionXright = valuesSorted[resolutionRangeRight]
+    else:
+        percentileXright = None
+        resolutionXright = 1
+    #print('Area left:', areaLeft)
+    resolution = resolutionXright - resolutionXleft
+    print('resolutionLeft:', resolutionXleft)
+    print('resolutionRight:', resolutionXright)
+    #print(resolution)
+    return percentileXleft, percentileXright, resolutionXleft, resolutionXright
+
+def weighted_percentile(values, weights, feature):
+    sortedValues, sortedWeights = sortColumns(values, weights)
+    sumWeights = np.array(sortedWeights).sum()
+    #print('sumWeights:', sumWeights)
+    resolutionSum = 0
+    for (value, weight) in zip(sortedValues, sortedWeights):
+        resolutionSum += weight
+        #print('resolutionSum:', resolutionSum)
+        if resolutionSum <= (0.5 * sumWeights): ## 0.16
+            median = value
+        if feature == 'InvariantMass' and resolutionSum <= (0.025 * sumWeights):
+            resolutionRangeLeft = value
+        if feature == 'InvariantMass' and resolutionSum > (0.5 * sumWeights) and resolutionSum <= (0.975 * sumWeights):
+            resolutionRangeRight = value
+        if feature == 'Scores' and resolutionSum <= (0.05 * sumWeights): ## 0.32
+            resolutionRangeLeft = value
+    if feature == 'Scores':
+        resolutionRangeRight = 1.
+    '''
+    if (median - sortedValues[0]) > (sortedValues[len(sortedValues) - 1] - median):
+        diff = median - sortedValues[0]
+    elif (median - sortedValues[0]) < (sortedValues[len(sortedValues) - 1] - median):
+        diff = sortedValues[len(sortedValues) - 1] - median
+    diff = 0
+    '''
+
+    print('resolutionLeft:', resolutionRangeLeft)
+    print('resolutionRight:', resolutionRangeRight)
+    print('median:', median)
+    return resolutionRangeLeft, resolutionRangeRight#, diff
+
+def defineBinsNew(hist_signal_norm, signalMCweightsMass):
+    sortedValues, sortedWeights = sortColumns(hist_signal_norm, signalMCweightsMass, True)
+    sumWeights = np.array(sortedWeights).sum()
+    cumulativeSum = 0.
+    #percArray = np.array([0.3, 0.2, 0.2, 0.1, 0.1]) * sumWeights
+    percArray = np.full(0.05, 20)# * sumWeights
+    print(percArray)
+    exit()
+    print(sumWeights)
+    print(percArray)
+    iPerc = 0
+    Bins = np.array([1.])
+    for (value, weight) in zip(sortedValues, sortedWeights):
+        cumulativeSum += weight
+        if cumulativeSum <= percArray[iPerc]:
+            binEdge = value
+        else:
+            Bins = np.append(Bins, binEdge)
+            iPerc += 1
+            cumulativeSum = 0.
+        if iPerc == len(percArray):
+            break
+    Bins = np.append(Bins, 0.)
+    Bins = np.sort(Bins)
+    return Bins
+
+import json
+def scaleVariables(modelDir, dataFrameSignal, dataFrameBkg, inputFeatures, outputDir):
+    variablesFileName = 'variables.json'
+    variablesFile = modelDir + variablesFileName 
+    print(Fore.GREEN + 'Loading ' + variablesFile)
+    jsonFile = open(variablesFile, 'r')
+    values = json.load(jsonFile)
+    for field in values['inputs']:
+        feature = field['name']
+        if feature not in inputFeatures:
+            continue
+        print('Scaling ' + feature)
+        offset = field['offset']
+        scale = field['scale']
+        dataFrameSignal[feature] = (dataFrameSignal[feature] - offset) / scale
+        if feature != 'mass':
+            dataFrameBkg[feature] = (dataFrameBkg[feature] - offset) / scale
+    jsonFile.close()
+    shutil.copyfile(variablesFile, outputDir + variablesFileName)
+    print(Fore.GREEN + 'Copied variables file to ' + outputDir + variablesFileName)
+    return dataFrameSignal, dataFrameBkg
+
+from keras.utils.vis_utils import plot_model
+def loadModelAndWeights(modelDir, outputDir):
+    from keras.models import model_from_json
+    architectureFileName = 'architecture.json'
+    architectureFile = modelDir + architectureFileName
+    with open(architectureFile, 'r') as json_file:
+        print(Fore.GREEN + 'Loading ' + architectureFile)
+        model = model_from_json(''.join(json_file.readlines()))
+    shutil.copyfile(architectureFile, outputDir + architectureFileName)
+    print(Fore.GREEN + 'Copied architecture file to ' + outputDir + architectureFileName)
+    ### Plotting and saving the model
+    plot_model(model, to_file = outputDir + 'loadedModel.png', show_shapes = True, show_layer_names = True)
+    print(Fore.GREEN + 'Saved ' + outputDir + 'loadedModel.png')
+    ### Loading weights into the model
+    weightsFileName = 'weights.h5'
+    weightsFile = modelDir + weightsFileName
+    #weightsFile = modelDir + preselectionCuts + '/weights.h5'
+    print(Fore.GREEN + 'Loading ' + weightsFile)
+    model.load_weights(weightsFile)
+    shutil.copyfile(weightsFile, outputDir + weightsFileName)
+    print(Fore.GREEN + 'Copied weights file to ' + outputDir + weightsFileName)
+    batchSize = 2048
+    #print(model.summary())
+    return model, batchSize
