@@ -1,4 +1,8 @@
 from Functions import *
+from keras.utils.vis_utils import plot_model
+import eli5
+from eli5.permutation_importance import get_score_importances
+
 ### Setting a seed for reproducibility
 #tf.random.set_seed(1234)
 
@@ -11,41 +15,55 @@ patienceValue = 5
 ### Reading the command line
 tag, jetCollection, analysis, channel, preselectionCuts, background, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, testMass, doTrain, doTest, loop, hpOptimization, drawPlots = ReadArgParser()
 
+drawPlots = True
 originsBkgTest = list(background.split('_'))
 
 ### Reading the configuration file
-ntuplePath, dfPath, InputFeatures = ReadConfig(tag, analysis, jetCollection)
-dfPath += analysis + '/' + channel + '/' + signal + '/' + background + '_fullStat/'
-print(Fore.GREEN + 'Input files directory: ' + dfPath)
-outputFileCommonName = jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + signal + '_' + background + '_' + NN
+ntuplePath, dfPath, InputFeatures = ReadConfig(tag, analysis, jetCollection, signal)
+#inputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/ggFVBF' + '/' + signal + '/' + background + '/'# + 'tmp/' # + '_fullStat/'
+#inputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + signal + '/' + background + '/'# + 'tmp/' # + '_fullStat/'
+inputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + signal + '/' + background + '/'# + 'tmp/' # + '_fullStat/'
+#inputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + signal + '/' + background + '/' + 'ggFsameStatAsVBF/'# + 'tmp/' # + '_fullStat/'
+print(Fore.GREEN + 'Input files directory: ' + inputDir)
+outputFileCommonName = NN + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + signal + '_' + background
 
 ### Creating the output directory and the logFile
-outputDir = dfPath + NN # + '_halfStat'
+outputDir = inputDir + NN# + '_3'# + '/withDNNscore'# + '/test1'# + '/3layers'#'/ggFsameStatAsVBF'# + '/withDNNscore' #'/DNNScore_Z'# + '/' + preselectionCuts # + '_halfStat'
 print(format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
 
 logFileName = outputDir + '/logFile_' + outputFileCommonName + '.txt'
 logFile = open(logFileName, 'w')
 logInfo = ''
-logString = WriteLogFile(tag, ntuplePath, InputFeatures, dfPath, hpOptimization, doTrain, doTest, validationFraction, batchSize, patienceValue)
+logString = WriteLogFile(tag, ntuplePath, InputFeatures, inputDir, hpOptimization, doTrain, doTest, validationFraction, batchSize, patienceValue)
 logFile.write(logString)
 logInfo += logString
 
 ### Loading input data
-data_train, data_test, X_train, X_test, y_train, y_test, w_train, w_test = LoadData(dfPath, tag, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures)
-
+data_train, data_test, X_train, X_test, y_train, y_test, w_train, w_test = LoadData(inputDir, tag, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures)
+'''
+### to make same stat as VBF
+data_train_signal = data_train[data_train['isSignal'] == 1]
+data_train_bkg = data_train[data_train['isSignal'] != 1]
+data_train_signal = data_train_signal[:87156]
+data_train_bkg = data_train_bkg[:35500]
+data_train = pd.concat((data_train_signal, data_train_bkg), ignore_index = True)
+data_train = ShufflingData(data_train)
+X_train = np.array(data_train[InputFeatures].values).astype(np.float32)
+y_train = np.array(data_train['isSignal'].values).astype(np.float32)
+'''
 ### Writing dataframes composition to the log file
-logString = '\nNumber of train events: ' + str(len(X_train)) + ' (' + str(int(sum(y_train))) + ' signal and ' + str(int(len(y_train) - sum(y_train))) + ' background)' + '\nNumber of test events: ' + str(len(X_test)) + ' (' + str(int(sum(y_test))) + ' signal and ' + str(int(len(y_test) - sum(y_test))) + ' background)'
+logString = '\nNumber of train events: ' + str(len(X_train)) + ' (' + str(int(sum(y_train))) + ' signal and ' + str(int(len(y_train) - sum(y_train))) + ' background), with MC weights: ' + str(sum(data_train['weight'])) + ' (' + str(sum(data_train[data_train['isSignal'] == 1]['weight'])) + ' signal and ' + str(sum(data_train[data_train['isSignal'] == 0]['weight'])) + ' background)\nNumber of test events: ' + str(len(X_test)) + ' (' + str(int(sum(y_test))) + ' signal and ' + str(int(len(y_test) - sum(y_test))) + ' background), with MC weights: ' + str(sum(data_test['weight'])) + ' (' + str(sum(data_test[data_test['isSignal'] == 1]['weight'])) + ' signal and ' + str(sum(data_test[data_test['isSignal'] == 0]['weight'])) + ' background)'
 logFile.write(logString)
 logInfo += logString
 
-
 bkgRejFile = open(outputDir + '/BkgRejectionVsMass.txt', 'w')
 #bkgRejFile.write('Background rejection obtained using the version of the software 02-feb-2022, lepton masses as input feature, WP = 0.90, 0.94, 0.97, 0.99\n')
+'''
 bkgRej90File = open(outputDir + '/BkgRejectionVsMassWP90.txt', 'w')
 bkgRej94File = open(outputDir + '/BkgRejectionVsMassWP94.txt', 'w')
 bkgRej97File = open(outputDir + '/BkgRejectionVsMassWP97.txt', 'w')
 bkgRej99File = open(outputDir + '/BkgRejectionVsMassWP99.txt', 'w')
-
+'''
 
 bkgRej90 = []
 bkgRej94 = []
@@ -63,10 +81,10 @@ if hpOptimization:
 
     def buildOptimizedModel(hp):
         model = tf.keras.Sequential()
-        model.add(layers.Dense(units = hp.Int('units', min_value = 8, max_value = 128, step = 1), input_dim = len(InputFeatures), activation = 'relu'))
+        model.add(layers.Dense(units = hp.Int('units', min_value = 8, max_value = 200, step = 8), input_dim = len(InputFeatures), activation = 'relu'))
         model.add(tf.keras.layers.Dropout(hp.Float('dropout', 0, 0.3, step = 0.1)))
-        for iLayer in range(hp.Int('layers', 1, 6)):
-            model.add(tf.keras.layers.Dense(units = hp.Int('units_' + str(iLayer), 8, 128, step = 2), activation = 'relu'))
+        for iLayer in range(hp.Int('layers', 1, 5)):
+            model.add(tf.keras.layers.Dense(units = hp.Int('units_' + str(iLayer), 0, 5, step = 1), activation = 'relu'))
             model.add(tf.keras.layers.Dropout(hp.Float('dropout_' + str(iLayer), 0, 0.3, step = 0.1)))
         model.add(Dense(1, activation = 'sigmoid'))
         hp_lr = tf.keras.optimizers.schedules.ExponentialDecay(
@@ -81,12 +99,13 @@ if hpOptimization:
         else:
             raise
         model.compile(optimizer = optimizer, loss = 'binary_crossentropy', weighted_metrics = ['accuracy'])#, run_eagerly = True)
+        #plot_model(model, to_file='untrainedModel.png', show_shapes=True, show_layer_names=True)        
         return model
 
     tuner = RandomSearch(
         buildOptimizedModel,
         objective = keras_tuner.Objective('val_accuracy', direction = 'max'),
-        max_trials = 1,#00, 
+        max_trials = 300, 
         executions_per_trial = 1,
         directory = outputDir + '/tunerTrials/',  
         overwrite = True
@@ -119,11 +138,14 @@ if hpOptimization:
     logFile.write('\nOptimizer: ' + str(model.optimizer.get_config()))
     logFile.write('\n*******************************************************************************************')
 
+'''
+These dictionaries were created to evaluate the stability of the pDNN by making consecutive trainings and tests
+They are not needed when performing only one training. Since this is the usual case these and the other lines involving these dictionaries are commented out. 
 bkgRej90Dict = {}
 bkgRej94Dict = {}
 bkgRej97Dict = {}
 bkgRej99Dict = {}
-
+'''
 for iLoop in range(loop):
 
     #enablePrint()
@@ -162,7 +184,7 @@ for iLoop in range(loop):
             ### Building and compiling the PDNN
             model, Loss, Metrics, learningRate, Optimizer = BuildDNN(len(InputFeatures), numberOfNodes, numberOfLayers, dropout)
             model.compile(loss = Loss, optimizer = Optimizer, weighted_metrics = Metrics)
-            logString = '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of layers: ' + str(numberOfLayers) + '\nDropout: ' + str(dropout) + '\nLoss: ' + Loss + '\nOptimizer: ' + str(Optimizer) + '\nLearning rate: ' + str(learningRate) + '\nMetrics: ' + str(Metrics)
+            logString = '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of hidden layers: ' + str(numberOfLayers) + '\nDropout: ' + str(dropout) + '\nLoss: ' + Loss + '\nOptimizer: ' + str(Optimizer) + '\nLearning rate: ' + str(learningRate) + '\nMetrics: ' + str(Metrics)
             logFile.write(logString)
             logInfo += logString
 
@@ -172,6 +194,7 @@ for iLoop in range(loop):
 
         ### Saving to files
         SaveModel(model, outputDir, NN)
+        plot_model(model, to_file='trainedModel.png', show_shapes=True, show_layer_names=True)
 
     if doTest:
         ### Evaluating the performance of the PDNN on the test sample and writing results to the log file
@@ -188,7 +211,7 @@ for iLoop in range(loop):
 
     #if doTrain and doTest:
     ### Drawing accuracy and loss
-    if drawPlots:
+    if drawPlots and doTrain: ### THINK
         DrawLoss(modelMetricsHistory, testLoss, patienceValue, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName)
         DrawAccuracy(modelMetricsHistory, testAccuracy, patienceValue, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName)
 
@@ -196,6 +219,26 @@ for iLoop in range(loop):
         logFile.close()
         print(Fore.GREEN + 'Saved ' + logFileName)
 
+    ### Features ranking
+    def score(X, Y):
+        y_pred = model.predict(X)
+        fpr, tpr, thresholds = roc_curve(Y, y_pred)#, sample_weight = wMC_test_mass)
+        roc_auc = auc(fpr, tpr)
+        return roc_auc
+
+    
+
+    deltasDict = {}
+    '''
+    base_score, score_decreases = get_score_importances(score, X_test, y_test)
+    print('###### base_score ########')
+    print(base_score)
+    print('###### score_decreases ########')
+    print(score_decreases)
+    feature_importances = np.mean(score_decreases, axis = 0)
+    print('###### feature_importances ########')
+    print(feature_importances)
+    '''
     if doTest == False:
         exit()
         
@@ -218,6 +261,9 @@ for iLoop in range(loop):
 
     for unscaledMass in testMass:
 
+        if unscaledMass != 1000:# and unscaledMass != 600:
+            continue
+
         ### Checking whether there are test events with the selected mass
         if unscaledMass not in unscaledTestMassPointsList:
             print(Fore.RED + 'No test signal with mass ' + str(unscaledMass))
@@ -228,13 +274,13 @@ for iLoop in range(loop):
         print(format('Output directory: ' + Fore.GREEN + newOutputDir), checkCreateDir(newOutputDir))
         newLogFileName = newOutputDir + '/logFile_' + outputFileCommonName + '_' + str(unscaledMass) + '.txt'
         newLogFile = open(newLogFileName, 'w')
-
+        '''
         if (iLoop == 0 and loop > 1):
             bkgRej90Dict[unscaledMass] = []
             bkgRej94Dict[unscaledMass] = []
             bkgRej97Dict[unscaledMass] = []
             bkgRej99Dict[unscaledMass] = []
-
+        '''
         ### Selecting only test signal events with the same mass value and saving them as an array
         data_test_signal_mass = data_test_signal[data_test_signal['unscaledMass'] == unscaledMass]
         scaledMass = list(set(list(data_test_signal_mass['mass'])))[0]
@@ -246,6 +292,43 @@ for iLoop in range(loop):
         data_test_bkg = data_test_bkg.assign(mass = np.full(len(data_test_bkg), scaledMass))
         X_test_bkg = np.asarray(data_test_bkg[InputFeatures].values).astype(np.float32)
         wMC_test_bkg = np.array(data_test_bkg['weight'])
+
+        X_test_mass = np.concatenate((X_test_signal_mass, X_test_bkg))
+        y_test_mass = np.concatenate((np.ones(len(X_test_signal_mass)), np.zeros(len(X_test_bkg)))) ### REDEFINED BELOW!!
+
+        nIter = 100
+        base_score, score_decreases = get_score_importances(score, X_test_mass, y_test_mass, n_iter = nIter) ### increase n_iter 
+        print('###### base_score ########')
+        print(base_score)
+        print('###### score_decreases ########')
+        print(score_decreases)
+        feature_importances = np.mean(score_decreases, axis = 0)
+        print('###### mean score_decreases #######')
+        print(feature_importances)
+        relative_feature_importances = feature_importances / base_score
+        print('##### relative_feature_importances ######')
+        deltasDict[unscaledMass] = relative_feature_importances
+        print(deltasDict)
+        for iFeature in range(len(InputFeatures)):
+            feature = InputFeatures[iFeature]
+            print(feature)
+            histoValues = np.array([item[iFeature] for item in score_decreases])
+            print('##### histoValues #####')
+            print(histoValues)
+            histoValues = histoValues / base_score
+            print('##### histoValues / base_score #####')
+            print(histoValues)
+            legendText = 'Mean: ' + str(round(histoValues.mean(), 2)) + '\nstd: ' + str(round(histoValues.std(), 2)) + '\nEntries: ' + str(len(histoValues))
+            plt.hist(histoValues, label = legendText)
+            plt.xlabel('Relative AUC difference')
+            plt.title(feature + ' - ' + signal + ' (1 TeV) ' + analysis + ' ' + channel)
+            plt.savefig(outputDir + '/Histo_AUCdifference_' + feature + '_' + outputFileCommonName + '.png')
+            plt.clf()
+        continue 
+
+        
+
+
         
         ### Selecting train signal events with the same mass
         data_train_signal_mass = data_train_signal[data_train_signal['unscaledMass'] == unscaledMass]
@@ -265,7 +348,6 @@ for iLoop in range(loop):
         y_test_mass = np.concatenate((np.ones(len(yhat_test_signal_mass)), np.zeros(len(yhat_test_bkg_mass))))
         wMC_test_mass = np.concatenate((wMC_test_signal_mass, wMC_test_bkg))
 
-        
         TNR, FPR, FNR, TPR = DrawCM(yhat_test_mass, y_test_mass, wMC_test_mass, newOutputDir, unscaledMass, background, outputFileCommonName, jetCollection, analysis, channel, preselectionCuts, signal, drawPlots)
         newLogFile.write('\TNR (TN/N): ' + str(TNR) + '\nFPR (FP/N): ' + str(FPR) + '\FNR (FN/P): ' + str(FNR) + '\n TPR (TP/P): ' + str(TPR))
 
@@ -322,11 +404,43 @@ for iLoop in range(loop):
                 bkgRej99File.write(str(rejValue) + ' ')
             bkgRej99File.write('\n')
         '''
+
+    fig, ax1 = plt.subplots(figsize = (13, 13))
+    #ax.matshow(intersection_matrix, cmap=plt.cm.Blues)
+    xLabels = InputFeatures
+    yLabels = list(deltasDict.keys())
+    deltasList = []
+    for yLabel in yLabels:
+        aa = list(deltasDict[yLabel])
+        deltasList.append(aa)
+    print(deltasList)
+
+    im = ax1.matshow(deltasList)#, vmin = -1, vmax = 1)
+    plt.colorbar(im, ax = ax1)
+    plt.xticks(range(len(InputFeatures)), InputFeatures, rotation = 'vertical')
+    plt.yticks(range(len(yLabels)), yLabels)
+
+    #for i in xrange(15):
+    for i in range(len(xLabels)):
+        #for j in xrange(15):
+        for j in range(len(yLabels)):
+            massValue = yLabels[j]
+            #c = intersection_matrix[j,i]
+            c = deltasDict[massValue][i]
+            cDisplay = round(c, 4)
+            #cDisplay = "{:.1e}".format(c)
+            ax1.text(i, j, str(cDisplay), va='center', ha='center', fontsize = 8, color = 'r')
+            
+    plt.tight_layout()
+    plt.savefig(outputDir + '/featuresRanking_' + outputFileCommonName + '.png')
+    exit()
     if (len(testMass) > 1):
         DrawRejectionVsMass(testMass, WP, bkgRej90, bkgRej94, bkgRej97, bkgRej99, outputDir, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName) 
 
 bkgRejFile.close()
+'''
 bkgRej90File.close()
 bkgRej94File.close()
 bkgRej97File.close()
 bkgRej99File.close()
+'''

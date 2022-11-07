@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 #import shlex
 from colorama import init, Fore
 init(autoreset = True)
+import math
 
 #print(sys.executable, ' '.join(map(shlex.quote, sys.argv)))
 
@@ -27,7 +28,7 @@ tag, jetCollection, analysis, channel, preselectionCuts, signal, background, dra
 InputFeatures, dfPath, variablesToSave, backgroundsList = ReadConfig(tag, analysis, jetCollection, signal)
 
 ### Creating output directories and logFile
-tmpOutputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts
+tmpOutputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts# + '/ggFandVBF'# + '/ggFVBF'
 print(format('First output directory: ' + Fore.GREEN + tmpOutputDir), checkCreateDir(tmpOutputDir))
 tmpFileCommonName = tag + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts
 
@@ -61,7 +62,23 @@ print(dfPath)
 ### Creating empty signal and background dataframe 
 dataFrameSignal = []
 dataFrameBkg = []
+'''
+def computePx(ptArray, phi):
+    px = ptArray * np.cos(phi)
+    return px
 
+def computePy(ptArray, phi):
+    px = ptArray * np.sin(phi)
+    return px
+
+def computePz(ptArray, eta):
+    pz = ptArray * np.sinh(eta)
+    return pz
+
+def computeE(ptArray, etaArray, massArray):
+    e = np.sqrt((ptArray ** 2) * (1 + np.sinh(etaArray) ** 2) + (massArray ** 2))
+    return e
+'''
 for target in inputOrigins:
     fileName = tmpOutputDir + '/' + target + '_' + tmpFileCommonName + '.pkl'
 
@@ -80,15 +97,19 @@ for target in inputOrigins:
         ### Defining local dataframe (we might have found only one among many dataframes)
         partialDataFrameBkg = []
         for file in os.listdir(dfPath):
-            print(file)
             ### Loading input file
             if file.startswith(target) and file.endswith('.pkl'):
+                '''
+                if target != signal:
+                    continue
+                '''
                 print(Fore.GREEN + 'Loading ' + dfPath + file)
                 inputDf = pd.read_pickle(dfPath + file)
                 ### Selecting events according to merged/resolved regime and ggF/VBF channel
                 inputDf = SelectEvents(inputDf, channel, analysis, preselectionCuts, signal)
                 ### Creating new column in the dataframe with the origin
                 inputDf = inputDf.assign(origin = target)
+
                 ### Filling signal/background dataframes
                 if target == signal:
                     dataFrameSignal.append(inputDf)
@@ -98,11 +119,13 @@ for target in inputOrigins:
         if target == signal:
             dataFrameSignal = pd.concat(dataFrameSignal, ignore_index = True)
             dataFrameSignal.to_pickle(fileName)
+
         elif target != signal:
             partialDataFrameBkg = pd.concat(partialDataFrameBkg, ignore_index = True)
             partialDataFrameBkg.to_pickle(fileName)
             ### Appending the local background dataframe to the final one
             dataFrameBkg.append(partialDataFrameBkg)
+
         print(Fore.GREEN + 'Saved ' + fileName)
 
 ### Concatening the global background dataframe
@@ -146,12 +169,48 @@ dataFrame = pd.concat([dataFrameSignal, dataFrameBkg], ignore_index = True)
 ### Selecting in the dataframe only the variables relevant for the next steps
 dataFrame = dataFrame[variablesToSave]
 
-### Removing events with hight absoulte MC weights
+'''
+print(dataFrame)
+cosphi = np.cos(dataFrame['lep1_phi'])
+##################### 
+lep1_px_array = computePx(dataFrame['lep1_pt'], dataFrame['lep1_phi'])
+dataFrame = dataFrame.assign(lep1_px = lep1_px_array)
+lep2_px_array = computePx(dataFrame['lep2_pt'], dataFrame['lep2_phi'])
+dataFrame = dataFrame.assign(lep2_px = lep2_px_array)
+fatjet_px_array = computePx(dataFrame['fatjet_pt'], dataFrame['fatjet_phi'])
+dataFrame = dataFrame.assign(fatjet_px = fatjet_px_array)
+
+lep1_py_array = computePy(dataFrame['lep1_pt'], dataFrame['lep1_phi'])
+dataFrame = dataFrame.assign(lep1_py = lep1_py_array)
+lep2_py_array = computePy(dataFrame['lep2_pt'], dataFrame['lep2_phi'])
+dataFrame = dataFrame.assign(lep2_py = lep2_py_array)                
+fatjet_py_array = computePy(dataFrame['fatjet_pt'], dataFrame['fatjet_phi'])
+dataFrame = dataFrame.assign(fatjet_py = fatjet_py_array)                
+
+lep1_pz_array = computePz(dataFrame['lep1_pt'], dataFrame['lep1_eta'])
+dataFrame = dataFrame.assign(lep1_pz = lep1_pz_array)
+lep2_pz_array = computePz(dataFrame['lep2_pt'], dataFrame['lep2_eta'])
+dataFrame = dataFrame.assign(lep2_pz = lep2_pz_array)                
+fatjet_pz_array = computePz(dataFrame['fatjet_pt'], dataFrame['fatjet_eta'])
+dataFrame = dataFrame.assign(fatjet_pz = fatjet_pz_array)                
+
+lep1_e_array = computeE(dataFrame['lep1_pt'], dataFrame['lep1_eta'], dataFrame['mass'])
+dataFrame = dataFrame.assign(lep1_e = lep1_e_array)
+lep2_e_array = computeE(dataFrame['lep2_pt'], dataFrame['lep2_eta'], dataFrame['mass'])
+dataFrame = dataFrame.assign(lep2_e = lep2_e_array)
+fatjet_e_array = computeE(dataFrame['fatjet_pt'], dataFrame['fatjet_eta'], dataFrame['mass'])
+dataFrame = dataFrame.assign(fatjet_e = fatjet_e_array)
+#####################
+print(dataFrame)
+#exit()
+'''
+'''
+### Removing events with high absoulte MC weights
 meanWeight = dataFrame['weight'].mean()
 stdWeight = dataFrame['weight'].std()
 selection = 'abs(weight - ' + str(meanWeight) + ') <= 5 * ' + str(stdWeight)
 dataFrame = dataFrame.query(selection)
-
+'''
 ### Shuffling the dataframe
 dataFrame = ShufflingData(dataFrame)
 
@@ -159,7 +218,7 @@ dataFrame = ShufflingData(dataFrame)
 for origin in inputOrigins:
     logFile.write('\nNumber of ' + origin + ' events: ' + str(dataFrame[dataFrame['origin'] == origin].shape[0]) + ' (raw), ' + str(sum(dataFrame[dataFrame['origin'] == origin]['weight'])) +' (with MC weights)')
     print(Fore.BLUE + 'Number of ' + origin + ' events: ' + str(dataFrame[dataFrame['origin'] == origin].shape[0]) + ' (raw), ' + str(sum(dataFrame[dataFrame['origin'] == origin]['weight'])) +' (with MC weights)')
-    
+#exit()
 ### Saving the combined dataframe
 outputFileName = '/MixData_' + fileCommonName + '.pkl'
 dataFrame.to_pickle(outputDir + outputFileName)

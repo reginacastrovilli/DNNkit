@@ -27,11 +27,13 @@ dfPath, InputFeatures, signalsList, backgroundsList = ReadConfig(tag, analysis, 
 
 ### Loading input file
 inputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + signal + '/' + background
+#inputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + 'ggFandVBF/' + signal + '/' + background
 fileCommonName = tag + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + signal + '_' + background
+print(Fore.GREEN + 'Loading' + inputDir + '/MixData_' + fileCommonName + '.pkl')
 data = pd.read_pickle(inputDir + '/MixData_' + fileCommonName + '.pkl') 
 
 ### If not already existing, creating output directory
-outputDir = inputDir
+outputDir = inputDir# + '/ggFsameStatAsVBF'
 checkCreateDir(outputDir)
 fileCommonName += '_' + str(trainingFraction) + 't'
 
@@ -59,7 +61,40 @@ dataSetBackground = data_set[data_set['origin'] != signal]
 massesSignalList = sorted(list(set(list(dataSetSignal['mass']))))
 print(Fore.BLUE + 'Masses in the signal sample: ' + str(massesSignalList) + ' GeV (' + str(len(massesSignalList)) + ')')
 logFile.write('\nMasses in the signal sample: ' + str(massesSignalList) + ' GeV (' + str(len(massesSignalList)) + ')')
+'''
+statDict = {}
+statDict['Radion'] = {500: 2587, 600: 7075, 700: 10780, 800: 13074, 1000: 13241, 1200: 11704, 1400: 11451, 1500: 11811, 1600: 12185, 1800: 13458, 2000: 14873, 2400: 17913, 2600: 18750, 3000: 19480, 3500: 17941, 4000: 15948, 4500: 14542, 5000: 13232, 6000: 12604}
+statDict['RSG'] = {500: 1622, 600: 5964, 700: 5964, 800: 7282, 1000: 7329, 1200: 7208, 1400: 7431, 1500: 7549, 1600: 7620, 1800: 8410, 2000: 9452, 2400: 11098, 2600: 11505, 3000: 11699, 3500: 11033, 4000: 9492, 4500: 8321, 5000: 7532, 6000: 7532}
+statDict['HVTWZ'] = {500: 0, 600: 2735, 700: 4526, 800: 6452, 1000: 7293, 1200: 6853, 1400: 0, 1500: 6886, 1600: 0, 1800: 8544, 2000: 9401, 2400: 7708, 2600: 11763, 3000: 12711, 3500: 12100, 4000: 11888, 4500: 0, 5000: 0, 6000: 0}
+statBkgDict = {}
+statBkgDict['Radion'] = {'Zjets': 41611, 'Diboson': 2603, 'stop': 8, 'ttbar': 272, 'Wjets': 16} 
+statBkgDict['RSG'] = {'Zjets': 41292, 'Diboson': 2602, 'stop': 8, 'ttbar': 272, 'Wjets': 16} 
+statBkgDict['HVTWZ'] = {'Zjets': 41611, 'Diboson': 2603, 'stop': 8, 'ttbar': 272, 'Wjets': 16} 
 
+newDataSetSignal = []
+
+for mass in massesSignalList:
+    dataSetSignalMass = dataSetSignal[dataSetSignal['mass'] == mass]
+    if mass not in statDict[signal]:
+        continue
+    statMass = statDict[signal][mass]
+    dataSetSignalMass = dataSetSignalMass[:statMass]
+    newDataSetSignal.append(dataSetSignalMass)
+dataSetSignal = pd.concat(newDataSetSignal, ignore_index = True)
+dataSetSignal = ShufflingData(dataSetSignal)
+
+newDataSetBkg = []
+for bkg in backgroundsList:
+    dataSetBkgOrigin = dataSetBackground[dataSetBackground['origin'] == bkg]
+    statBkg = statBkgDict[signal][bkg]
+    dataSetBkgOrigin = dataSetBkgOrigin[:statBkg]
+    newDataSetBkg.append(dataSetBkgOrigin)
+dataSetBackground = pd.concat(newDataSetBkg, ignore_index = True)
+dataSetBackground = ShufflingData(dataSetBackground)
+
+print(dataSetSignal.shape)
+print(dataSetBackground.shape)
+'''
 ### Creating new column in the dataframes with train weight
 dataSetSignal, dataSetBackground, logString = ComputeTrainWeights(dataSetSignal, dataSetBackground, massesSignalList, outputDir, fileCommonName, jetCollection, analysis, channel, signal, backgroundLegend, preselectionCuts, drawPlots)
 if logString != '':
