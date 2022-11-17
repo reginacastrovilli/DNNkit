@@ -1,11 +1,11 @@
 # Assigning script names to variables
 fileNameSaveToPkl = 'saveToPkl.py'
 fileNameBuildDataSet = 'buildDataset.py'
-fileNameComputeSignificance = 'computeSignificance.py'#New.py' ##2
+fileNameComputeSignificance = 'computeSignificanceScores.py' #'computeSignificance.py'#New.py' ##2
 fileNameSplitDataSet = 'splitDataset.py'
 fileNameBuildDNN = 'buildDNN.py'
 #fileNameBuildPDNN = 'buildPDNNtuningHyp.py'
-fileNameBuildPDNN = 'buildPDNN.py'
+fileNameBuildPDNN = 'buildPDNN.py'#'buildPDNNscores.py'#'buildPDNN.py'
 fileName6 = 'tuningHyperparameters.py'
 fileNamePlots = 'tests/drawPlots.py'
 fileNameCreateScoresBranch = 'addScoreBranch.py'#'createScoresBranch.py'
@@ -26,19 +26,20 @@ def ReadArgParser():
     parser.add_argument('-t', '--TrainingFraction', help = 'Relative size of the training sample, between 0 and 1', default = 0.8)
     parser.add_argument('-p', '--PreselectionCuts', help = 'Preselection cut', type = str)
     parser.add_argument('-h', '--hpOptimization', help = 'If 1 hyperparameters optimization will be performed', default = 0)
-    parser.add_argument('-n', '--Nodes', help = 'Number of nodes of the (p)DNN, should always be >= nColumns and strictly positive', default = 128) #32
-    parser.add_argument('-l', '--Layers', help = 'Number of hidden layers of the (p)DNN', default = 4) #2
-    parser.add_argument('-e', '--Epochs', help = 'Number of epochs for the training', default = 200) #150
+    parser.add_argument('-n', '--Nodes', help = 'Number of nodes of the (p)DNN, should always be >= nColumns and strictly positive', default = 48)#128) #32
+    parser.add_argument('-l', '--Layers', help = 'Number of hidden layers of the (p)DNN', default = 2)#4) #2
+    parser.add_argument('-e', '--Epochs', help = 'Number of maximum epochs for the training', default = 200) #150
     parser.add_argument('-v', '--Validation', help = 'Fraction of the training data that will actually be used for validation', default = 0.2)
     parser.add_argument('-d', '--Dropout', help = 'Fraction of the neurons to drop during the training', default = 0.2)
     parser.add_argument('-m', '--Mass', help = 'Masses for the (P)DNN train/test (GeV, in quotation mark separated by a space)', default = 'all')
     parser.add_argument('--doTrain', help = 'If 1 the training will be performed, if 0 it won\'t', default = 1)
     parser.add_argument('--doTest', help = 'If 1 the test will be performed, if 0 it won\'t', default = 1)
-    parser.add_argument('--loop', help = 'How many times the code will be executed', default = 1)
+    parser.add_argument('--loop', help = 'How many times the code will be executed', default = 20)
     parser.add_argument('--tag', help = 'CxAOD tag', default = 'r33-24')
     parser.add_argument('--drawPlots', help = 'If 1 all plots will be saved', default = 0)
     parser.add_argument('-r', '--regime', help = '')
     parser.add_argument('-f', '--FeatureToPlot', help = 'Feature to plot to compute significance', default = 'score')
+    parser.add_argument('--trainSet', help = 'trainSet')
     
     args = parser.parse_args()
 
@@ -86,7 +87,7 @@ def ReadArgParser():
         parser.error(Fore.RED + 'Number of layers must be integer and strictly positive')
     numberOfEpochs = int(args.Epochs)
     if args.Epochs and numberOfEpochs < 1:
-        parser.error(Fore.RED + 'Number of epochs must be integer and strictly positive')
+        parser.error(Fore.RED + 'Number of maximum epochs must be integer and strictly positive')
     validationFraction = float(args.Validation)
     if args.Validation and (validationFraction < 0. or validationFraction > 1.):
         parser.error(Fore.RED + 'Validation fraction must be between 0 and 1')
@@ -101,6 +102,7 @@ def ReadArgParser():
     if args.doTest and (doTest != 0 and doTest != 1):
         parser.error(Fore.RED + 'doTest can only be 1 (to perform the test) or 0')
     loop = int(args.loop)
+    trainSet = args.trainSet
     tag = args.tag
     drawPlots = args.drawPlots
     regime = args.regime#.split()
@@ -136,12 +138,13 @@ def ReadArgParser():
         print(Fore.BLUE + '                     doTrain = ' + str(doTrain))
         print(Fore.BLUE + '                      doTest = ' + str(doTest))
         print(Fore.BLUE + '         validation fraction = ' + str(validationFraction))
-        print(Fore.BLUE + '            number of epochs = ' + str(numberOfEpochs))
+        print(Fore.BLUE + '    number of maximum epochs = ' + str(numberOfEpochs))
+        print(Fore.BLUE + '                    trainSet = ' + str(trainSet))
         if not hpOptimization:
             print(Fore.BLUE + '             number of nodes = ' + str(numberOfNodes))
             print(Fore.BLUE + '     number of hidden layers = ' + str(numberOfLayers))
             print(Fore.BLUE + '                     dropout = ' + str(dropout))
-        return tag, jetCollection, analysis, channel, preselectionCuts, backgroundString, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, mass, doTrain, doTest, loop, hpOptimization, drawPlots
+        return tag, jetCollection, analysis, channel, preselectionCuts, backgroundString, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, mass, doTrain, doTest, loop, hpOptimization, drawPlots, trainSet
 
     if fileNameComputeSignificance in sys.argv[0]:
         return tag, jetCollection, regime, preselectionCuts, signal, backgroundString
@@ -225,7 +228,7 @@ def enablePrint():
 import pandas as pd
 import numpy as np
 
-def LoadData(dfPath, tag, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures):
+def LoadData(dfPath, tag, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures, iLoop):
     fileCommonName = tag + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + str(signal) + '_' + background + '_' + str(trainingFraction) + 't'
     print(Fore.GREEN + 'Loading ' + dfPath + 'data_train_' + fileCommonName + '.pkl')
     dataTrain = pd.read_pickle(dfPath + '/data_train_' + fileCommonName + '.pkl')
@@ -260,21 +263,23 @@ def SelectEvents(dataFrame, channel, analysis, preselectionCuts, signal):
     ### Selecting events according to type of analysis and channel
     selectionMergedGGF = 'Pass_MergHP_GGF_ZZ_2btag_SR == True or Pass_MergHP_GGF_ZZ_01btag_SR == True or Pass_MergHP_GGF_WZ_SR == True or Pass_MergLP_GGF_ZZ_2btag_SR == True or Pass_MergLP_GGF_ZZ_01btag_SR == True or Pass_MergLP_GGF_WZ_SR == True or Pass_MergHP_GGF_ZZ_2btag_ZCR == True or Pass_MergHP_GGF_ZZ_01btag_ZCR == True or Pass_MergHP_GGF_WZ_ZCR == True or Pass_MergLP_GGF_ZZ_2btag_ZCR == True or Pass_MergLP_GGF_ZZ_01btag_ZCR == True or Pass_MergLP_GGF_WZ_ZCR == True'# or Pass_MergHP_GGF_ZZ_01btag_TCR == True or Pass_MergHP_GGF_ZZ_2btag_TCR == True or Pass_MergHP_GGF_WZ_TCR == True or Pass_MergLP_GGF_ZZ_01btag_TCR == True or Pass_MergLP_GGF_ZZ_2btag_TCR == True or Pass_MergLP_GGF_WZ_TCR == True'
     selectionMergedGGFZZLPuntagSR = 'Pass_MergLP_GGF_ZZ_01btag_SR == True and Pass_MergHP_GGF_ZZ_2btag_SR == False and Pass_MergHP_GGF_ZZ_01btag_SR == False and Pass_MergHP_GGF_WZ_SR == False and Pass_MergLP_GGF_ZZ_2btag_SR == False and Pass_MergHP_GGF_ZZ_2btag_ZCR == False and Pass_MergHP_GGF_WZ_ZCR == False and Pass_MergHP_GGF_ZZ_01btag_ZCR == False and Pass_MergLP_GGF_ZZ_2btag_ZCR == False and Pass_MergLP_GGF_ZZ_01btag_ZCR == False and Pass_MergLP_GGF_WZ_SR == False and Pass_MergLP_GGF_WZ_ZCR == False'
-    #selectionMergedVBF = 'Pass_MergHP_VBF_WZ_SR == True or Pass_MergHP_VBF_ZZ_SR == True or Pass_MergLP_VBF_WZ_SR == True or Pass_MergLP_VBF_ZZ_SR == True or Pass_MergHP_VBF_WZ_ZCR == True or Pass_MergHP_VBF_ZZ_ZCR == True or Pass_MergLP_VBF_WZ_ZCR == True or Pass_MergLP_VBF_ZZ_ZCR == True'# or Pass_MergHP_VBF_WZ_TCR == True or Pass_MergHP_VBF_ZZ_TCR == True or Pass_MergLP_VBF_WZ_TCR == True or Pass_MergLP_VBF_ZZ_TCR == True'
-    selectionMergedVBF = 'Pass_MergHP_VBF_ZZ_SR == True or Pass_MergLP_VBF_ZZ_SR == True or Pass_MergHP_VBF_ZZ_ZCR == True or Pass_MergLP_VBF_ZZ_ZCR == True'# or Pass_MergHP_VBF_WZ_TCR == True or Pass_MergHP_VBF_ZZ_TCR == True or Pass_MergLP_VBF_WZ_TCR == True or Pass_MergLP_VBF_ZZ_TCR == True'
+    selectionMergedVBF = 'Pass_MergHP_VBF_WZ_SR == True or Pass_MergHP_VBF_ZZ_SR == True or Pass_MergLP_VBF_WZ_SR == True or Pass_MergLP_VBF_ZZ_SR == True or Pass_MergHP_VBF_WZ_ZCR == True or Pass_MergHP_VBF_ZZ_ZCR == True or Pass_MergLP_VBF_WZ_ZCR == True or Pass_MergLP_VBF_ZZ_ZCR == True'# or Pass_MergHP_VBF_WZ_TCR == True or Pass_MergHP_VBF_ZZ_TCR == True or Pass_MergLP_VBF_WZ_TCR == True or Pass_MergLP_VBF_ZZ_TCR == True'
+    #selectionMergedVBF = 'Pass_MergHP_VBF_ZZ_SR == True or Pass_MergLP_VBF_ZZ_SR == True or Pass_MergHP_VBF_ZZ_ZCR == True or Pass_MergLP_VBF_ZZ_ZCR == True'# or Pass_MergHP_VBF_WZ_TCR == True or Pass_MergHP_VBF_ZZ_TCR == True or Pass_MergLP_VBF_WZ_TCR == True or Pass_MergLP_VBF_ZZ_TCR == True'
     selectionResolvedGGF = 'Pass_Res_GGF_WZ_SR == True or Pass_Res_GGF_ZZ_2btag_SR == True or Pass_Res_GGF_ZZ_01btag_SR == True or Pass_Res_GGF_WZ_ZCR == True or Pass_Res_GGF_ZZ_2btag_ZCR == True or Pass_Res_GGF_ZZ_01btag_ZCR == True'# or Pass_Res_GGF_WZ_TCR == True or Pass_Res_GGF_ZZ_2btag_TCR == True or Pass_Res_GGF_ZZ_01btag_TCR == True'
     selectionResolvedVBF = 'Pass_Res_VBF_WZ_SR == True or Pass_Res_VBF_ZZ_SR == True or Pass_Res_VBF_WZ_ZCR == True or Pass_Res_VBF_ZZ_ZCR == True'# or Pass_Res_VBF_WZ_TCR == True or Pass_Res_VBF_ZZ_TCR == True'
-    
+    selectionResolved = 'Pass_Res_GGF_WZ_SR == True or Pass_Res_GGF_ZZ_2btag_SR == True or Pass_Res_GGF_ZZ_01btag_SR == True or Pass_Res_GGF_WZ_ZCR == True or Pass_Res_GGF_ZZ_2btag_ZCR == True or Pass_Res_GGF_ZZ_01btag_ZCR == True or Pass_Res_VBF_WZ_SR == True or Pass_Res_VBF_ZZ_SR == True or Pass_Res_VBF_WZ_ZCR == True or Pass_Res_VBF_ZZ_ZCR == True'
+
     if channel == 'ggF':
-        #dataFrame = dataFrame.query('Pass_isVBF == False')
+        dataFrame = dataFrame.query('Pass_isVBF == False')
         if analysis == 'merged':
             selection = selectionMergedGGF
             #selection = selectionMergedGGFZZLPuntagSR            
         elif analysis == 'resolved':
             selection = selectionResolvedGGF
+            #selection = selectionResolved
 
     elif channel == 'VBF':
-        #dataFrame = dataFrame.query('Pass_isVBF == True')
+        dataFrame = dataFrame.query('Pass_isVBF == True')
         if analysis == 'merged':
             selection = selectionMergedVBF
         elif analysis == 'resolved':
@@ -303,7 +308,6 @@ def SelectRegime(dataFrame, preselectionCuts, regime, channel):
 
     if regime == 'allMerged':
         dataFrame = dataFrame.query('Pass_isVBF == ' + isVBF)
-        print('aaaaa')
         dataFrame = dataFrame.query('Pass_MergHP_GGF_ZZ_2btag_SR == True or Pass_MergLP_GGF_ZZ_2btag_SR == True or Pass_MergHP_GGF_ZZ_01btag_SR == True or Pass_MergLP_GGF_ZZ_01btag_SR == True')
     if regime == 'allMergedZCRs':
         dataFrame = dataFrame.query('Pass_isVBF == ' + isVBF)
@@ -352,10 +356,14 @@ def integral(y,x,bins):
     return s
 
 def DrawVariablesHisto(dataFrame, InputFeatures, outputDir, outputFileCommonName, jetCollection, analysis, channel, signal, background, preselectionCuts, scaled = False):
-    ### Replacing '0' with 'Background' and '1' with 'Signal' in the 'isOrigin' column
+    '''
+    ### Replacing '0' with 'Background' and '1' with 'Signal' in the 'isSignal' column
     dataFrame['isSignal'].replace(to_replace = [0, 1], value = ['Background', 'Signal'], inplace = True)
     dataFrameSignal = dataFrame[dataFrame['isSignal'] == 'Signal']
     dataFrameBkg = dataFrame[dataFrame['isSignal'] == 'Background']
+    '''
+    dataFrameSignal = dataFrame[dataFrame['origin'] == signal]
+    dataFrameBkg = dataFrame[dataFrame['origin'] != signal]
     print(list(set(list(dataFrameBkg['origin']))))
     if 'VBF' in signal:
         signalLabel = signal.replace('VBF', '')
@@ -383,6 +391,8 @@ def DrawVariablesHisto(dataFrame, InputFeatures, outputDir, outputFileCommonName
             binsDict[feature] = 'auto'
         if feature == 'weight':
             ax = seaborn.histplot(data = dataFrame['weight'], x = dataFrame['weight'], hue = dataFrame['isSignal'], common_norm = False, stat = statType, legend = True) 
+        if feature == 'origin':
+            ax = seaborn.histplot(data = dataFrame[feature], x = dataFrame[feature], hue = dataFrame['origin'], common_norm = False, stat = statType, legend = True)
         else:
             if scaled == False and feature in binsDict:
                 ax = seaborn.histplot(data = dataFrameBkg[feature], x = dataFrameBkg[feature], weights = dataFrameBkg['weight'], bins = np.array(binsDict[feature]), hue = hueType, legend = legendBool, multiple = 'stack', stat = 'probability', common_norm = True) #stat = statType
@@ -390,14 +400,14 @@ def DrawVariablesHisto(dataFrame, InputFeatures, outputDir, outputFileCommonName
                 ax = seaborn.histplot(data = dataFrame[feature], x = dataFrame[feature], weights = dataFrame['weight'], hue = hueType, common_norm = False, stat = statType, legend = legendBool)#, multiple = 'stack')
             elif scaled == True:
                 ax = seaborn.histplot(data = dataFrame[feature], x = dataFrame[feature], weights = dataFrame['weight'], hue = hueType, common_norm = False, stat = statType, legend = legendBool)#, multiple = 'stack')
-        seaborn.histplot(data = dataFrameSignal[feature], x = dataFrameSignal[feature], weights = dataFrameSignal['weight'], bins = np.array(binsDict[feature]), element = 'step', fill = False, stat = 'probability')#, lw = 2, color = 'blue', label = signalLabel)#, density = True)
+            seaborn.histplot(data = dataFrameSignal[feature], x = dataFrameSignal[feature], weights = dataFrameSignal['weight'], bins = np.array(binsDict[feature]), element = 'step', fill = False, stat = 'probability', color = 'red')#, lw = 2, color = 'blue', label = signalLabel)#, density = True)
         #elif fileNameSplitDataSet in sys.argv[0]:
         ''' histogram of train_weight without bins is slow 
             if feature == 'train_weight':
                 ax = seaborn.histplot(data = dataFrame['weight'], x = dataFrame['weight'], hue = dataFrame['isSignal'], common_norm = False, stat = 'count', legend = True)
         '''
         #    contents, bins, _ = plt.hist(dataFrame[feature], weights = dataFrame['train_weight'], bins = 100, label = legendText)
-        labelDict = {'lep1_E': r'lep$_1$ E [GeV]', 'lep1_m': r'lep$_1$ m [GeV]', 'lep1_pt': r'lep$_1$ p$_T$ [GeV]', 'lep1_eta': r'lep$_1$ $\eta$', 'lep1_phi': r'lep$_1$ $\phi$', 'lep2_E': r'lep$_2$ E [GeV]', 'lep2_m': r'lep$_2$ m [GeV]', 'lep2_pt': r'lep$_2$ p$_t$ [GeV]', 'lep2_eta': r'lep$_2$ $\eta$', 'lep2_phi': r'lep$_2$ $\phi$', 'fatjet_m': 'fat jet m [GeV]', 'fatjet_pt': r'fat jet p$_t$ [GeV]', 'fat jet_eta': r'fat jet $\eta$', 'fat jet_phi': r'fat jet $\phi$', 'fat jet_D2': r'fat jet D$_2$', 'Zcand_m': 'Z$_{cand}$ m [GeV]', 'Zcand_pt': r'Z$_{cand}$ p$_t$ [GeV]', 'X_boosted_m': 'X_boosted m [GeV]', 'mass': 'mass [GeV]', 'weight': 'weight', 'isSignal': 'isSignal', 'origin': 'origin', 'Wdijet_m': 'Wdijet m [GeV]', 'Wdijet_pt': 'Wdijet p$_T$ [GeV]', 'Wdijet_eta': 'Wdijet $\eta$', 'Wdijet_phi': 'Wdijet $\phi$', 'Zdijet_m': 'Z$_{dijet}$ m [GeV]', 'Zdijet_pt': 'Z$_{dijet}$ p$_T$ [GeV]', 'Zdijet_eta': 'Z$_{dijet}$ $\eta$', 'Zdijet_phi': 'Z$_{dijet}$ $\phi$', 'sigWJ1_m': 'sigWJ1 m', 'sigWJ1_pt': 'sigWJ1 p$_T$', 'sigWJ1_eta': 'sigWJ1 $\eta$', 'sigWJ1_phi': 'sigWJ1 $\phi$', 'sigWJ2_m': 'sigWJ2 m', 'sigWJ2_pt': 'sigWJ2 p$_T$', 'sigWJ2_eta': 'sigWJ2 $\eta$', 'sigWJ2_phi': 'sigWJ2 $\phi$', 'sigZJ1_m': 'sigZJ1 m', 'sigZJ1_pt': 'sigZJ1 p$_T$', 'sigZJ1_eta': 'sigZJ1 $\eta$', 'sigZJ1_phi': 'sigZJ1 $\phi$', 'sigZJ2_m': 'sigZJ2 m', 'sigZJ2_pt': 'sigZJ2 p$_T$', 'sigZJ2_eta': 'sigZJ2 $\eta$', 'sigZJ2_phi': 'sigZJ2 $\phi$'}
+        labelDict = {'lep1_E': r'lep$_1$ E [GeV]', 'lep1_m': r'lep$_1$ m [GeV]', 'lep1_pt': r'lep$_1$ p$_T$ [GeV]', 'lep1_eta': r'lep$_1$ $\eta$', 'lep1_phi': r'lep$_1$ $\phi$', 'lep2_E': r'lep$_2$ E [GeV]', 'lep2_m': r'lep$_2$ m [GeV]', 'lep2_pt': r'lep$_2$ p$_t$ [GeV]', 'lep2_eta': r'lep$_2$ $\eta$', 'lep2_phi': r'lep$_2$ $\phi$', 'fatjet_m': 'fat jet m [GeV]', 'fatjet_pt': r'fat jet p$_t$ [GeV]', 'fat jet_eta': r'fat jet $\eta$', 'fat jet_phi': r'fat jet $\phi$', 'fat jet_D2': r'fat jet D$_2$', 'Zcand_m': 'Z$_{cand}$ m [GeV]', 'Zcand_pt': r'Z$_{cand}$ p$_t$ [GeV]', 'X_boosted_m': 'X_boosted m [GeV]', 'X_resolved_ZZ_m': 'X_resolved_ZZ m [GeV]', 'X_resolved_WZ_m': 'X_resolved_WZ m [GeV]', 'mass': 'mass [GeV]', 'weight': 'weight', 'isSignal': 'isSignal', 'origin': 'origin', 'Wdijet_m': 'Wdijet m [GeV]', 'Wdijet_pt': 'Wdijet p$_T$ [GeV]', 'Wdijet_eta': 'Wdijet $\eta$', 'Wdijet_phi': 'Wdijet $\phi$', 'Zdijet_m': 'Z$_{dijet}$ m [GeV]', 'Zdijet_pt': 'Z$_{dijet}$ p$_T$ [GeV]', 'Zdijet_eta': 'Z$_{dijet}$ $\eta$', 'Zdijet_phi': 'Z$_{dijet}$ $\phi$', 'sigWJ1_m': 'sigWJ1 m', 'sigWJ1_pt': 'sigWJ1 p$_T$', 'sigWJ1_eta': 'sigWJ1 $\eta$', 'sigWJ1_phi': 'sigWJ1 $\phi$', 'sigWJ2_m': 'sigWJ2 m', 'sigWJ2_pt': 'sigWJ2 p$_T$', 'sigWJ2_eta': 'sigWJ2 $\eta$', 'sigWJ2_phi': 'sigWJ2 $\phi$', 'sigZJ1_m': 'sigZJ1 m', 'sigZJ1_pt': 'sigZJ1 p$_T$', 'sigZJ1_eta': 'sigZJ1 $\eta$', 'sigZJ1_phi': 'sigZJ1 $\phi$', 'sigZJ2_m': 'sigZJ2 m', 'sigZJ2_pt': 'sigZJ2 p$_T$', 'sigZJ2_eta': 'sigZJ2 $\eta$', 'sigZJ2_phi': 'sigZJ2 $\phi$'}
         '''
         if feature in featureLogX:
             ax.set_xscale('log')
@@ -425,7 +435,7 @@ def DrawVariablesHisto(dataFrame, InputFeatures, outputDir, outputFileCommonName
                 plt.ylabel('Counts')
         '''
         plt.ylabel('Weighted probability (MC weights)')                                                                                                           
-        if feature == 'weight':
+        if feature == 'weight' or feature == 'origin':
             plt.ylabel('Counts')
         #plt.legend(handlelength = 0, handletextpad = 0, prop={'size': 15})
         if feature == 'origin':
@@ -560,6 +570,7 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.layers.core import Dense, Activation
 from sklearn.metrics import log_loss
 import tensorflow as tf
+from keras.optimizers import SGD
 
 def BuildDNN(N_input, nodesNumber, layersNumber, dropout):
     model = Sequential()
@@ -575,9 +586,18 @@ def BuildDNN(N_input, nodesNumber, layersNumber, dropout):
     #model.compile(loss = 'binary_crossentropy', optimizer = 'rmsprop', metrics = ['accuracy'])
     Loss = 'binary_crossentropy'
     Metrics = ['accuracy']
-    learningRate = 0.0001#0.001#0.0003 #0.001
-    Optimizer = tf.keras.optimizers.Adam(learning_rate = learningRate) #Adam
+    learningRate = 0.01#0.001#0.0003 #0.001
+    #Optimizer = tf.keras.optimizers.Adam(learning_rate = learningRate) #Adam
+    Optimizer = SGD(lr = 0.1)
     return model, Loss, Metrics, learningRate, Optimizer
+
+def scheduler(epoch, lr):
+    if epoch <= 5:
+        return 0.003
+    elif epoch < 30:
+        return 0.001
+    else:
+        return 0.0001
 
 def SaveArchAndWeights(model, outputDir):
     arch = model.to_json()
@@ -649,9 +669,11 @@ def SaveModel(model, outputDir, NN):
     SaveArchAndWeights(model, outputDir)
     variablesFileName = '/variables.json'
     #previousDir = outputDir.replace('loose' + NN, '') ###########aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-    previousDir = outputDir.replace(NN, '') ###########aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-    print(previousDir)
-    #shutil.copyfile(previousDir + variablesFileName, outputDir + variablesFileName)
+    #previousDir = outputDir.replace(NN, '') ###########aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    variablesDir = outputDir.rsplit('/', 1)[0]
+    #variablesDir += variablesFileName
+    #print('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA ' + variablesDir + variablesFileName)
+    #shutil.copyfile(variablesDir + variablesFileName, outputDir + variablesFileName)
 
 '''
 import matplotlib
@@ -804,6 +826,7 @@ def DrawROCbkgRejectionScores(fpr, tpr, AUC, outputDir, NN, unscaledMass, jetCol
     if drawPlots:
         emptyPlot, = plt.plot(fpr[0], tpr[0], color = 'white')
         plt.plot(fpr, tpr, color = 'darkorange', label = 'AUC: ' + str(round(AUC, 2)), lw = 2)
+        #plt.plot(fakeFPR, fakeTPR, color = 'blue', label = 'reweighted AUC: ' + str(round(fakeAUC, 2)), lw = 2)
         legend1 = plt.legend(handlelength = 0, handletextpad = 0, loc = 'center right')
         plt.xlim([-0.05, 1.0])
         plt.ylim([0.0, 1.05])
@@ -1254,7 +1277,8 @@ def sortColumns(values, weights, Reverse = False):
     return sortedValues, sortedWeights
 
 import math
-def defineVariableBins(bkgEvents, weightsBkgEvents, lowerMass, upperMass, resolutionRangeLeft, resolutionRangeRight, feature, nBinsMass = None, bkgEventsInResolution= None):
+#def defineVariableBins(bkgEvents, weightsBkgEvents, lowerMass, upperMass, resolutionRangeLeft, resolutionRangeRight, feature, nBinsMass = None, bkgEventsInResolution= None):
+def defineVariableBins(bkgEvents, weightsBkgEvents, resolutionRangeLeft, resolutionRangeRight, feature, nBinsMass = None, bkgEventsInResolution = None):
     if feature == 'Scores':
         bkgEvents, weightsBkgEvents = sortColumns(bkgEvents, weightsBkgEvents, True)
     bkgErrorSquared = 0
@@ -1267,7 +1291,8 @@ def defineVariableBins(bkgEvents, weightsBkgEvents, lowerMass, upperMass, resolu
         Bins = np.array([leftEdge])
         bkgMassEventsInResolution = 0
     elif feature == 'Scores':
-        leftEdge = upperMass
+        #leftEdge = upperMass
+        leftEdge = 1
         Bins = np.array([leftEdge])
         bkgScoresEventsInResolution = 0
     
@@ -1518,15 +1543,20 @@ def weighted_percentile(values, weights, feature):
     sumWeights = np.array(sortedWeights).sum()
     #print('sumWeights:', sumWeights)
     resolutionSum = 0
+    #foundLeftEdge = False
     for (value, weight) in zip(sortedValues, sortedWeights):
+        #print('value:', value)
         resolutionSum += weight
         #print('resolutionSum:', resolutionSum)
         if resolutionSum <= (0.5 * sumWeights): ## 0.16
             median = value
         if feature == 'InvariantMass' and resolutionSum <= (0.025 * sumWeights):
             resolutionRangeLeft = value
+            #foundLeftEdge = True
+            #print('updating resolutionRangeLeft to ', resolutionRangeLeft)
         if feature == 'InvariantMass' and resolutionSum > (0.5 * sumWeights) and resolutionSum <= (0.975 * sumWeights):
             resolutionRangeRight = value
+            #print('updating resolutionRangeRight to', resolutionRangeRight)
         if feature == 'Scores' and resolutionSum <= (0.05 * sumWeights): ## 0.32
             resolutionRangeLeft = value
     if feature == 'Scores':
@@ -1538,7 +1568,10 @@ def weighted_percentile(values, weights, feature):
         diff = sortedValues[len(sortedValues) - 1] - median
     diff = 0
     '''
-
+    '''
+    if foundLeftEdge == False:
+        resolutionRangeLeft = sortedValues[0]
+    '''
     print('resolutionLeft:', resolutionRangeLeft)
     print('resolutionRight:', resolutionRangeRight)
     print('median:', median)
@@ -1616,3 +1649,296 @@ def loadModelAndWeights(modelDir, outputDir):
     batchSize = 2048
     #print(model.summary())
     return model, batchSize
+
+### Loading NN if not performing training in buildPDNN
+from keras.models import model_from_json
+def LoadNN(outputDir):
+    ### Loading architecture and weights from file
+    print(Fore.BLUE + 'Loading architecture and weights')
+    architectureFileName = outputDir + '/architecture.json'
+    with open(architectureFileName, 'r') as architectureFile:
+        loadedModel = architectureFile.read()
+    print(Fore.GREEN + 'Loaded ' + architectureFileName)
+    model = model_from_json(loadedModel)
+    weightsFileName = outputDir + '/weights.h5'
+    model.load_weights(weightsFileName)
+    print(Fore.GREEN + 'Loaded ' + weightsFileName)
+    model.compile(loss = 'binary_crossentropy', weighted_metrics = ['accuracy']) #-> We don't care about the optimizer since we will only perform test, if loss and/or metric change save and then load them
+    return model
+
+def SignalBackgroundScores(wMC_test, wMC_train, yhat_test, yhat_train):
+    wMC = np.concatenate((wMC_test, wMC_train))
+    yhat = np.concatenate((yhat_test, yhat_train))
+    Nbins = np.linspace(0, 1, 51)
+    y, bins, _ = plt.hist(yhat, weights = wMC, bins = Nbins, histtype = 'step', lw = 2, color = 'blue', density = False) #, label = [r'Signal train + test']          
+    y = y / np.sum(wMC) ### perché density = False                                                                                                                    
+    print(y)
+
+    ### Computing error on bin contents neglecting correlation between single bin content and whole histogram content                                                 
+    yhat_sorted, wMC_sorted = sortColumns(yhat, wMC)
+    weightsSum = 0
+    weightsSquaredSum = 0
+    iBin = 0
+    y_error2 = np.array([])
+    for score, weight in zip(yhat, wMC):
+        if score >= bins[iBin] and score < bins[iBin + 1]:
+            weightsSquaredSum += weight ** 2
+        if iBin == (len(bins) - 2) and score == bins[iBin + 1]:
+            weightsSquaredSum += weight ** 2
+        else:
+            y_error2 = np.append(y_error2, weightsSquaredSum)
+            weightsSquaredSum = weight ** 2
+            iBin += 1
+            if iBin == len(bins) - 1:
+                break
+
+    ### fin qui ho y_signal_error che è un array con la somma dei quadrati dei pesi in ogni bin                                                                       
+    histo_error = np.sqrt(np.sum(y_error2)) ### l'errore su tutto l'histo è la somma degli errori in ogni bin                                                         
+    t1 = 1 / sum(wMC)
+    t2 = y_error2
+    t3 = (y / sum(wMC)) **2
+    t4 = histo_error ** 2
+    t5 = np.sqrt(t2 + t3 * t4)
+    epsilon_bcr = t1 * t5
+
+    return y, epsilon_bcr, bins
+
+### Calibration curve (pag 17 in https://cds.cern.ch/record/2808844/files/ATL-COM-PHYS-2022-366.pdf)                                                                  
+def CalibrationCurves(wMC_test_signal, wMC_train_signal, yhat_test_signal, yhat_train_signal, wMC_test_bkg, wMC_train_bkg, yhat_test_bkg, yhat_train_bkg, unscaledMass, outputDir):
+    y_signal, epsilon_bcr_signal, bins = SignalBackgroundScores(wMC_test_signal, wMC_train_signal, yhat_test_signal, yhat_train_signal)
+    y_bkg, epsilon_bcr_bkg, _ = SignalBackgroundScores(wMC_test_bkg, wMC_train_bkg, yhat_bkg, yhat_test_bkg, yhat_train_bkg)
+    sum_histo = y_signal + y_bkg
+    print('sum:', sum_histo)
+    ratio = y_signal / sum_histo
+    print('ratio:', ratio)
+    ratioErrorArray = np.array([])
+
+    for sum_value, score_signal, score_bkg, score_signal_error, score_bkg_error in zip(sum_histo, y_signal, y_bkg, epsilon_bcr_signal, epsilon_bcr_bkg):
+        t1 = 1 / (sum_value) ** 2
+        t2 = (score_bkg * score_signal_error) ** 2
+        t3 = (score_signal * score_bkg_error) ** 2
+        t4 = np.sqrt(t2 + t3)
+        t5 = t1 * t4
+        ratioErrorArray = np.append(ratioErrorArray, t5)
+
+    binsBar = np.array([])
+    for iBinEdge in range(len(bins) - 1):
+        binsBarEdge = (bins[iBinEdge] + bins[iBinEdge + 1]) / 2
+        binsBar = np.append(binsBar, binsBarEdge)
+
+    #plt.bar(binsBar, ratio, yerr = ratioErrorArray, width = 0.02, edgecolor = 'blue', color = 'white')                                                               
+    plt.clf()
+    plt.bar(binsBar, ratio, width = 0.02, edgecolor = 'blue', color = 'white')
+    x = np.linspace(0, 1, 26)
+    plt.plot(x, x, color = 'orange', linestyle='--')
+    plt.ylabel('Probability ratio')
+    plt.xlabel('Score')
+    plt.figtext(0.15, 0.8, 'Mass hypothesis: ' + str(unscaledMass) + ' GeV', wrap = True, horizontalalignment = 'left')
+    ScoresPltName = outputDir + '/CalibrationCurve_' + outputDir + '_' + str(unscaledMass) + '.png'
+    #plt.savefig(ScoresPltName)                                                                                                                                       
+    plt.show()
+    print(Fore.GREEN + 'Saved ' + ScoresPltName)
+    plt.clf()
+
+def PredictionAndAUC(X, Y):
+    y_pred = model.predict(X)
+    fpr, tpr, thresholds = roc_curve(Y, y_pred)
+    roc_auc = auc(fpr, tpr)
+    return roc_auc
+
+### Features ranking                                                                                                                                                  
+import eli5
+from eli5.permutation_importance import get_score_importances
+def FeaturesRanking(X_signal, X_bkg, deltasDict, inputFeatures, signal, analysis, channel, outputDir, outputFileCommonName, drawPlots):
+    X = np.concatenate((X_signal, X_bkg))
+    y = np.concatenate((np.ones(len(X_signal)), np.zeros(len(X_bkg))))
+    nIter = 100
+    base_score, score_decreases = get_score_importances(PredictionAndAUC, X, y, n_iter = nIter)
+    print('###### base_score ########')
+    print(base_score)
+    print('###### score_decreases ########')
+    print(score_decreases)
+    feature_importances = np.mean(score_decreases, axis = 0)
+    print('###### mean score_decreases #######')
+    print(feature_importances)
+    relative_feature_importances = feature_importances / base_score
+    print('##### relative_feature_importances ######')
+    deltasDict[unscaledMass] = relative_feature_importances
+    print(deltasDict)
+    '''                                                                                                                                                               
+    if drawPlots:                                                                                                                                                     
+        plt.clf()                                                                                                                                                     
+        for iFeature in range(len(nputFeatures)):                                                                                                                    
+            feature = inputFeatures[iFeature]                                                                                                                         
+            print(feature)                                                                                                                                            
+            histoValues = np.array([item[iFeature] for item in score_decreases])                                                                                      
+            print('##### histoValues #####')                                                                                                                          
+            print(histoValues)                                                                                                                                        
+            histoValues = histoValues / base_score                                                                                                                    
+            print('##### histoValues / base_score #####')                                                                                                             
+            print(histoValues)                                                                                                                                        
+            legendText = 'Mean: ' + str(round(histoValues.mean(), 2)) + '\nstd: ' + str(round(histoValues.std(), 2)) + '\nEntries: ' + str(len(histoValues))          
+            plt.hist(histoValues, label = legendText)                                                                                                                 
+            plt.xlabel('Relative AUC difference')                                                                                                                     
+            plt.title(feature + ' - ' + signal + ' (1 TeV) ' + analysis + ' ' + channel)                                                                              
+            plt.savefig(outputDir + '/Histo_AUCdifference_' + feature + '_' + outputFileCommonName + '.png')                                                          
+            plt.clf()                                                                                                                                                 
+    '''
+    return deltasDict
+
+def PlotFeaturesRanking(inputFeatures, deltasDict, outputDir, outputFileCommonName):
+    fig, ax1 = plt.subplots(figsize = (13, 13))
+    xLabels = inputFeatures
+    yLabels = list(deltasDict.keys())
+    deltasList = []
+    for yLabel in yLabels:
+        aa = list(deltasDict[yLabel])
+        deltasList.append(aa)
+    print(deltasList)
+    im = ax1.matshow(deltasList)#, vmin = -1, vmax = 1)                                                                                                               
+    plt.colorbar(im, ax = ax1)
+    plt.xticks(range(len(inputFeatures)), inputFeatures, rotation = 'vertical')
+    plt.yticks(range(len(yLabels)), yLabels)
+    for i in range(len(xLabels)):
+        for j in range(len(yLabels)):
+            massValue = yLabels[j]
+            c = deltasDict[massValue][i]
+            cDisplay = round(c, 4)
+            ax1.text(i, j, str(cDisplay), va = 'center', ha = 'center', fontsize = 8, color = 'r')
+    plt.tight_layout()
+    plt.savefig(outputDir + '/featuresRanking_' + outputFileCommonName + '.png')
+
+
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
+from tensorflow.keras.optimizers import RMSprop
+import keras_tuner
+from keras_tuner.tuners import RandomSearch
+
+def buildOptimizedModel(hp):
+    model = tf.keras.Sequential()
+    model.add(layers.Dense(units = hp.Int('units', min_value = 8, max_value = 200, step = 8), input_dim = len(InputFeatures), activation = 'relu'))
+    model.add(tf.keras.layers.Dropout(hp.Float('dropout', 0, 0.3, step = 0.1)))
+    for iLayer in range(hp.Int('layers', 1, 5)):
+        model.add(tf.keras.layers.Dense(units = hp.Int('units_' + str(iLayer), 0, 5, step = 1), activation = 'relu'))
+        model.add(tf.keras.layers.Dropout(hp.Float('dropout_' + str(iLayer), 0, 0.3, step = 0.1)))
+    model.add(Dense(1, activation = 'sigmoid'))
+    hp_lr = tf.keras.optimizers.schedules.ExponentialDecay(
+        initial_learning_rate = hp.Choice('learning_rate', values = [1e-2, 1e-3, 1e-4]),
+        decay_steps = 10000,
+        decay_rate = 0.95)
+    optimizer = hp.Choice('optimizer', values = ['RMSprop', 'Adam'])
+    if optimizer == 'RMSprop':
+        optimizer = tf.keras.optimizers.RMSprop(learning_rate = hp_lr)
+    elif optimizer == 'Adam':
+        optimizer = tf.keras.optimizers.Adam(learning_rate = hp_lr)
+    else:
+        raise
+    model.compile(optimizer = optimizer, loss = 'binary_crossentropy', weighted_metrics = ['accuracy'])#, run_eagerly = True)                                         
+    #plot_model(model, to_file='untrainedModel.png', show_shapes=True, show_layer_names=True)                                                                         
+    return model
+
+def HpOptimization(inputFeatures, patienceValue, X, y, w, numberOfEpochs, validationFraction, batchSize):
+    tuner = RandomSearch(
+        buildOptimizedModel,
+        objective = keras_tuner.Objective('val_accuracy', direction = 'max'),
+        max_trials = 300,
+        executions_per_trial = 1,
+        directory = outputDir + '/tunerTrials/',
+        overwrite = True
+    )
+
+    print(tuner.search_space_summary())
+    stop_early = tf.keras.callbacks.EarlyStopping(monitor = 'val_loss', patience = patienceValue)
+    tuner.search(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, validation_split = validationFraction, callbacks = [stop_early], batch_size = batchSize)
+    tuner.results_summary()
+    best_hps = tuner.get_best_hyperparameters(num_trials = 1)[0]
+    model = tuner.hypermodel.build(best_hps)
+    #print(model.summary())                                                                                                                                           
+
+    #logFile.write('\n************************** HYPERPARAMETERS OPTIMIZATION RESULTS **************************')                                                    
+    logString = '\n************************** HYPERPARAMETERS OPTIMIZATION RESULTS **************************'
+    print('Number of nodes in layer number 0: ', tuner.get_best_hyperparameters()[0].get('units'))
+    #logFile.write('\nNumber of nodes in layer number 0: ' + str(tuner.get_best_hyperparameters()[0].get('units')))                                                   
+    logString += '\nNumber of nodes in layer number 0: ' + str(tuner.get_best_hyperparameters()[0].get('units'))
+    print('Dropout in layer number 0: ', tuner.get_best_hyperparameters()[0].get('dropout'))
+    #logFile.write('\nDropout in layer number 0: ' + str(tuner.get_best_hyperparameters()[0].get('dropout')))                                                         
+    logString += '\nDropout in layer number 0: ' + str(tuner.get_best_hyperparameters()[0].get('dropout'))
+    layersNumber = tuner.get_best_hyperparameters()[0].get('layers')
+    print('Number of hidden layers: ', layersNumber)
+    #logFile.write('\nNumber of hidden layers: ' + str(layersNumber))                                                                                                 
+    logString += '\nNumber of hidden layers: ' + str(layersNumber)
+    for iLayer in range(1, layersNumber + 1):
+        hp_nodes = 'units_' + str(iLayer - 1)
+        hp_dropout = 'dropout_' + str(iLayer - 1)
+        print('Number of nodes in hidden layer number ' + str(iLayer) + ': ' + str(tuner.get_best_hyperparameters()[0].get(hp_nodes)))
+        #logFile.write('\nNumber of nodes in hidden layer number ' + str(iLayer) + ': ' + str(tuner.get_best_hyperparameters()[0].get(hp_nodes)))                     
+        logString += '\nNumber of nodes in hidden layer number ' + str(iLayer) + ': ' + str(tuner.get_best_hyperparameters()[0].get(hp_nodes))
+        print('Dropout in hidden layer number ' + str(iLayer) + ': ' + str(tuner.get_best_hyperparameters()[0].get(hp_dropout)))
+        logFile.write('\nDropout in hidden layer number ' + str(iLayer) + ': ' + str(tuner.get_best_hyperparameters()[0].get(hp_dropout)))
+        logString += '\nDropout in hidden layer number ' + str(iLayer) + ': ' + str(tuner.get_best_hyperparameters()[0].get(hp_dropout))
+    print('Optimizer:', model.optimizer.get_config())
+    #logFile.write('\nOptimizer: ' + str(model.optimizer.get_config()))                                                                                               
+    logString += '\nOptimizer: ' + str(model.optimizer.get_config())
+    #logFile.write('\n*******************************************************************************************')                                                   
+    logString += '\n*******************************************************************************************'
+    return model, logString
+
+def SameStatAsVBF(dataTrain):
+    dataTrain_signal = dataTrain[dataTrain['isSignal'] == 1]
+    dataTrain_bkg = dataTrain[dataTrain['isSignal'] != 1]
+    dataTrain_signal = dataTrain_signal[:87156]
+    dataTrain_bkg = dataTrain_bkg[:35500]
+    dataTrain = pd.concat((dataTrain_signal, dataTrain_bkg), ignore_index = True)
+    dataTrain = ShufflingData(dataTrain)
+    XTrain = np.array(dataTrain[InputFeatures].values).astype(np.float32)
+    yTrain = np.array(dataTrain['isSignal'].values).astype(np.float32)
+    return dataTrain, XTrain, yTrain
+
+def plotHistory(patiences, series, feature, outputDir, outputFileCommonName):
+    plt.clf()
+    for i in range(len(patiences)):
+        plt.subplot(220 + (i+1))
+        plt.plot(series[i])
+        plt.title('patience = ' + str(patiences[i]), pad = -80)
+    #plt.show()                                                                                                                                                       
+    pltName = outputDir + '/' + feature + '_DifferentPatience_' + outputFileCommonName + '.png'
+    plt.savefig(pltName)
+    print(Fore.GREEN + 'Saved ' + pltName)
+    plt.clf()
+
+from keras import backend
+from keras.callbacks import ReduceLROnPlateau, Callback
+def TrainNN(X_train, y_train, w_train, patienceValue, numberOfEpochs, batchSize, validationFraction, NN, model, iLoop, loop):
+    print(Fore.BLUE + 'Training the ' + NN + ' -- loop ' + str(iLoop) + ' out of ' + str(loop - 1))
+
+    ### If we want to stop the training when we don't have an improvement in $monitor after $patience epochs                                                          
+    earlyStoppingCB = EarlyStopping(verbose = True, patience = 15, monitor = 'val_loss', restore_best_weights = True)
+
+    ### If we want to reduce the LR when we don't have an improvement in $monitor after $patience epochs                                                              
+    decreaseLR = tf.keras.callbacks.LearningRateScheduler(scheduler) ### needed?                                                                                      
+    rlrp = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=patienceValue, min_delta=1E-7)
+
+    # If we want to monitor the learning rate in each epoch                                                                                                           
+    class LearningRateMonitor(Callback):
+        # start of training                                                                                                                                           
+        def on_train_begin(self, logs={}):
+            self.lrates = list()
+
+        # end of each training epoch                                                                                                                                  
+        def on_epoch_end(self, epoch, logs={}):
+            # get and store the learning rate                                                                                                                         
+            optimizer = self.model.optimizer
+            lrate = float(backend.get_value(self.model.optimizer.lr))
+            print('Learning rate:', lrate)
+            self.lrates.append(lrate)
+    lrm = LearningRateMonitor()
+
+    CallbacksList = [rlrp, lrm] #earlyStoppingCB                                                                                                                      
+
+    #model, Loss, Metrics, learningRate, Optimizer = BuildDNN(len(inputfeatures), numberOfNodes, numberOfLayers, dropout)                                             
+    #model.compile(loss = Loss, optimizer = Optimizer, weighted_metrics = Metrics)
+    modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = batchSize, validation_split = validationFraction, verbose = 1, shuffle = False, callbacks = CallbacksList)
+
+    return modelMetricsHistory, lrm.lrates
