@@ -40,7 +40,8 @@ def ReadArgParser():
     parser.add_argument('-r', '--regime', help = '')
     parser.add_argument('-f', '--FeatureToPlot', help = 'Feature to plot to compute significance', default = 'score')
     parser.add_argument('--trainSet', help = 'trainSet')
-    
+    parser.add_argument('--studyLearningRate', default = 0)
+
     args = parser.parse_args()
 
     analysis = args.Analysis
@@ -109,6 +110,7 @@ def ReadArgParser():
     if args.regime:
         regime = regime.split()
     feature = args.FeatureToPlot
+    studyLearningRate = bool(int(args.studyLearningRate))
 
     if fileNameSaveToPkl in sys.argv[0]:
         print(Fore.BLUE + '           tag = ' + tag)
@@ -144,7 +146,7 @@ def ReadArgParser():
             print(Fore.BLUE + '             number of nodes = ' + str(numberOfNodes))
             print(Fore.BLUE + '     number of hidden layers = ' + str(numberOfLayers))
             print(Fore.BLUE + '                     dropout = ' + str(dropout))
-        return tag, jetCollection, analysis, channel, preselectionCuts, backgroundString, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, mass, doTrain, doTest, loop, hpOptimization, drawPlots, trainSet
+        return tag, jetCollection, analysis, channel, preselectionCuts, backgroundString, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, mass, doTrain, doTest, loop, hpOptimization, drawPlots, trainSet, studyLearningRate
 
     if fileNameComputeSignificance in sys.argv[0]:
         return tag, jetCollection, regime, preselectionCuts, signal, backgroundString
@@ -572,7 +574,7 @@ from sklearn.metrics import log_loss
 import tensorflow as tf
 from keras.optimizers import SGD
 
-def BuildDNN(N_input, nodesNumber, layersNumber, dropout):
+def BuildNN(N_input, nodesNumber, layersNumber, dropout, studyLearningRate):
     model = Sequential()
     model.add(Dense(units = nodesNumber, input_dim = N_input, activation = 'relu'))
     #model.add(Activation('relu'))
@@ -587,8 +589,10 @@ def BuildDNN(N_input, nodesNumber, layersNumber, dropout):
     Loss = 'binary_crossentropy'
     Metrics = ['accuracy']
     learningRate = 0.01#0.001#0.0003 #0.001
-    #Optimizer = tf.keras.optimizers.Adam(learning_rate = learningRate) #Adam
-    Optimizer = SGD(lr = 0.1)
+    if studyLearningRate:
+        Optimizer = SGD(lr = 0.1)
+    else:
+        Optimizer = tf.keras.optimizers.Adam(learning_rate = learningRate) #Adam
     return model, Loss, Metrics, learningRate, Optimizer
 
 def scheduler(epoch, lr):
@@ -1704,9 +1708,9 @@ def SignalBackgroundScores(wMC_test, wMC_train, yhat_test, yhat_train):
     return y, epsilon_bcr, bins
 
 ### Calibration curve (pag 17 in https://cds.cern.ch/record/2808844/files/ATL-COM-PHYS-2022-366.pdf)                                                                  
-def CalibrationCurves(wMC_test_signal, wMC_train_signal, yhat_test_signal, yhat_train_signal, wMC_test_bkg, wMC_train_bkg, yhat_test_bkg, yhat_train_bkg, unscaledMass, outputDir):
+def CalibrationCurves(wMC_test_signal, wMC_train_signal, yhat_test_signal, yhat_train_signal, wMC_test_bkg, wMC_train_bkg, yhat_test_bkg, yhat_train_bkg, unscaledMass, outputDir, outputFileCommonName):
     y_signal, epsilon_bcr_signal, bins = SignalBackgroundScores(wMC_test_signal, wMC_train_signal, yhat_test_signal, yhat_train_signal)
-    y_bkg, epsilon_bcr_bkg, _ = SignalBackgroundScores(wMC_test_bkg, wMC_train_bkg, yhat_bkg, yhat_test_bkg, yhat_train_bkg)
+    y_bkg, epsilon_bcr_bkg, _ = SignalBackgroundScores(wMC_test_bkg, wMC_train_bkg, yhat_test_bkg, yhat_train_bkg)
     sum_histo = y_signal + y_bkg
     print('sum:', sum_histo)
     ratio = y_signal / sum_histo
@@ -1734,9 +1738,9 @@ def CalibrationCurves(wMC_test_signal, wMC_train_signal, yhat_test_signal, yhat_
     plt.ylabel('Probability ratio')
     plt.xlabel('Score')
     plt.figtext(0.15, 0.8, 'Mass hypothesis: ' + str(unscaledMass) + ' GeV', wrap = True, horizontalalignment = 'left')
-    ScoresPltName = outputDir + '/CalibrationCurve_' + outputDir + '_' + str(unscaledMass) + '.png'
-    #plt.savefig(ScoresPltName)                                                                                                                                       
-    plt.show()
+    ScoresPltName = outputDir + '/CalibrationCurve_' + outputFileCommonName + '_' + str(unscaledMass) + '.png'
+    plt.savefig(ScoresPltName)                                                                                                                                       
+    #plt.show()
     print(Fore.GREEN + 'Saved ' + ScoresPltName)
     plt.clf()
 
@@ -1818,12 +1822,17 @@ from keras_tuner.tuners import RandomSearch
 
 def buildOptimizedModel(hp):
     model = tf.keras.Sequential()
-    model.add(layers.Dense(units = hp.Int('units', min_value = 8, max_value = 200, step = 8), input_dim = len(InputFeatures), activation = 'relu'))
-    model.add(tf.keras.layers.Dropout(hp.Float('dropout', 0, 0.3, step = 0.1)))
-    for iLayer in range(hp.Int('layers', 1, 5)):
-        model.add(tf.keras.layers.Dense(units = hp.Int('units_' + str(iLayer), 0, 5, step = 1), activation = 'relu'))
-        model.add(tf.keras.layers.Dropout(hp.Float('dropout_' + str(iLayer), 0, 0.3, step = 0.1)))
+    #model.add(layers.Dense(units = hp.Int('units', min_value = 8, max_value = 200, step = 8), input_dim = 17, activation = 'relu'))
+    model.add(layers.Dense(units = hp.Int('units', min_value = 40, max_value = 1000, step = 4), input_dim = 17, activation = 'relu'))
+    #model.add(layers.Dense(units = hp.Int('units', min_value = 40, max_value = 1000, step = 4), input_dim = len(inputFeatures), activation = 'relu'))
+    #model.add(tf.keras.layers.Dropout(hp.Float('dropout', 0, 0.3, step = 0.1)))
+    model.add(Dropout(0.2))
+    for iLayer in range(hp.Int('layers', 2, 6)):
+        model.add(tf.keras.layers.Dense(units = hp.Int('units_' + str(iLayer), 40, 1000, step = 4), activation = 'relu'))
+        #model.add(tf.keras.layers.Dropout(hp.Float('dropout_' + str(iLayer), 0, 0.3, step = 0.1)))
+        model.add(Dropout(0.2))
     model.add(Dense(1, activation = 'sigmoid'))
+    '''
     hp_lr = tf.keras.optimizers.schedules.ExponentialDecay(
         initial_learning_rate = hp.Choice('learning_rate', values = [1e-2, 1e-3, 1e-4]),
         decay_steps = 10000,
@@ -1835,53 +1844,55 @@ def buildOptimizedModel(hp):
         optimizer = tf.keras.optimizers.Adam(learning_rate = hp_lr)
     else:
         raise
-    model.compile(optimizer = optimizer, loss = 'binary_crossentropy', weighted_metrics = ['accuracy'])#, run_eagerly = True)                                         
-    #plot_model(model, to_file='untrainedModel.png', show_shapes=True, show_layer_names=True)                                                                         
+    model.compile(optimizer = optimizer, loss = 'binary_crossentropy', weighted_metrics = ['accuracy'])#, run_eagerly = True)
+    '''
+    model.compile(optimizer = tf.keras.optimizers.Adam(learning_rate = 0.01), loss = 'binary_crossentropy', weighted_metrics = ['accuracy'])#, run_eagerly = True)
+    plot_model(model, to_file='untrainedModel.png', show_shapes=True, show_layer_names=True)                                                                         
     return model
 
-def HpOptimization(inputFeatures, patienceValue, X, y, w, numberOfEpochs, validationFraction, batchSize):
+def HpOptimization(inputFeatures, patienceValue, X, y, w, numberOfEpochs, validationFraction, batchSize, outputDir):
     tuner = RandomSearch(
         buildOptimizedModel,
-        objective = keras_tuner.Objective('val_accuracy', direction = 'max'),
-        max_trials = 300,
-        executions_per_trial = 1,
+        objective = keras_tuner.Objective('val_loss', direction = 'min'),
+        max_trials = 4000,
+        executions_per_trial = 2,
         directory = outputDir + '/tunerTrials/',
         overwrite = True
     )
 
     print(tuner.search_space_summary())
     stop_early = tf.keras.callbacks.EarlyStopping(monitor = 'val_loss', patience = patienceValue)
-    tuner.search(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, validation_split = validationFraction, callbacks = [stop_early], batch_size = batchSize)
+    tuner.search(X, y, sample_weight = w, epochs = numberOfEpochs, validation_split = validationFraction, callbacks = [stop_early], batch_size = batchSize)
     tuner.results_summary()
     best_hps = tuner.get_best_hyperparameters(num_trials = 1)[0]
     model = tuner.hypermodel.build(best_hps)
-    #print(model.summary())                                                                                                                                           
+    #print(model.summary())
 
-    #logFile.write('\n************************** HYPERPARAMETERS OPTIMIZATION RESULTS **************************')                                                    
+    #logFile.write('\n************************** HYPERPARAMETERS OPTIMIZATION RESULTS **************************')
     logString = '\n************************** HYPERPARAMETERS OPTIMIZATION RESULTS **************************'
     print('Number of nodes in layer number 0: ', tuner.get_best_hyperparameters()[0].get('units'))
-    #logFile.write('\nNumber of nodes in layer number 0: ' + str(tuner.get_best_hyperparameters()[0].get('units')))                                                   
+    #logFile.write('\nNumber of nodes in layer number 0: ' + str(tuner.get_best_hyperparameters()[0].get('units')))
     logString += '\nNumber of nodes in layer number 0: ' + str(tuner.get_best_hyperparameters()[0].get('units'))
-    print('Dropout in layer number 0: ', tuner.get_best_hyperparameters()[0].get('dropout'))
-    #logFile.write('\nDropout in layer number 0: ' + str(tuner.get_best_hyperparameters()[0].get('dropout')))                                                         
-    logString += '\nDropout in layer number 0: ' + str(tuner.get_best_hyperparameters()[0].get('dropout'))
+    #print('Dropout in layer number 0: ', tuner.get_best_hyperparameters()[0].get('dropout'))
+    #logFile.write('\nDropout in layer number 0: ' + str(tuner.get_best_hyperparameters()[0].get('dropout')))
+    #logString += '\nDropout in layer number 0: ' + str(tuner.get_best_hyperparameters()[0].get('dropout'))
     layersNumber = tuner.get_best_hyperparameters()[0].get('layers')
     print('Number of hidden layers: ', layersNumber)
-    #logFile.write('\nNumber of hidden layers: ' + str(layersNumber))                                                                                                 
+    #logFile.write('\nNumber of hidden layers: ' + str(layersNumber))
     logString += '\nNumber of hidden layers: ' + str(layersNumber)
     for iLayer in range(1, layersNumber + 1):
         hp_nodes = 'units_' + str(iLayer - 1)
-        hp_dropout = 'dropout_' + str(iLayer - 1)
+        #hp_dropout = 'dropout_' + str(iLayer - 1)
         print('Number of nodes in hidden layer number ' + str(iLayer) + ': ' + str(tuner.get_best_hyperparameters()[0].get(hp_nodes)))
-        #logFile.write('\nNumber of nodes in hidden layer number ' + str(iLayer) + ': ' + str(tuner.get_best_hyperparameters()[0].get(hp_nodes)))                     
+        #logFile.write('\nNumber of nodes in hidden layer number ' + str(iLayer) + ': ' + str(tuner.get_best_hyperparameters()[0].get(hp_nodes)))
         logString += '\nNumber of nodes in hidden layer number ' + str(iLayer) + ': ' + str(tuner.get_best_hyperparameters()[0].get(hp_nodes))
-        print('Dropout in hidden layer number ' + str(iLayer) + ': ' + str(tuner.get_best_hyperparameters()[0].get(hp_dropout)))
-        logFile.write('\nDropout in hidden layer number ' + str(iLayer) + ': ' + str(tuner.get_best_hyperparameters()[0].get(hp_dropout)))
-        logString += '\nDropout in hidden layer number ' + str(iLayer) + ': ' + str(tuner.get_best_hyperparameters()[0].get(hp_dropout))
-    print('Optimizer:', model.optimizer.get_config())
-    #logFile.write('\nOptimizer: ' + str(model.optimizer.get_config()))                                                                                               
-    logString += '\nOptimizer: ' + str(model.optimizer.get_config())
-    #logFile.write('\n*******************************************************************************************')                                                   
+        #print('Dropout in hidden layer number ' + str(iLayer) + ': ' + str(tuner.get_best_hyperparameters()[0].get(hp_dropout)))
+        #logFile.write('\nDropout in hidden layer number ' + str(iLayer) + ': ' + str(tuner.get_best_hyperparameters()[0].get(hp_dropout)))
+        #logString += '\nDropout in hidden layer number ' + str(iLayer) + ': ' + str(tuner.get_best_hyperparameters()[0].get(hp_dropout))
+    #print('Optimizer:', model.optimizer.get_config())
+    #logFile.write('\nOptimizer: ' + str(model.optimizer.get_config()))
+    #logString += '\nOptimizer: ' + str(model.optimizer.get_config())
+    #logFile.write('\n*******************************************************************************************')
     logString += '\n*******************************************************************************************'
     return model, logString
 
@@ -1902,7 +1913,7 @@ def plotHistory(patiences, series, feature, outputDir, outputFileCommonName):
         plt.subplot(220 + (i+1))
         plt.plot(series[i])
         plt.title('patience = ' + str(patiences[i]), pad = -80)
-    #plt.show()                                                                                                                                                       
+    #plt.show()
     pltName = outputDir + '/' + feature + '_DifferentPatience_' + outputFileCommonName + '.png'
     plt.savefig(pltName)
     print(Fore.GREEN + 'Saved ' + pltName)
@@ -1910,35 +1921,41 @@ def plotHistory(patiences, series, feature, outputDir, outputFileCommonName):
 
 from keras import backend
 from keras.callbacks import ReduceLROnPlateau, Callback
-def TrainNN(X_train, y_train, w_train, patienceValue, numberOfEpochs, batchSize, validationFraction, NN, model, iLoop, loop):
-    print(Fore.BLUE + 'Training the ' + NN + ' -- loop ' + str(iLoop) + ' out of ' + str(loop - 1))
+def TrainNN(X_train, y_train, w_train, patienceValue, numberOfEpochs, batchSize, validationFraction, model, studyLearningRate):#, iLoop, loop):
+    #print(Fore.BLUE + 'Training the ' + NN + ' -- loop ' + str(iLoop) + ' out of ' + str(loop - 1))
 
-    ### If we want to stop the training when we don't have an improvement in $monitor after $patience epochs                                                          
-    earlyStoppingCB = EarlyStopping(verbose = True, patience = 15, monitor = 'val_loss', restore_best_weights = True)
+    ### If we want to stop the training when we don't have an improvement in $monitor after $patience epochs
+    earlyStoppingCB = EarlyStopping(verbose = True, patience = 2, monitor = 'val_loss', restore_best_weights = True)
 
-    ### If we want to reduce the LR when we don't have an improvement in $monitor after $patience epochs                                                              
-    decreaseLR = tf.keras.callbacks.LearningRateScheduler(scheduler) ### needed?                                                                                      
-    rlrp = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=patienceValue, min_delta=1E-7)
+    ### If we want to reduce the LR when we don't have an improvement in $monitor after $patience epochs
+    decreaseLR = tf.keras.callbacks.LearningRateScheduler(scheduler) ### needed?
+    rlrp = ReduceLROnPlateau(monitor = 'val_loss', factor = 0.1, patience = patienceValue, min_delta = 1E-7)
 
-    # If we want to monitor the learning rate in each epoch                                                                                                           
+    # If we want to monitor the learning rate in each epoch
     class LearningRateMonitor(Callback):
-        # start of training                                                                                                                                           
+        # start of training
         def on_train_begin(self, logs={}):
             self.lrates = list()
 
-        # end of each training epoch                                                                                                                                  
+        # end of each training epoch
         def on_epoch_end(self, epoch, logs={}):
-            # get and store the learning rate                                                                                                                         
+            # get and store the learning rate
             optimizer = self.model.optimizer
             lrate = float(backend.get_value(self.model.optimizer.lr))
             print('Learning rate:', lrate)
             self.lrates.append(lrate)
-    lrm = LearningRateMonitor()
 
-    CallbacksList = [rlrp, lrm] #earlyStoppingCB                                                                                                                      
+    if studyLearningRate:
+        lrm = LearningRateMonitor(Callback)
+        CallbacksList = [rlrp, lrm] #earlyStoppingCB
 
-    #model, Loss, Metrics, learningRate, Optimizer = BuildDNN(len(inputfeatures), numberOfNodes, numberOfLayers, dropout)                                             
+    else:
+        CallbacksList = [earlyStoppingCB]#,rlrp]#, lrm] #earlyStoppingCB
+    #model, Loss, Metrics, learningRate, Optimizer = BuildDNN(len(inputfeatures), numberOfNodes, numberOfLayers, dropout)
     #model.compile(loss = Loss, optimizer = Optimizer, weighted_metrics = Metrics)
     modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = batchSize, validation_split = validationFraction, verbose = 1, shuffle = False, callbacks = CallbacksList)
 
-    return modelMetricsHistory, lrm.lrates
+    if studyLearningRate:
+        return modelMetricsHistory, lrm.lrates
+    else:
+        return modelMetricsHistory

@@ -15,13 +15,14 @@ batchSize = 2048
 patienceValue = 5
 
 ### Reading the command line
-tag, jetCollection, analysis, channel, preselectionCuts, background, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, testMass, doTrain, doTest, loop, doHpOptimization, drawPlots, trainSet = ReadArgParser()
+tag, jetCollection, analysis, channel, preselectionCuts, background, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, testMass, doTrain, doTest, loop, doHpOptimization, drawPlots, trainSet, studyLearningRate = ReadArgParser()
 
 drawPlots = True
 doFeaturesRanking = False
 originsBkgTest = list(background.split('_'))
 doSameStatAsVBF = False
-studyLearningRate = False
+#studyLearningRate = False
+doStatisticTest = False
 
 ### Reading the configuration file
 ntuplePath, dfPath, InputFeatures = ReadConfig(tag, analysis, jetCollection, signal)
@@ -34,10 +35,9 @@ outputFileCommonName = NN + '_' + jetCollection + '_' + analysis + '_' + channel
 
 ### Creating the output directory and the logFile
 #outputDir = inputDir + NN + '_trainSet' + str(trainSet)#0'# + '_3'# + '/withDNNscore'# + '/test1'# + '/3layers'#'/ggFsameStatAsVBF'# + '/withDNNscore' #'/DNNScore_Z'# + '/' + preselectionCuts # + '_halfStat'
-outputDir = inputDir + NN + '_prova1'
-print(format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
-
-#inputDir = outputDir ########## TOGLIERE!!!!
+#outputDir = inputDir + NN + '_prova1'
+outputDir = inputDir + NN + 'hpOptimization'
+print(format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))#inputDir = outputDir ########## TOGLIERE!!!!
 print(Fore.GREEN + 'Input files directory: ' + inputDir)
 
 logFileName = outputDir + '/logFile_' + outputFileCommonName + '.txt'
@@ -46,14 +46,15 @@ logInfo = ''
 logString = WriteLogFile(tag, ntuplePath, InputFeatures, inputDir, doHpOptimization, doTrain, doTest, validationFraction, batchSize, patienceValue)
 logFile.write(logString)
 logInfo += logString
-AUCfile = open(outputDir + '/AUCvalues.txt', 'w')
-AUCfile.write('AUC values in each of the 20 iterations\n')
-lossFile = open(outputDir + '/lossValues.txt', 'w')
-lossFile.write('Train loss minimum - validation loss minimum - train loss at the validation loss minimum (in each of the 20 iterations)\n')
-scoresFileName = outputDir + '/scoresValues.txt'
-scoresFile = open(scoresFileName, 'w')
-scoresFile.write('Scores of the 20 fixed events in each of the 20 iterations\n')
-
+if doStatisticTest:
+    AUCfile = open(outputDir + '/AUCvalues.txt', 'w')
+    AUCfile.write('AUC values in each of the 20 iterations\n')
+    lossFile = open(outputDir + '/lossValues.txt', 'w')
+    lossFile.write('Train loss minimum - validation loss minimum - train loss at the validation loss minimum (in each of the 20 iterations)\n')
+    scoresFileName = outputDir + '/scoresValues.txt'
+    scoresFile = open(scoresFileName, 'w')
+    scoresFile.write('Scores of the 20 fixed events in each of the 20 iterations\n')
+    
 ### Loading input data
 data_train, data_test, X_train, X_test, y_train, y_test, w_train, w_test = LoadData(inputDir, tag, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures, trainSet)
 
@@ -67,21 +68,46 @@ logFile.write(logString)
 logInfo += logString
 
 if doHpOptimization:
-    HpOptimization(InputFeatures, patienceValue, X_train, y_train, w_train, numberOfEpochs, validationFraction, batchSize)
+    model, logString = HpOptimization(InputFeatures, patienceValue, X_train, y_train, w_train, numberOfEpochs, validationFraction, batchSize, outputDir)
+    logFile.write(logString)
+    logInfo += logString
+
+else: 
+    ### Building and compiling the PDNN
+    model, Loss, Metrics, learningRate, Optimizer = BuildNN(len(InputFeatures), numberOfNodes, numberOfLayers, dropout, studyLearningRate)
+    model.compile(loss = Loss, optimizer = Optimizer, weighted_metrics = Metrics)
+    NNdiagramName = outputDir + '/trainedModel.png'
+    #plot_model(model, to_file = NNdiagramName, show_shapes = True, show_layer_names = True)
+    print(Fore.GREEN + 'Saved ' + NNdiagramName)
+    logString = '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of hidden layers: ' + str(numberOfLayers) + '\nDropout: ' + str(dropout) + '\nLoss: ' + Loss + '\nOptimizer: ' + str(Optimizer) + '\nLearning rate: ' + str(learningRate) + '\nMetrics: ' + str(Metrics)
+    logFile.write(logString)
+    logInfo += logString
+                
+if studyLearningRate:
+    patiences = [2, 5, 10, 15]
+    print(Fore.RED + 'Training ' + str(len(patiences)) + ' pDNN with decreasing learning rate and different patience values')
+    lr_list, loss_list, acc_list, = list(), list(), list()
+    for iPatience in range(len(patiences)):
+        iPatienceValue = patiences[iPatience]
+        print(Fore.BLUE + 'NN number ' + str(iPatience) + ' out of ' + str(len(patiences) - 1) + ' -> patience = ' + str(iPatienceValue))
+        modelMetricsHistory, lrm_rates = TrainNN(X_train, y_train, w_train, iPatienceValue, numberOfEpochs, batchSize, validationFraction, model, studyLearningRate)#, iLoop, loop)
+        #modelMetricsHistory, lrm_rates = TrainNN(X_train, y_train, w_train, iPatienceValue, numberOfEpochs, batchSize, validationFraction, NN, model, Loss, Optimizer, Metrics, iLoop, loop)
+        loss_list.append(modelMetricsHistory.history['loss'])
+        acc_list.append(modelMetricsHistory.history['accuracy'])
+        lr_list.append(lrm_rates)
+        
+    # plot learning rates
+    plotHistory(patiences, lr_list, 'LearningRate', outputDir, outputFileCommonName)
+    # plot loss
+    plotHistory(patiences, loss_list, 'Loss', outputDir, outputFileCommonName)
+    # plot accuracy
+    plotHistory(patiences, acc_list, 'Accuracy', outputDir, outputFileCommonName)
 
 for iLoop in range(loop):
 
     outputDirLoop = outputDir + '/loop_' + str(iLoop)
     print(format('Output directory: ' + Fore.GREEN + outputDirLoop), checkCreateDir(outputDirLoop))
-    #enablePrint()
-    #print(Fore.RED + 'loop: ' + str(iLoop))
-    #blockPrint()
 
-    #if iLoop == 0:
-        #logString = '\nLoss: ' + Loss + '\nLearning rate: ' + str(learningRate) + '\nOptimizer: ' + str(Optimizer) + '\nweighted_metrics: ' + str(Metrics)
-        #logFile.write(logString)
-        #logInfo += logString
-    
     if not doTrain:
         model = LoadNN(outputDir)
 
@@ -97,7 +123,7 @@ for iLoop in range(loop):
                 logInfo += logString
         '''
 
-
+        '''
         if not doHpOptimization:
             ### Building and compiling the PDNN
             model, Loss, Metrics, learningRate, Optimizer = BuildDNN(len(InputFeatures), numberOfNodes, numberOfLayers, dropout)
@@ -109,48 +135,34 @@ for iLoop in range(loop):
                 logString = '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of hidden layers: ' + str(numberOfLayers) + '\nDropout: ' + str(dropout) + '\nLoss: ' + Loss + '\nOptimizer: ' + str(Optimizer) + '\nLearning rate: ' + str(learningRate) + '\nMetrics: ' + str(Metrics)
                 logFile.write(logString)
                 logInfo += logString
-
-            if studyLearningRate:
-                patiences = [2, 5, 10, 15]
-                print(Fore.RED + 'Training ' + str(len(patiences)) + ' pDNN with decreasing learning rate and different patience values')
-                lr_list, loss_list, acc_list, = list(), list(), list()
-                for iPatience in range(len(patiences)):
-                    iPatienceValue = patiences[iPatience]
-                    print(Fore.BLUE + 'NN number ' + str(iPatience) + ' out of ' + str(len(patiences) - 1) + ' -> patience = ' + str(iPatienceValue))
-                    modelMetricsHistory, lrm_rates = TrainNN(X_train, y_train, w_train, iPatienceValue, numberOfEpochs, batchSize, validationFraction, NN, model, iLoop, loop)
-                    #modelMetricsHistory, lrm_rates = TrainNN(X_train, y_train, w_train, iPatienceValue, numberOfEpochs, batchSize, validationFraction, NN, model, Loss, Optimizer, Metrics, iLoop, loop)
-                    loss_list.append(modelMetricsHistory.history['loss'])
-                    acc_list.append(modelMetricsHistory.history['accuracy'])
-                    lr_list.append(lrm_rates)
-                    
-                # plot learning rates
-                plotHistory(patiences, lr_list, 'LearningRate', outputDirLoop, outputFileCommonName)
-                # plot loss
-                plotHistory(patiences, loss_list, 'Loss', outputDirLoop, outputFileCommonName)
-                # plot accuracy
-                plotHistory(patiences, acc_list, 'Accuracy', outputDirLoop, outputFileCommonName)
-            '''
+        '''
+        
+        '''
             ### Training
             if not doHpOptimization:
             ### Building and compiling the PDNN
             model, Loss, Metrics, learningRate, Optimizer = BuildDNN(len(InputFeatures), numberOfNodes, numberOfLayers, dropout)
             model.compile(loss = Loss, optimizer = Optimizer, weighted_metrics = Metrics)
-            '''
-           
-            #modelMetricsHistory, lrm.lrates = TrainNN(X_train, y_train, w_train, patienceValue, numberOfEpochs, batchSize, validationFraction, NN, model, Loss, Optimizer, Metrics, iLoop, loop)
-            modelMetricsHistory, _ = TrainNN(X_train, y_train, w_train, patienceValue, numberOfEpochs, batchSize, validationFraction, NN, model, iLoop, loop)
-        exit()
         '''
-        ### Writing best losses to file
-        loss_hist = modelMetricsHistory.history['loss']
-        val_loss_hist = modelMetricsHistory.history['val_loss']
-        best_epoch = np.argmin(loss_hist)# + 1
-        lossFile.write(str(np.min(loss_hist)) + ' ' + str(np.min(val_loss_hist)) + ' ' + str(loss_hist[best_epoch]) + '\n')
-        
+           
+        #modelMetricsHistory, lrm.lrates = TrainNN(X_train, y_train, w_train, patienceValue, numberOfEpochs, batchSize, validationFraction, NN, model, Loss, Optimizer, Metrics, iLoop, loop)
+        if not studyLearningRate:
+            print(Fore.BLUE + 'Training the ' + NN + ' -- loop ' + str(iLoop) + ' out of ' + str(loop - 1))
+
+            #model.compile(loss = Loss, optimizer = Optimizer, weighted_metrics = Metrics) ### here?
+            modelMetricsHistory = TrainNN(X_train, y_train, w_train, patienceValue, numberOfEpochs, batchSize, validationFraction, model, studyLearningRate)#, iLoop, loop)
+
+        if doStatisticTest:
+            ### Writing best losses to file
+            loss_hist = modelMetricsHistory.history['loss']
+            val_loss_hist = modelMetricsHistory.history['val_loss']
+            best_epoch = np.argmin(loss_hist)# + 1
+            lossFile.write(str(np.min(loss_hist)) + ' ' + str(np.min(val_loss_hist)) + ' ' + str(loss_hist[best_epoch]) + '\n')
+
         ### Saving to files
         SaveModel(model, outputDirLoop, NN)
-        plot_model(model, to_file='trainedModel.png', show_shapes=True, show_layer_names=True)
-        '''
+        plot_model(model, to_file = 'trainedModel.png', show_shapes = True, show_layer_names = True)
+
     '''
     if doTest:
         ### Evaluating the performance of the PDNN on the test sample and writing results to the log file
@@ -201,7 +213,7 @@ for iLoop in range(loop):
     testMass.sort()
 
     for unscaledMass in testMass:
-
+        
         if unscaledMass != 1000:# and unscaledMass != 600:
             continue
 
@@ -231,26 +243,27 @@ for iLoop in range(loop):
         if doFeaturesRanking:
             FeaturesRanking(X_test_signal_mass, X_test_bkg, deltasDict, InputFeatures, signal, analysis, channel, outputDir, outputFileCommonName, drawPlots)
 
-        if iLoop == 0:
-            ### Creating dataset with just 20 events
-            data_test_signal_mass_10 = data_test_signal_mass[:10]
-            data_test_bkg_10 = data_test_bkg[:10]
-            data_test_20 = pd.concat((data_test_signal_mass_10, data_test_bkg_10))
-            #print(data_test_20)
-            #print(data_test_20.shape)
-            data_test_20.to_pickle(outputDir + '/20events_test.pkl')
-            print(Fore.GREEN + 'Saved ' + outputDir + '/20events_test.pkl')
-            #print(yhat_20)
-            #print(len(yhat_20))
-        else:
-            data_test_20 = pd.read_pickle(outputDir + '/20events_test.pkl')
+        if doStatisticTest:
+            if iLoop == 0:
+                ### Creating dataset with just 20 events
+                data_test_signal_mass_10 = data_test_signal_mass[:10]
+                data_test_bkg_10 = data_test_bkg[:10]
+                data_test_20 = pd.concat((data_test_signal_mass_10, data_test_bkg_10))
+                #print(data_test_20)
+                #print(data_test_20.shape)
+                data_test_20.to_pickle(outputDir + '/20events_test.pkl')
+                print(Fore.GREEN + 'Saved ' + outputDir + '/20events_test.pkl')
+                #print(yhat_20)
+                #print(len(yhat_20))
+            else:
+                data_test_20 = pd.read_pickle(outputDir + '/20events_test.pkl')
 
-        yhat_20 = np.array(model.predict(data_test_20[InputFeatures], batch_size = batchSize))
+            yhat_20 = np.array(model.predict(data_test_20[InputFeatures], batch_size = batchSize))
 
-        for iScore in range(len(yhat_20)):
-            scoresFile.write(str(yhat_20[iScore][0]) + ' ')
-            if iScore == (len(yhat_20) - 1):
-                scoresFile.write('\n')
+            for iScore in range(len(yhat_20)):
+                scoresFile.write(str(yhat_20[iScore][0]) + ' ')
+                if iScore == (len(yhat_20) - 1):
+                    scoresFile.write('\n')
 
         ### Selecting train signal events with the same mass
         data_train_signal_mass = data_train_signal[data_train_signal['unscaledMass'] == unscaledMass]
@@ -278,7 +291,8 @@ for iLoop in range(loop):
         roc_auc = auc(fpr, tpr)
         print(format(Fore.BLUE + 'ROC_AUC: ' + str(roc_auc)))
         newLogFile.write('\nROC_AUC: ' + str(roc_auc))
-        AUCfile.write(str(roc_auc) + '\n')
+        if doStatisticTest:
+            AUCfile.write(str(roc_auc) + '\n')
 
         '''
         from scipy import integrate
@@ -300,17 +314,18 @@ for iLoop in range(loop):
         print(Fore.GREEN + 'Saved ' + newLogFileName)
 
         if drawPlots and doFeaturesRanking:
-            PlotFeaturesRanking(InputFeatures, deltasDict, outputDir, outputFileCommonName)
+            PlotFeaturesRanking(InputFeatures, deltasDict, newOutputDir, outputFileCommonName)
 
         ### Plotting calibration curve on signal (train + test) scores
-        CalibrationCurves(wMC_test_signal_mass, wMC_train_signal_mass, yhat_test_signal_mass, yhat_train_signal_mass, wMC_test_bkg, wMC_train_bkg, yhat_test_bkg_mass, yhat_train_bkg_mass, unscaledMass, outputFileCommonName)
+        CalibrationCurves(wMC_test_signal_mass, wMC_train_signal_mass, yhat_test_signal_mass, yhat_train_signal_mass, wMC_test_bkg, wMC_train_bkg, yhat_test_bkg_mass, yhat_train_bkg_mass, unscaledMass, newOutputDir, outputFileCommonName)
 
     #if (len(testMass) > 1):
     #    DrawRejectionVsMass(testMass, WP, bkgRej90, bkgRej94, bkgRej97, bkgRej99, outputDir, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName) 
 
-AUCfile.close()
-print(Fore.GREEN + 'Saved ' + outputDir + '/AUCvalues.txt')
-lossFile.close()
-print(Fore.GREEN + 'Saved ' + outputDir + '/lossValues.txt')
-scoresFile.close()
-print(Fore.GREEN + 'Saved ' + outputDir + '/scoresValues.txt')
+if doStatisticTest:
+    AUCfile.close()
+    print(Fore.GREEN + 'Saved ' + outputDir + '/AUCvalues.txt')
+    lossFile.close()
+    print(Fore.GREEN + 'Saved ' + outputDir + '/lossValues.txt')
+    scoresFile.close()
+    print(Fore.GREEN + 'Saved ' + outputDir + '/scoresValues.txt')
