@@ -4,7 +4,7 @@
 ### Histograms of scaled and unscaled variables will be saved if running with --drawPlots = 1
 
 import seaborn
-from Functions import ReadArgParser, checkCreateDir, ReadConfig, DrawVariablesHisto, ShufflingData, ComputeTrainWeights, ScalingFeatures#, SaveFeatureScaling,
+from Functions import ReadArgParser, checkCreateDir, ReadConfig, DrawVariablesHisto, ShufflingData, ComputeTrainWeights, ScalingFeatures, ComputeScaleFactors#, SaveFeatureScaling,
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -23,7 +23,7 @@ pd.options.mode.chained_assignment = None ### to suppress the SettingWithCopyWar
 tag, jetCollection, analysis, channel, preselectionCuts, background, signal, trainingFraction, drawPlots = ReadArgParser()
 
 ### Reading from configuration file
-dfPath, InputFeatures, signalsList, backgroundsList = ReadConfig(tag, analysis, jetCollection, signal)
+dfPath, InputFeatures, signalsList, backgroundsList = ReadConfig(tag, analysis, jetCollection, signal) ### remove input features
 
 ### Loading input file
 inputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + signal + '/' + background
@@ -33,7 +33,7 @@ print(Fore.GREEN + 'Loading' + inputDir + '/MixData_' + fileCommonName + '.pkl')
 data = pd.read_pickle(inputDir + '/MixData_' + fileCommonName + '.pkl') 
 
 ### If not already existing, creating output directory
-outputDir = inputDir# + '/ggFsameStatAsVBF'
+outputDir = inputDir# + '/PDNN_trainSet9'# + '/ggFsameStatAsVBF'
 checkCreateDir(outputDir)
 fileCommonName += '_' + str(trainingFraction) + 't'
 
@@ -139,24 +139,29 @@ data_train = data_train[:nEvents]
 '''
 
 ### Scaling InputFeatures of train and test set
+logString = ComputeScaleFactors(data_train, outputDir)
+'''
 data_train, data_test, logString = ScalingFeatures(data_train, data_test, InputFeatures, outputDir)
+'''
 logFile.write(logString)
 
+'''
 if drawPlots:
     scaledHistogramsPath = outputDir + '/trainScaledHistograms'
     print(format('Output directory: ' + Fore.GREEN + scaledHistogramsPath), checkCreateDir(scaledHistogramsPath))
     logFile.write('\nSaving histograms of the scaled train dataset in ' + scaledHistogramsPath)
     DrawVariablesHisto(data_train, InputFeatures, scaledHistogramsPath, fileCommonName, jetCollection, analysis, channel, signal, backgroundLegend, preselectionCuts, True)
+'''
 
-### Saving scaled dataframes
+### Saving unscaled dataframes
 dataTrainName = outputDir + '/data_train_' + fileCommonName + '.pkl'
 data_train.to_pickle(dataTrainName)
 print(Fore.GREEN + 'Saved ' + dataTrainName)
-logFile.write('\nSaved scaled train dataframe in ' + dataTrainName)
+logFile.write('\nSaved unscaled train dataframe in ' + dataTrainName)
 dataTestName = outputDir + '/data_test_' + fileCommonName + '.pkl'
 data_test.to_pickle(dataTestName)
 print(Fore.GREEN + 'Saved ' + dataTestName)
-logFile.write('\nSaved scaled test dataframe in ' + dataTestName)
+logFile.write('\nSaved unscaled test dataframe in ' + dataTestName)
 
 ### Closing log file
 logFile.close()
