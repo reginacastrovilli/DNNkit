@@ -4,7 +4,7 @@
 ### A cut on the mass value is performed according to the regime selected.
 ### Histograms and a correlation matrix of the relevat variables can be saved.
 
-from Functions import ReadArgParser, ReadConfig, checkCreateDir, ShufflingData, SelectEvents, CutMasses, DrawVariablesHisto, DrawCorrelationMatrix
+from Functions import ReadArgParser, ReadConfig, checkCreateDir, ShufflingData, SelectEvents, CutMasses, DrawVariablesHisto, DrawCorrelationMatrix, computeDerivedVariables
 import pandas as pd
 import numpy as np
 import random
@@ -25,7 +25,7 @@ overwriteDataFrame = False
 tag, jetCollection, analysis, channel, preselectionCuts, signal, background, drawPlots = ReadArgParser()
 
 ### Reading from config file
-InputFeatures, dfPath, variablesToSave, backgroundsList = ReadConfig(tag, analysis, jetCollection, signal)
+InputFeatures, dfPath, variablesToSave, variablesToDerive, backgroundsList = ReadConfig(tag, analysis, jetCollection, signal)
 
 ### Creating output directories and logFile
 tmpOutputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts# + '/ggFandVBF'# + '/ggFVBF'
@@ -62,23 +62,7 @@ print(dfPath)
 ### Creating empty signal and background dataframe 
 dataFrameSignal = []
 dataFrameBkg = []
-'''
-def computePx(ptArray, phi):
-    px = ptArray * np.cos(phi)
-    return px
 
-def computePy(ptArray, phi):
-    px = ptArray * np.sin(phi)
-    return px
-
-def computePz(ptArray, eta):
-    pz = ptArray * np.sinh(eta)
-    return pz
-
-def computeE(ptArray, etaArray, massArray):
-    e = np.sqrt((ptArray ** 2) * (1 + np.sinh(etaArray) ** 2) + (massArray ** 2))
-    return e
-'''
 for target in inputOrigins:
     fileName = tmpOutputDir + '/' + target + '_' + tmpFileCommonName + '.pkl'
 
@@ -99,10 +83,6 @@ for target in inputOrigins:
         for file in os.listdir(dfPath):
             ### Loading input file
             if file.startswith(target) and file.endswith('.pkl'):
-                '''
-                if target != signal:
-                    continue
-                '''
                 print(Fore.GREEN + 'Loading ' + dfPath + file)
                 inputDf = pd.read_pickle(dfPath + file)
                 ### Selecting events according to merged/resolved regime and ggF/VBF channel
@@ -166,44 +146,12 @@ dataFrameBkg = dataFrameBkg.assign(mass = massesBkg)
 ### Concatening signal and background dataframes
 dataFrame = pd.concat([dataFrameSignal, dataFrameBkg], ignore_index = True)
 
+### Computing derived variables
+dataFrame = computeDerivedVariables(variablesToDerive, dataFrame)
+
 ### Selecting in the dataframe only the variables relevant for the next steps
-dataFrame = dataFrame[variablesToSave]
+dataFrame = dataFrame[variablesToSave + variablesToDerive]
 
-'''
-print(dataFrame)
-cosphi = np.cos(dataFrame['lep1_phi'])
-##################### 
-lep1_px_array = computePx(dataFrame['lep1_pt'], dataFrame['lep1_phi'])
-dataFrame = dataFrame.assign(lep1_px = lep1_px_array)
-lep2_px_array = computePx(dataFrame['lep2_pt'], dataFrame['lep2_phi'])
-dataFrame = dataFrame.assign(lep2_px = lep2_px_array)
-fatjet_px_array = computePx(dataFrame['fatjet_pt'], dataFrame['fatjet_phi'])
-dataFrame = dataFrame.assign(fatjet_px = fatjet_px_array)
-
-lep1_py_array = computePy(dataFrame['lep1_pt'], dataFrame['lep1_phi'])
-dataFrame = dataFrame.assign(lep1_py = lep1_py_array)
-lep2_py_array = computePy(dataFrame['lep2_pt'], dataFrame['lep2_phi'])
-dataFrame = dataFrame.assign(lep2_py = lep2_py_array)                
-fatjet_py_array = computePy(dataFrame['fatjet_pt'], dataFrame['fatjet_phi'])
-dataFrame = dataFrame.assign(fatjet_py = fatjet_py_array)                
-
-lep1_pz_array = computePz(dataFrame['lep1_pt'], dataFrame['lep1_eta'])
-dataFrame = dataFrame.assign(lep1_pz = lep1_pz_array)
-lep2_pz_array = computePz(dataFrame['lep2_pt'], dataFrame['lep2_eta'])
-dataFrame = dataFrame.assign(lep2_pz = lep2_pz_array)                
-fatjet_pz_array = computePz(dataFrame['fatjet_pt'], dataFrame['fatjet_eta'])
-dataFrame = dataFrame.assign(fatjet_pz = fatjet_pz_array)                
-
-lep1_e_array = computeE(dataFrame['lep1_pt'], dataFrame['lep1_eta'], dataFrame['mass'])
-dataFrame = dataFrame.assign(lep1_e = lep1_e_array)
-lep2_e_array = computeE(dataFrame['lep2_pt'], dataFrame['lep2_eta'], dataFrame['mass'])
-dataFrame = dataFrame.assign(lep2_e = lep2_e_array)
-fatjet_e_array = computeE(dataFrame['fatjet_pt'], dataFrame['fatjet_eta'], dataFrame['mass'])
-dataFrame = dataFrame.assign(fatjet_e = fatjet_e_array)
-#####################
-print(dataFrame)
-#exit()
-'''
 '''
 ### Removing events with high absoulte MC weights
 meanWeight = dataFrame['weight'].mean()
@@ -211,6 +159,7 @@ stdWeight = dataFrame['weight'].std()
 selection = 'abs(weight - ' + str(meanWeight) + ') <= 5 * ' + str(stdWeight)
 dataFrame = dataFrame.query(selection)
 '''
+
 ### Shuffling the dataframe
 dataFrame = ShufflingData(dataFrame)
 
@@ -218,7 +167,7 @@ dataFrame = ShufflingData(dataFrame)
 for origin in inputOrigins:
     logFile.write('\nNumber of ' + origin + ' events: ' + str(dataFrame[dataFrame['origin'] == origin].shape[0]) + ' (raw), ' + str(sum(dataFrame[dataFrame['origin'] == origin]['weight'])) +' (with MC weights)')
     print(Fore.BLUE + 'Number of ' + origin + ' events: ' + str(dataFrame[dataFrame['origin'] == origin].shape[0]) + ' (raw), ' + str(sum(dataFrame[dataFrame['origin'] == origin]['weight'])) +' (with MC weights)')
-#exit()
+
 ### Saving the combined dataframe
 outputFileName = '/MixData_' + fileCommonName + '.pkl'
 dataFrame.to_pickle(outputDir + outputFileName)

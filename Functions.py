@@ -1,7 +1,7 @@
-# Assigning script names to variables
+### Assigning script names to variables
 fileNameSaveToPkl = 'saveToPkl.py'
 fileNameBuildDataSet = 'buildDataset.py'
-fileNameComputeSignificance = 'computeSignificanceScores.py' #'computeSignificance.py'#New.py' ##2
+fileNameComputeSignificance = 'computeSignificance.py'#'computeSignificanceScores.py' #'computeSignificance.py'#New.py' ##2
 fileNameSplitDataSet = 'splitDataset.py'
 fileNameBuildDNN = 'buildDNN.py'
 #fileNameBuildPDNN = 'buildPDNNtuningHyp.py'
@@ -34,7 +34,7 @@ def ReadArgParser():
     parser.add_argument('-m', '--Mass', help = 'Masses for the (P)DNN train/test (GeV, in quotation mark separated by a space)', default = 'all')
     parser.add_argument('--doTrain', help = 'If 1 the training will be performed, if 0 it won\'t', default = 1)
     parser.add_argument('--doTest', help = 'If 1 the test will be performed, if 0 it won\'t', default = 1)
-    parser.add_argument('--loop', help = 'How many times the code will be executed', default = 20)
+    parser.add_argument('--loop', help = 'How many times the code will be executed', default = 1) #20
     parser.add_argument('--tag', help = 'CxAOD tag', default = 'r33-24')
     parser.add_argument('--drawPlots', help = 'If 1 all plots will be saved', default = 0)
     parser.add_argument('-r', '--regime', help = '')
@@ -46,7 +46,7 @@ def ReadArgParser():
 
     analysis = args.Analysis
     if args.Analysis is None and fileNameSaveToPkl not in sys.argv[0] and fileNameComputeSignificance not in sys.argv[0]:
-        parser.error(Fore.RED + 'Requested type of analysis (either \'mergered\' or \'resolved\')')
+        parser.error(Fore.RED + 'Requested type of analysis (either \'merged\' or \'resolved\')')
     elif args.Analysis and analysis != 'resolved' and analysis != 'merged':
         parser.error(Fore.RED + 'Analysis can be either \'merged\' or \'resolved\'')
     channel = args.Channel
@@ -193,12 +193,13 @@ def ReadConfig(tag, analysis, jetCollection, signal):
         #if signal == 'Radion' or signal == 'RSG':
         if 'Radion' in signal or 'RSG' in signal:
             InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesResolvedRadionRSG'))
+            variablesToDerive = ast.literal_eval(config.get('config', 'variablesToDeriveResolvedRadionRSG'))
             variablesToSave = ast.literal_eval(config.get('config', 'variablesToSaveResolvedRadionRSG'))
         else:
             InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesResolvedHVT'))
             variablesToSave = ast.literal_eval(config.get('config', 'variablesToSaveResolvedHVT'))
     if fileNameBuildDataSet in sys.argv[0]:
-        return InputFeatures, dfPath, variablesToSave, backgroundsList
+        return InputFeatures, dfPath, variablesToSave, variablesToDerive, backgroundsList
     if fileNameComputeSignificance in sys.argv[0] or fileNameCreateScoresBranch in sys.argv[0]:
         return inputFiles, rootBranchSubSample, InputFeatures, dfPath, variablesToSave, backgroundsList
     if fileNamePlots in sys.argv[0]:
@@ -481,8 +482,10 @@ def ComputeTrainWeights(dataSetSignal, dataSetBackground, massesSignalList, outp
             plt.bar(signal + ' ' + str(signalMass) + ' GeV', dataSetSignal[dataSetSignal['mass'] == signalMass]['train_weight'].sum(), color = 'blue')
     if drawPlots:
         plt.bar('all ' + signal, dataSetSignal['train_weight'].sum(), color = 'orange')
+    '''
     ### All signal weight
     signalWeight = dataSetSignal['train_weight'].sum()
+    '''
     ### Background MC weight
     bkgWeight = dataSetBackground['weight'].sum()
     ### Scale factor to equalize signal/background
@@ -565,10 +568,74 @@ def ScalingFeatures(dataTrain, dataTest, InputFeatures, outputDir):
     logString = '\nSaved variables offset and scales in ' + variablesFileName
     return dataTrain, dataTest, logString
 
+### Computing weighted median and IQR range
+def ComputeScaleFactors(dataTrain, outputDir):
+    dataTrainCopy = dataTrain.copy()
+    variablesNotToScale = ['Pass', 'DNN', 'origin', 'isSignal', 'weight', 'train_weight', 'unscaledMass']
+    variablesToScale = []
+    for variable in dataTrain.columns:
+        addVariable = True
+        for variableNotToScale in variablesNotToScale:
+            if variableNotToScale in variable:
+                addVariable = False
+                print('Not scaling ' + variable)
+                break
+        if addVariable == True:
+            variablesToScale.append(variable)
+    sumTrainWeights = np.array(dataTrainCopy['train_weight']).sum()
+    halfTrainWeights = sumTrainWeights / 2
+    perc1 = sumTrainWeights * 0.25
+    perc2 = sumTrainWeights * 0.75
+    variablesFileName = outputDir + '/variables.json'
+    variablesFile = open(variablesFileName, 'w')
+    variablesFile.write("{\n")
+    variablesFile.write("  \"inputs\": [\n")
+    for feature in variablesToScale:
+        cumulativeSum = 0
+        print('Computing scale factors (median and IQR) for ' + feature)
+        dataTrainCopy = dataTrainCopy.sort_values(by = [feature])
+        for index in range(len(dataTrainCopy)):
+            cumulativeSum += dataTrainCopy['train_weight'].iloc[index]
+            if cumulativeSum <= perc1:
+                perc1index = index
+            else:
+                break
+        for index in range(perc1index, len(dataTrainCopy)):
+            cumulativeSum += dataTrainCopy['train_weight'].iloc[index]
+            if cumulativeSum <= halfTrainWeights:
+                medianIndex = index
+            else:
+                break
+        for index in range(medianIndex, len(dataTrainCopy)):
+            cumulativeSum += dataTrainCopy['train_weight'].iloc[index]
+            if cumulativeSum <= perc2:
+                perc2index = index
+            else:
+                break
+        quartileLeft = dataTrainCopy[feature].iloc[perc1index]
+        median = dataTrainCopy[feature].iloc[medianIndex]
+        quartileRight = dataTrainCopy[feature].iloc[perc2index]
+        iqr = quartileRight - quartileLeft ### InterQuartile Range (IQR)
+        variablesFile.write("    {\n")
+        variablesFile.write("      \"name\": \"%s\",\n" % feature)
+        variablesFile.write("      \"offset\": %lf,\n" % median) # EJS 2021-05-27: I have compelling reasons to believe this should be -mu
+        variablesFile.write("      \"scale\": %lf\n" % iqr) # EJS 2021-05-27: I have compelling reasons to believe this should be 1/sigma                            
+        variablesFile.write("    }")
+        if feature != variablesToScale[len(variablesToScale) - 1]:
+            variablesFile.write(",\n")
+        else:
+            variablesFile.write("\n")
+    variablesFile.write("  ],\n")
+    variablesFile.write("  \"class_labels\": [\"BinaryClassificationOutputName\"]\n")
+    variablesFile.write("}\n")
+    print(Fore.GREEN + 'Saved variables offsets (median) and scales (interquartile range, IQR) in ' + variablesFileName)
+    logString = '\nSaved variables offset (median) and scales (interquartile range, IQR) in ' + variablesFileName
+    return logString
+
 ### Building the (P)DNN
 from keras.models import Model, Sequential
 from keras.layers import Dense, Dropout, Input, BatchNormalization
-from keras.callbacks import EarlyStopping, ModelCheckpoint
+from keras.callbacks import EarlyStopping
 from keras.layers.core import Dense, Activation
 from sklearn.metrics import log_loss
 import tensorflow as tf
@@ -577,11 +644,12 @@ from keras.optimizers import SGD
 def BuildNN(N_input, nodesNumber, layersNumber, dropout, studyLearningRate):
     model = Sequential()
     model.add(Dense(units = nodesNumber, input_dim = N_input, activation = 'relu'))
+    #model.add(Dense(units = 88, input_dim = N_input, activation = 'relu'))
     #model.add(Activation('relu'))
     if dropout > 0:
         model.add(Dropout(dropout))
     for i in range(0, layersNumber):
-        model.add(Dense(nodesNumber, activation = 'relu'))
+        model.add(Dense(nodesNumber, activation = 'swish')) ##swish
     #    model.add(Activation('relu'))
         model.add(Dropout(dropout))
     model.add(Dense(1, activation = 'sigmoid'))
@@ -589,10 +657,14 @@ def BuildNN(N_input, nodesNumber, layersNumber, dropout, studyLearningRate):
     Loss = 'binary_crossentropy'
     Metrics = ['accuracy']
     learningRate = 0.01#0.001#0.0003 #0.001
+    '''
     if studyLearningRate:
         Optimizer = SGD(lr = 0.1)
     else:
-        Optimizer = tf.keras.optimizers.Adam(learning_rate = learningRate) #Adam
+        #Optimizer = SGD(lr = 0.1)
+        #Optimizer = tf.keras.optimizers.Adam(learning_rate = learningRate) #Adam
+    '''
+    Optimizer = tf.keras.optimizers.Nadam(learning_rate = learningRate) #Adam
     return model, Loss, Metrics, learningRate, Optimizer
 
 def scheduler(epoch, lr):
@@ -1306,11 +1378,13 @@ def defineVariableBins(bkgEvents, weightsBkgEvents, resolutionRangeLeft, resolut
 
     bkgEventsResolutionArray = []
     weightsBkgEventsResolutionArray = []
+    
     for bkg, weight in zip(bkgEvents, weightsBkgEvents):
         if bkg >= resolutionRangeLeft and bkg <= resolutionRangeRight:
         #if bkg >= lowerMass and bkg <= upperMass:
             bkgEventsResolutionArray.insert(len(bkgEventsResolutionArray), bkg)
             weightsBkgEventsResolutionArray.insert(len(weightsBkgEventsResolutionArray), weight)
+
     if feature == 'InvariantMass':
         bkgMassEventsInResolution = sum(weightsBkgEventsResolutionArray)
         print('# weighted bkg events in resolution range ' + str(bkgMassEventsInResolution))
@@ -1426,8 +1500,100 @@ def defineVariableBins(bkgEvents, weightsBkgEvents, resolutionRangeLeft, resolut
     else:
         Bins = np.append(Bins, 0)
         Bins = np.sort(Bins)
-        return Bins
+         return Bins
     '''
+
+def defineVariableBinsNew(bkgEvents, weightsBkgEvents, resolution, leftEdge, rightEdge, feature, nBinsMass = None, bkgEventsInResolution = None):
+    if feature == 'Scores':
+        bkgEvents, weightsBkgEvents = sortColumns(bkgEvents, weightsBkgEvents, True)
+    bkgErrorSquared = 0
+
+    weightsSum = 0.
+    bkgUncertainty = 0.7
+    weightsSumSquared = 0.
+    Bins = np.array([leftEdge])
+    print('Bins:', Bins)
+    bkgEventsResolutionArray = []
+    weightsBkgEventsResolutionArray = []
+    
+    if feature == 'InvariantMass':
+        bkgMassEventsInResolution = sum(weightsBkgEvents)
+        print('# weighted bkg events in resolution range ' + str(bkgMassEventsInResolution))
+        print('# raw bkg events in resolution range:', len(bkgEventsResolutionArray))
+    elif feature == 'Scores':
+        bkgScoresEventsInResolution = sum(weightsBkgEvents)
+
+    if feature == 'InvariantMass':# or feature == 'Scores':
+        reachedLastElement = False
+        for bkg, weight in zip(bkgEvents, weightsBkgEvents):
+            #weightsSum += weight --> eventi bkg attesi secondo il MC che nei dati fluttuerà come sqrt(weightsSum) 
+            weightsSumSquared += weight * weight # --> errore sulla predizione MC sul numero di eventi 
+            weightsSum += weight
+            if weightsSum <= 0 and bkg != bkgEvents[len(bkgEvents) - 1]:
+                continue
+
+            if bkg == bkgEvents[len(bkgEvents) - 1]: ### when we reach the last bkg event we check that the bin is large enough to meet the requirements we set, otherwise we remove the last binEdge from the bin array
+                reachedLastElement = True
+                if weightsSum > 0:
+                    relativeBkgError = (math.sqrt(weightsSumSquared)) / weightsSum
+                else: 
+                    relativeBkgError = 0
+                print(Fore.RED + 'Last bkg eventttttttttttttttttttttttttttttt')
+                if weightsSum <= 0 or (bkg - leftEdge) < resolution or relativeBkgError > bkgUncertainty:
+                    print('Bins before deletinggggggg:' + str(Bins))
+                    print(Fore.RED + 'Removing last binnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn')
+                    Bins = np.delete(Bins, -1)
+                    print(Bins)
+
+            if reachedLastElement == True:
+                break
+
+            #bkgError = 1 / math.sqrt(weightsSum)        
+            relativeBkgError = (math.sqrt(weightsSumSquared)) / weightsSum
+
+            ''' ## Rob
+            sumWeightsSquared = 0.
+            sumWeightsSquared += weight * weight
+            if weightsSum <= 0:
+                continue
+            relativeBkgError = 1 / math.sqrt(weightsSum)
+            '''
+
+            if (bkg - leftEdge) >= resolution and relativeBkgError <= bkgUncertainty and bkg != bkgEvents[len(bkgEvents) - 1]:
+                Bins = np.append(Bins, bkg)
+                print('Left edge: ' + str(leftEdge))
+                print('Difference: ' + str(abs(bkg - leftEdge))) ###???
+                print('Error: ' + str(relativeBkgError))
+                print('weightSum: ' + str(weightsSum))
+                print(Bins)
+                weightsSum = 0
+                weightsSumSquared = 0
+                leftEdge = bkg
+
+        Bins = np.append(Bins, rightEdge)
+        print(Fore.RED + 'Bins: ' + str(Bins))
+        return Bins, bkgMassEventsInResolution
+
+
+    elif feature == 'Scores':
+        print('nBinsMass: ', nBinsMass)
+        print('bkgScoresEventsInResolution:', bkgScoresEventsInResolution)
+        print('bkgEventsInResolution:', bkgEventsInResolution)
+        if bkgEventsInResolution <= 0 or bkgScoresEventsInResolution <= 0:
+            nBins = 1
+        else:
+            nBins = round(nBinsMass * bkgScoresEventsInResolution / bkgEventsInResolution)
+            if nBins == 0:
+                nBins = 1
+        print('nBins:', nBins)
+        Bins = np.linspace(leftEdge, rightEdge, nBins + 1)
+        BinsArray = np.array([])
+        for iBin in Bins:
+            BinsArray = np.append(BinsArray, iBin)
+        BinsArray = np.sort(BinsArray)
+        print(Fore.RED + 'Bins: ' + str(BinsArray))
+        return(BinsArray)
+
 def defineVariableBinsOld(bkgEvents, weightsBkgEvents, lowerMass, upperMass, resolutionRangeLeft, resolutionRangeRight):
     resolution = resolutionRangeRight - resolutionRangeLeft
     zipped_lists = zip(list(bkgEvents), list(weightsBkgEvents))
@@ -1547,6 +1713,7 @@ def weighted_percentile(values, weights, feature):
     sumWeights = np.array(sortedWeights).sum()
     #print('sumWeights:', sumWeights)
     resolutionSum = 0
+    resolutionRangeLeft = 0
     #foundLeftEdge = False
     for (value, weight) in zip(sortedValues, sortedWeights):
         #print('value:', value)
@@ -1576,6 +1743,8 @@ def weighted_percentile(values, weights, feature):
     if foundLeftEdge == False:
         resolutionRangeLeft = sortedValues[0]
     '''
+    if resolutionRangeLeft == 0:
+        resolutionRangeLeft = min(sortedValues)
     print('resolutionLeft:', resolutionRangeLeft)
     print('resolutionRight:', resolutionRangeRight)
     print('median:', median)
@@ -1628,6 +1797,28 @@ def scaleVariables(modelDir, dataFrameSignal, dataFrameBkg, inputFeatures, outpu
     shutil.copyfile(variablesFile, outputDir + variablesFileName)
     print(Fore.GREEN + 'Copied variables file to ' + outputDir + variablesFileName)
     return dataFrameSignal, dataFrameBkg
+
+### Scaling train dataset according to the scale factor saved in variables.json file
+def scaleTrainDataset(dataTrain, variablesDir, inputFeatures, outputDir):
+    variablesFileName = 'variables.json'
+    variablesFile = variablesDir + variablesFileName 
+    print(Fore.GREEN + 'Loading scaling factors from ' + variablesFile)
+    jsonFile = open(variablesFile, 'r')
+    values = json.load(jsonFile)
+    for field in values['inputs']:
+        feature = field['name']
+        if feature not in inputFeatures:
+            continue
+        print('Scaling ' + feature)
+        offset = field['offset']
+        scale = field['scale']
+        dataTrain[feature] = (dataTrain[feature] - offset) / scale
+    jsonFile.close()
+    outputFileName = outputDir + '/' + variablesFileName
+    shutil.copyfile(variablesFile, outputFileName)
+    print(Fore.GREEN + 'Copied variables file to ' + outputFileName)
+    return dataTrain
+
 
 from keras.utils.vis_utils import plot_model
 def loadModelAndWeights(modelDir, outputDir):
@@ -1912,7 +2103,7 @@ def plotHistory(patiences, series, feature, outputDir, outputFileCommonName):
     for i in range(len(patiences)):
         plt.subplot(220 + (i+1))
         plt.plot(series[i])
-        plt.title('patience = ' + str(patiences[i]), pad = -80)
+        #plt.title('patience = ' + str(patiences[i]), pad = -80)
     #plt.show()
     pltName = outputDir + '/' + feature + '_DifferentPatience_' + outputFileCommonName + '.png'
     plt.savefig(pltName)
@@ -1920,16 +2111,27 @@ def plotHistory(patiences, series, feature, outputDir, outputFileCommonName):
     plt.clf()
 
 from keras import backend
-from keras.callbacks import ReduceLROnPlateau, Callback
+from keras.callbacks import ReduceLROnPlateau, Callback, ModelCheckpoint
 def TrainNN(X_train, y_train, w_train, patienceValue, numberOfEpochs, batchSize, validationFraction, model, studyLearningRate):#, iLoop, loop):
     #print(Fore.BLUE + 'Training the ' + NN + ' -- loop ' + str(iLoop) + ' out of ' + str(loop - 1))
 
     ### If we want to stop the training when we don't have an improvement in $monitor after $patience epochs
-    earlyStoppingCB = EarlyStopping(verbose = True, patience = 2, monitor = 'val_loss', restore_best_weights = True)
+    #earlyStoppingCB = EarlyStopping(verbose = True, patience = patienceValue, monitor = 'val_loss', restore_best_weights = True)
+    earlyStoppingCB = EarlyStopping(verbose = True, patience = 15, monitor = 'val_loss', restore_best_weights = True)
 
     ### If we want to reduce the LR when we don't have an improvement in $monitor after $patience epochs
     decreaseLR = tf.keras.callbacks.LearningRateScheduler(scheduler) ### needed?
-    rlrp = ReduceLROnPlateau(monitor = 'val_loss', factor = 0.1, patience = patienceValue, min_delta = 1E-7)
+    #rlrp = ReduceLROnPlateau(monitor = 'val_loss', factor = 0.1, patience = patienceValue, min_lr = 0.0001)
+    rlrp = ReduceLROnPlateau(monitor = 'val_loss', factor = 0.1, patience = 5, min_lr = 0.00001)
+
+    checkpoint_filepath = 'tmp/checkpoint/model.hdf5'
+    model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+    filepath=checkpoint_filepath,
+    save_weights_only=False,
+    monitor='val_loss',
+    mode='min',
+    verbose = True,
+    save_best_only=True)
 
     # If we want to monitor the learning rate in each epoch
     class LearningRateMonitor(Callback):
@@ -1947,15 +2149,99 @@ def TrainNN(X_train, y_train, w_train, patienceValue, numberOfEpochs, batchSize,
 
     if studyLearningRate:
         lrm = LearningRateMonitor(Callback)
-        CallbacksList = [rlrp, lrm] #earlyStoppingCB
+        CallbacksList = [rlrp, lrm, earlyStoppingCB] #earlyStoppingCB
 
     else:
-        CallbacksList = [earlyStoppingCB]#,rlrp]#, lrm] #earlyStoppingCB
+        #lrm = LearningRateMonitor(Callback)
+        lrm = LearningRateMonitor()
+        CallbacksList = [earlyStoppingCB, lrm, rlrp]#[rlrp, model_checkpoint_callback] #earlyStoppingCB
     #model, Loss, Metrics, learningRate, Optimizer = BuildDNN(len(inputfeatures), numberOfNodes, numberOfLayers, dropout)
     #model.compile(loss = Loss, optimizer = Optimizer, weighted_metrics = Metrics)
-    modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = batchSize, validation_split = validationFraction, verbose = 1, shuffle = False, callbacks = CallbacksList)
+    modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = batchSize, validation_split = validationFraction, verbose = 1, callbacks = CallbacksList)
 
     if studyLearningRate:
         return modelMetricsHistory, lrm.lrates
     else:
         return modelMetricsHistory
+
+
+def WeightedDistributionComparison(dataTrainSignal, dataTrainBkg, dataTestSignal, dataTestBkg, scoresTrainSignal, scoresTrainBkg, scoresTestSignal, scoresTestBkg, featureToPlot):
+    dataSignal = pd.concat([dataTrainSignal, dataTestSignal], ignore_index = True)
+    dataBkg = pd.concat([dataTrainBkg, dataTestBkg], ignore_index = True)
+    scoresSignal = np.concatenate((scoresTrainSignal, scoresTestSignal))
+    scoresBkg = np.concatenate((scoresTrainBkg, scoresTestBkg))
+    weightsBkg = dataBkg['weight']
+    minHisto = min(min(dataBkg[featureToPlot]), min(dataSignal[featureToPlot]))
+    maxHisto = max(max(dataBkg[featureToPlot]), max(dataSignal[featureToPlot]))
+    Bins = np.linspace(minHisto, maxHisto, 101)
+    MCweightsSignal = np.array(dataSignal['weight'])
+    bkgContent, bkgEdges, _ = plt.hist(dataBkg[featureToPlot], bins = Bins, weights = weightsBkg, histtype = 'step', lw = 2, color = 'blue', density = True, label = ['Background'])
+    signalContent, signalEdges, _ = plt.hist(dataSignal[featureToPlot], bins = Bins, weights = MCweightsSignal, histtype = 'step', lw = 2, color = 'red', density = True, label = ['Signal'])
+    plt.legend()
+    #plt.show()
+    plt.clf()
+    leftBin = 0
+    rightBin = 0
+    iBin = 0
+    for bkg, signal in zip(bkgContent, signalContent):
+        if bkg != 0 and signal != 0 and leftBin == 0:
+            leftBin = bkgEdges[iBin]
+        if bkg != 0 and signal != 0:
+            rightBin = bkgEdges[iBin + 1]
+        iBin += 1
+    print(leftBin)
+    print(rightBin)
+    reducedBins = np.linspace(leftBin, rightBin, 51)
+    secondWeightsSignal = np.array([])
+    secondWeightsSignalList = np.asarray((1 - scoresSignal) / scoresSignal).astype(np.float32)
+    for secondWeight in secondWeightsSignalList:
+        secondWeightsSignal = np.append(secondWeightsSignal, secondWeight[0])
+    weightsSignal = np.array(MCweightsSignal * secondWeightsSignal)
+    print(MCweightsSignal)
+    print('Len(MCweightsSignal):', len(MCweightsSignal))
+    print(round(MCweightsSignal[0], 10))
+    print(secondWeightsSignal)
+    print('len(secondWeightsSignal):', len(secondWeightsSignal))
+    print(round(secondWeightsSignal[0], 10))
+    print(weightsSignal)
+    print('len(weightsSignal):', len(weightsSignal))
+    print(round(weightsSignal[0], 10))
+    plt.hist(dataBkg[featureToPlot], bins = reducedBins, weights = weightsBkg, histtype = 'step', lw = 2, color = 'blue', density = True, label = ['Background'])
+    plt.hist(dataSignal[featureToPlot], bins = reducedBins, weights = MCweightsSignal, histtype = 'step', lw = 2, color = 'red', density = True, label = ['Signal'])
+    plt.hist(dataSignal[featureToPlot], bins = reducedBins, weights = weightsSignal, histtype = 'step', lw = 2, color = 'green', density = True, label = ['Signal with Pb/Ps'])
+    plt.xlabel(featureToPlot)
+    plt.ylabel('Weighted counts')
+    plt.legend()
+    plt.show()
+
+def computePx(ptArray, phi):
+    px = ptArray * np.cos(phi)
+    return px
+
+def computePy(ptArray, phi):
+    px = ptArray * np.sin(phi)
+    return px
+
+def computePz(ptArray, eta):
+    pz = ptArray * np.sinh(eta)
+    return pz
+
+def computeE(ptArray, etaArray, massArray):
+    e = np.sqrt((ptArray ** 2) * (1 + np.sinh(etaArray) ** 2) + (massArray ** 2))
+    return e
+
+def computeDerivedVariables(variablesToDerive, dataFrame):
+    for variableToDerive in variablesToDerive:
+        objectName = variableToDerive.split('_')[0]
+        variable = variableToDerive.split('_')[1]
+        if variable == 'e':
+            newColumn = computeE(dataFrame[objectName + '_pt'], dataFrame[objectName + '_eta'], dataFrame[objectName + '_m'])
+        if variable == 'px':
+            newColumn = computePx(dataFrame[objectName + '_pt'], dataFrame[objectName + '_phi'])
+        if variable == 'py':
+            newColumn = computePy(dataFrame[objectName + '_pt'], dataFrame[objectName + '_phi'])
+        if variable == 'pz':
+            newColumn = computePy(dataFrame[objectName + '_pt'], dataFrame[objectName + '_eta'])
+        #dataFrame = dataFrame.assign({variableToDerive: newColumn})
+        dataFrame[variableToDerive] = newColumn
+    return dataFrame
