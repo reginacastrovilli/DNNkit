@@ -245,16 +245,16 @@ def LoadData(dfPath, tag, jetCollection, signal, analysis, channel, background, 
         print(col + ' -> ' + str(sumCol))
     exit()
     '''
-    X_train = np.array(dataTrain[InputFeatures].values).astype(np.float32)
-    y_train = np.array(dataTrain['isSignal'].values).astype(np.float32)
-    w_train = dataTrain['train_weight'].values
+    #X_train = np.array(dataTrain[InputFeatures].values).astype(np.float32)
+    #y_train = np.array(dataTrain['isSignal'].values).astype(np.float32)
+    #w_train = dataTrain['train_weight'].values
     print(Fore.GREEN + 'Loading ' + dfPath + 'data_test_' + fileCommonName + '.pkl')
     dataTest = pd.read_pickle(dfPath + '/data_test_' + fileCommonName + '.pkl')
-    X_test = np.array(dataTest[InputFeatures].values).astype(np.float32)
-    y_test = np.array(dataTest['isSignal'].values).astype(np.float32)
-    w_test = dataTest['train_weight'].values
+    #X_test = np.array(dataTest[InputFeatures].values).astype(np.float32)
+    #y_test = np.array(dataTest['isSignal'].values).astype(np.float32)
+    #w_test = dataTest['train_weight'].values
 
-    return dataTrain, dataTest, X_train, X_test, y_train, y_test, w_train, w_test
+    return dataTrain, dataTest#, X_train, X_test, y_train, y_test, w_train, w_test
 
 
 ### Writing in the log file

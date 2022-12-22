@@ -35,8 +35,8 @@ outputFileCommonName = NN + '_' + jetCollection + '_' + analysis + '_' + channel
 
 ### Creating the output directory and the logFile
 #outputDir = inputDir + NN + '_trainSet' + str(trainSet)#0'# + '_3'# + '/withDNNscore'# + '/test1'# + '/3layers'#'/ggFsameStatAsVBF'# + '/withDNNscore' #'/DNNScore_Z'# + '/' + preselectionCuts # + '_halfStat'
-#outputDir = inputDir + NN + '_prova1'
-outputDir = inputDir + NN + 'hpOptimization'
+outputDir = inputDir + NN + '_2layers48nodesSwish_epxpypz'
+#outputDir = inputDir + NN + 'hpOptimization'
 print(format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))#inputDir = outputDir ########## TOGLIERE!!!!
 print(Fore.GREEN + 'Input files directory: ' + inputDir)
 
@@ -56,14 +56,16 @@ if doStatisticTest:
     scoresFile.write('Scores of the 20 fixed events in each of the 20 iterations\n')
     
 ### Loading input data
-data_train, data_test, X_train, X_test, y_train, y_test, w_train, w_test = LoadData(inputDir, tag, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures, trainSet)
+#data_train, data_test, X_train, X_test, y_train, y_test, w_train, w_test = LoadData(inputDir, tag, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures, trainSet)
+data_train, data_test = LoadData(inputDir, tag, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures, trainSet)
 
+'''
 ### to make same stat as VBF
 if doSameStatAsVBF:
     data_train, X_train, y_train = SameStatAsVBF(data_train)
-
+'''
 ### Writing dataframes composition to the log file
-logString = '\nNumber of train events: ' + str(len(X_train)) + ' (' + str(int(sum(y_train))) + ' signal and ' + str(int(len(y_train) - sum(y_train))) + ' background), with MC weights: ' + str(sum(data_train['weight'])) + ' (' + str(sum(data_train[data_train['isSignal'] == 1]['weight'])) + ' signal and ' + str(sum(data_train[data_train['isSignal'] == 0]['weight'])) + ' background)\nNumber of test events: ' + str(len(X_test)) + ' (' + str(int(sum(y_test))) + ' signal and ' + str(int(len(y_test) - sum(y_test))) + ' background), with MC weights: ' + str(sum(data_test['weight'])) + ' (' + str(sum(data_test[data_test['isSignal'] == 1]['weight'])) + ' signal and ' + str(sum(data_test[data_test['isSignal'] == 0]['weight'])) + ' background)'
+logString = '\nNumber of train events: ' + str(data_train.shape[0]) + ' (' + str(data_train[data_train['isSignal'] == 1].shape[0]) + ' signal and ' + str(data_train[data_train['isSignal'] == 0].shape[0]) + ' background), with MC weights: ' + str(sum(data_train['weight'])) + ' (' + str(sum(data_train[data_train['isSignal'] == 1]['weight']))+ ' signal and ' + str(sum(data_train[data_train['isSignal'] == 0]['weight'])) + ' background)\nNumber of test events: ' + str(data_test.shape[0]) + ' (' + str(data_test[data_test['isSignal'] == 1].shape[0]) + ' signal and ' + str(data_test[data_test['isSignal'] == 1].shape[0]) + ' background), with MC weights: ' + str(sum(data_test['weight'])) + ' (' + str(sum(data_test[data_test['isSignal'] == 1]['weight'])) + ' signal and ' + str(sum(data_test[data_test['isSignal'] == 0]['weight'])) + ' background)'
 logFile.write(logString)
 logInfo += logString
 
@@ -84,7 +86,7 @@ else:
     logInfo += logString
                 
 if studyLearningRate:
-    patiences = [2, 5, 10, 15]
+    patiences = [5]#[2, 5, 10, 15]
     print(Fore.RED + 'Training ' + str(len(patiences)) + ' pDNN with decreasing learning rate and different patience values')
     lr_list, loss_list, acc_list, = list(), list(), list()
     for iPatience in range(len(patiences)):
@@ -109,9 +111,11 @@ for iLoop in range(loop):
     print(format('Output directory: ' + Fore.GREEN + outputDirLoop), checkCreateDir(outputDirLoop))
 
     if not doTrain:
-        model = LoadNN(outputDir)
+        #model = LoadNN(outputDir)
+        model = LoadNN(outputDirLoop)
 
     if doTrain:
+        data_train = scaleTrainDataset(data_train, inputDir, InputFeatures, outputDirLoop)
         '''
         if not doHpOptimization:
             ### Building and compiling the PDNN
@@ -150,7 +154,8 @@ for iLoop in range(loop):
             print(Fore.BLUE + 'Training the ' + NN + ' -- loop ' + str(iLoop) + ' out of ' + str(loop - 1))
 
             #model.compile(loss = Loss, optimizer = Optimizer, weighted_metrics = Metrics) ### here?
-            modelMetricsHistory = TrainNN(X_train, y_train, w_train, patienceValue, numberOfEpochs, batchSize, validationFraction, model, studyLearningRate)#, iLoop, loop)
+            #justcommented modelMetricsHistory = TrainNN(X_train, y_train, w_train, patienceValue, numberOfEpochs, batchSize, validationFraction, model, studyLearningRate)#, iLoop, loop)
+            modelMetricsHistory = TrainNN(data_train[InputFeatures], data_train['isSignal'], data_train['train_weight'], patienceValue, numberOfEpochs, batchSize, validationFraction, model, studyLearningRate)#, iLoop, loop)
 
         if doStatisticTest:
             ### Writing best losses to file
@@ -160,6 +165,7 @@ for iLoop in range(loop):
             lossFile.write(str(np.min(loss_hist)) + ' ' + str(np.min(val_loss_hist)) + ' ' + str(loss_hist[best_epoch]) + '\n')
 
         ### Saving to files
+        #model.load_weights('tmp/checkpoint/model.hdf5')
         SaveModel(model, outputDirLoop, NN)
         plot_model(model, to_file = 'trainedModel.png', show_shapes = True, show_layer_names = True)
 
@@ -213,10 +219,10 @@ for iLoop in range(loop):
     testMass.sort()
 
     for unscaledMass in testMass:
-        
+        '''
         if unscaledMass != 1000:# and unscaledMass != 600:
             continue
-
+        '''
         ### Checking whether there are test events with the selected mass
         if unscaledMass not in unscaledTestMassPointsList:
             print(Fore.RED + 'No test signal with mass ' + str(unscaledMass))
@@ -317,7 +323,10 @@ for iLoop in range(loop):
             PlotFeaturesRanking(InputFeatures, deltasDict, newOutputDir, outputFileCommonName)
 
         ### Plotting calibration curve on signal (train + test) scores
-        CalibrationCurves(wMC_test_signal_mass, wMC_train_signal_mass, yhat_test_signal_mass, yhat_train_signal_mass, wMC_test_bkg, wMC_train_bkg, yhat_test_bkg_mass, yhat_train_bkg_mass, unscaledMass, newOutputDir, outputFileCommonName)
+        #CalibrationCurves(wMC_test_signal_mass, wMC_train_signal_mass, yhat_test_signal_mass, yhat_train_signal_mass, wMC_test_bkg, wMC_train_bkg, yhat_test_bkg_mass, yhat_train_bkg_mass, unscaledMass, newOutputDir, outputFileCommonName)
+
+        #WeightedDistributionComparison(data_train_signal_mass, data_train_bkg, data_test_signal_mass, data_test_bkg, yhat_train_signal_mass, yhat_train_bkg_mass, yhat_test_signal_mass, yhat_test_bkg_mass, 'lep1_eta')
+        
 
     #if (len(testMass) > 1):
     #    DrawRejectionVsMass(testMass, WP, bkgRej90, bkgRej94, bkgRej97, bkgRej99, outputDir, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName) 
