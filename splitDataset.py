@@ -20,15 +20,16 @@ init(autoreset = True)
 pd.options.mode.chained_assignment = None ### to suppress the SettingWithCopyWarning
 
 ### Reading from command line
-tag, jetCollection, analysis, channel, preselectionCuts, background, signal, trainingFraction, drawPlots = ReadArgParser()
+tag, analysis, channel, preselectionCuts, background, signal, trainingFraction, drawPlots = ReadArgParser()
 
 ### Reading from configuration file
-dfPath, InputFeatures, signalsList, backgroundsList = ReadConfig(tag, analysis, jetCollection, signal) ### remove input features
+dfPath, signalsList, backgroundsList = ReadConfig(tag, analysis, signal) ### remove input features
 
 ### Loading input file
 inputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + signal + '/' + background
 #inputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + 'ggFandVBF/' + signal + '/' + background
-fileCommonName = tag + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + signal + '_' + background
+#fileCommonName = tag + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + signal + '_' + background
+fileCommonName = tag + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + signal + '_' + background
 print(Fore.GREEN + 'Loading' + inputDir + '/MixData_' + fileCommonName + '.pkl')
 data = pd.read_pickle(inputDir + '/MixData_' + fileCommonName + '.pkl') 
 
@@ -40,7 +41,7 @@ fileCommonName += '_' + str(trainingFraction) + 't'
 ### Creating log file
 logFileName = '/logFile_splitDataset_' + fileCommonName + '.txt'
 logFile = open(outputDir + logFileName, 'w')
-logFile.write('Command executed: ' + sys.executable + ' '.join(map(shlex.quote, sys.argv)) + '\nTag: ' + tag + '\nJet collection: ' + jetCollection + '\nAnalysis: ' + analysis + '\nChannel: ' + channel + '\nPreselection cuts: ' + preselectionCuts + '\nSignal: ' + signal + '\nBackground: ' + background)
+logFile.write('Command executed: ' + sys.executable + ' '.join(map(shlex.quote, sys.argv)) + '\nTag: ' + tag + '\nAnalysis: ' + analysis + '\nChannel: ' + channel + '\nPreselection cuts: ' + preselectionCuts + '\nSignal: ' + signal + '\nBackground: ' + background)
 
 ### Creating the list of backgrounds and signal processes to select
 if background == 'all':
@@ -96,7 +97,7 @@ print(dataSetSignal.shape)
 print(dataSetBackground.shape)
 '''
 ### Creating new column in the dataframes with train weight
-dataSetSignal, dataSetBackground, logString = ComputeTrainWeights(dataSetSignal, dataSetBackground, massesSignalList, outputDir, fileCommonName, jetCollection, analysis, channel, signal, backgroundLegend, preselectionCuts, drawPlots)
+dataSetSignal, dataSetBackground, logString = ComputeTrainWeights(dataSetSignal, dataSetBackground, massesSignalList, outputDir, fileCommonName, analysis, channel, signal, backgroundLegend, preselectionCuts, drawPlots)
 if logString != '':
     print(Fore.GREEN + logString)
     logFile.write(logString)

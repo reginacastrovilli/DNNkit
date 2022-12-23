@@ -1,4 +1,4 @@
-from Functions import ReadArgParser, ReadConfig, checkCreateDir, ShufflingData, SelectRegime, CutMasses, defineBins, weighted_percentile, defineFixBins, defineVariableBins, sortColumns, defineBinsNew, scaleVariables, loadModelAndWeights
+from Functions import ReadArgParser, ReadConfig, checkCreateDir, ShufflingData, SelectRegime, CutMasses, defineBins, weighted_percentile, defineFixBins, defineVariableBins, sortColumns, defineBinsNew, scaleVariables, loadModelAndWeights, DrawVariablesHisto, defineVariableBinsNew
 from sklearn.metrics import roc_curve, auc, roc_auc_score
 import atlasplots as aplt
 import ROOT as root
@@ -22,17 +22,25 @@ saveResults = True
 NN = 'PDNN'
 
 ### Reading the command line and extracting analysis and channel
-tag, jetCollection, regime, preselectionCuts, signalLabel, background = ReadArgParser()
+tag, regime, preselectionCuts, signalLabel, background = ReadArgParser()
 
 ### move inside the loop over the regimes if combining different analysis/channels
 if 'Merg' in regime[0]:
     analysis = 'merged'
     lowerHistoMassEdge = 500
     upperHistoMassEdge = 3500
+    invariantMassVariable = 'X_boosted_m'
+
 elif 'Res' in regime[0]:
     analysis = 'resolved'
+    lowerHistoMassEdge = 300
+    upperHistoMassEdge = 1500
     #lowerHistoMassEdge = 400 ## ??? TODO (signal dependent?)
     #upperHistoMassEdge = 4000 ## ??? TODO (signal dependent?)
+    if 'WZ' in signalLabel:
+        invariantMassVariable = 'X_resolved_WZ_m'
+    else:
+        invariantMassVariable = 'X_resolved_ZZ_m'
 
 if 'GGF' in regime[0]:
     channel = 'ggF'
@@ -54,7 +62,7 @@ if len(regime) > 1:
     regimeString = '_'.join(regime)
 
 ### Reading from config file
-inputFiles, rootBranchSubSample, inputFeatures, dfPath, variablesToSave, backgroundsList = ReadConfig(tag, analysis, jetCollection, signal)
+inputFiles, rootBranchSubSample, inputFeatures, dfPath, variablesToSave, backgroundsList = ReadConfig(tag, analysis, signal)
 
 ### Creating the list of the background origins selected
 if background == 'all':
@@ -72,7 +80,7 @@ lines = DSIDfile.readlines()
 for line in lines:
     DictDSID[int(line.split(':')[0])] = int(line.split(':')[1])
 
-overwriteDataFrame = False
+overwriteDataFrame = True
 featuresToPlot = ['InvariantMass', 'Scores']
 #significanceListDict = {}
 significanceDict = {}
@@ -84,15 +92,16 @@ for regimeToTest in regime:
 
     ### Loading signal and background dataframes if already existing
     inputDir = dfPath + preselectionCuts + '/' + regimeToTest + '/'
+    #outputDir = inputDir + signal + '/' + 'ggFsameStatAsVBF/'
     #outputDir = inputDir + 'tmp/withX_boosted_m/'# + 'loosePDNN/' <-------------------- OK
     #outputDir = inputDir + 'withoutDNNscore/ggFpDNN/'# + 'loosePDNN/' <-------------------- OK
     #outputDir = inputDir + 'ggFVBF/'
     #outputDir = inputDir + 'VBFggF/'
-    outputDir = inputDir + signal + '/' + 'withoutDNNscore/'# + 'loosePDNN/' <-------------------- OK
+    outputDir = inputDir + signal + '/'# + 'withDNNscore/'# + 'loosePDNN/' <-------------------- OK
     #outputDir = dfPath + preselectionCuts + '/deepPDNN/' + regimeToTest + '/'
     print (format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
     if saveResults:
-        fileCommonName = tag + '_' + jetCollection + '_' + preselectionCuts + '_' + signal + '_' + background + '_' + regimeToTest
+        fileCommonName = tag + '_' + preselectionCuts + '_' + signal + '_' + background + '_' + regimeToTest
         logFileName = outputDir + 'logFile_computeSignificance_' + fileCommonName + '.txt'
         logFile = open(logFileName, 'w')
 
@@ -100,123 +109,57 @@ for regimeToTest in regime:
     dataFrameSignal = []
     dataFrameBkg = []
 
-    for target in targetOrigins:
-        outputFileName = target + '_' + tag + '_' + jetCollection + '_' + regimeToTest + '_' + preselectionCuts + '.pkl'
-
-        ### Loading dataframe if found and overwrite flag is false
-        if not overwriteDataFrame:
-            inputFileName = inputDir + outputFileName
-            if os.path.isfile(inputFileName):
-                if target == signal:
-                    print(Fore.GREEN + 'Found signal dataframe: loading ' + inputFileName)
-                    dataFrameSignal = pd.read_pickle(inputFileName)
-                    if saveResults:
-                        logFile.write('Found signal dataframe: loading ' + inputFileName + '\n')
-                else:
-                    print(Fore.GREEN + 'Found background dataframe: loading ' + inputFileName)
-                    dataFrameBkg.append(pd.read_pickle(inputFileName))
-                    if saveResults:
-                        logFile.write('Found background dataframe: loading ' + inputFileName + '\n')
-
-        if overwriteDataFrame or not os.path.isfile(inputFileName):
-            inputDir = dfPath + analysis + '/' + channel + '/none/'
-            ### Defining local dataframe (we might have found only one among many dataframes)
-            partialDataFrameBkg = []
-            print(target)
-            for file in os.listdir(inputDir):
-                if (all(x in file for x in [target, analysis, channel, 'none', '.pkl'])):
-                    if 'VBF' in file and 'VBF' not in channel:#signal:
-                        continue
-                    ### Loading input file
-                    print(Fore.GREEN + 'Loading ' + inputDir + file)
-                    inputDf = pd.read_pickle(inputDir + file)
-                    if saveResults:
-                        logFile.write('Loading ' + inputFileName + '\n')
-
-                    ### Selecting events in the desired regime
-                    inputDf = SelectRegime(inputDf, preselectionCuts, regimeToTest, channel)
-                    if target == signal:
-                        dataFrameSignal.append(inputDf)
-                    else:
-                        partialDataFrameBkg.append(inputDf)
-                    
-            ### Concatening and saving signal and background dataframes
-            if target == signal:
-                dataFrameSignal = pd.concat(dataFrameSignal, ignore_index = True)
-                dataFrameSignal.to_pickle(inputDir + outputFileName)
-            elif target != signal:
-                partialDataFrameBkg = pd.concat(partialDataFrameBkg, ignore_index = True)
-                partialDataFrameBkg.to_pickle(inputDir + outputFileName)
-                ### Appending the local background dataframe to the final one
-                dataFrameBkg.append(partialDataFrameBkg)
-            print(Fore.GREEN + 'Saved ' + inputDir + outputFileName)
-            if saveResults:
-                logFile.write('Saved ' + inputFileName + '\n')
-
-    ### Concatening the global background dataframe, saving origin column and list, creating a new dummy 'mass' column filled with 0
-    dataFrameBkg = pd.concat(dataFrameBkg, ignore_index = True)
+    inputDf = pd.read_pickle(dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + signalLabel + '/' + background + '/MixData_' + tag + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + signalLabel + '_' + background + '.pkl')
+    inputDf = inputDf.query(regimeToTest + ' == True')
+    dataFrameBkg = inputDf[inputDf['origin'] != signal]
+    dataFrameSignal = inputDf[inputDf['origin'] == signal]
 
     ### Removing events with high absoulte MC weights
-    dataFrameBkg = dataFrameBkg[dataFrameBkg['weight'] > -15]
+    #dataFrameBkg = dataFrameBkg[dataFrameBkg['weight'] > -15]
     backgroundsList = list(set(list(dataFrameBkg['origin'])))
     originsBkg = dataFrameBkg['origin']
     print('Number of background events: ' + str(dataFrameBkg.shape[0]) + ' raw, ' + str(dataFrameBkg['weight'].sum()) + ' with MC weights')
     if saveResults:
-        logFile.write('Number of background events: ' + str(dataFrameBkg.shape[0]) + ' raw, ' + str(dataFrameBkg['weight'].sum()) + ' with MC weights\n')
+        logFile.write('Number of background events: ' + str(dataFrameBkg.shape[0]) + ' raw, ' + str(round(dataFrameBkg['weight'].sum(), 1)) + ' with MC weights\n')
     dataFrameBkg = dataFrameBkg.assign(mass = np.zeros(len(dataFrameBkg)))
 
-    ### Converting DSID to mass in the signal dataframe
-    massesSignal = dataFrameSignal['DSID'].copy()
-    DSIDsignal = np.array(list(set(list(dataFrameSignal['DSID']))))
-    for DSID in DSIDsignal:
-        massesSignal = np.where(massesSignal == DSID, DictDSID[DSID], massesSignal)
-    dataFrameSignal = dataFrameSignal.assign(mass = massesSignal)
-    '''
-    ### tmp
-    invariant_mass_signal = dataFrameSignal['X_boosted_m'].copy()
-    invariant_mass_bkg = dataFrameBkg['X_boosted_m'].copy()
-    dataFrameSignal = dataFrameSignal.assign(X_boosted_m_unscaled = np.array(invariant_mass_signal))
-    dataFrameBkg = dataFrameBkg.assign(X_boosted_m_unscaled = np.array(invariant_mass_bkg))
-    '''
     ### Saving only variables that will be used as input to the neural network, X_boosted_m, weight
-    columnsToSave = inputFeatures + ['origin', 'X_boosted_m', 'weight']
-    #columnsToSave = inputFeatures + ['origin', 'weight', 'X_boosted_m_unscaled'] ###tmp
+    columnsToSave = inputFeatures + [invariantMassVariable] + ['origin', 'weight']
     dataFrameSignal = dataFrameSignal[columnsToSave]
     dataFrameBkg = dataFrameBkg[columnsToSave]
 
-    '''
-    dataFrameSignal1200 = dataFrameSignal[dataFrameSignal['mass'] == 1200]
-    print(dataFrameSignal1200)
-    print(dataFrameSignal1200['X_boosted_m'])
-    plt.hist(dataFrameSignal1200['X_boosted_m'], weights = dataFrameSignal1200['weight'], bins = np.linspace(900, 1600, 101), label = ['Signal'])
-    plt.hist(dataFrameBkg['X_boosted_m'], weights = dataFrameBkg['weight'], bins = np.linspace(900, 1600, 101), label = ['Bkg'])
-    plt.legend()
-    plt.show()
-    exit()
-    '''
     ### Cutting signal events according to their mass and the type of analysis
-    dataFrameSignal = CutMasses(dataFrameSignal, analysis)
+    dataFrameSignal = CutMasses(dataFrameSignal, analysis) ### useless if I read MixData
     massesSignalList = list(dict.fromkeys(list(dataFrameSignal['mass'])))
-    print(Fore.BLUE + 'Number of signal (' + signal + ') events: ' + str(dataFrameSignal.shape[0]) + ' raw, ' + str(dataFrameSignal['weight'].sum()) + ' with MC weights')
+    print(Fore.BLUE + 'Number of signal (' + signal + ') events: ' + str(dataFrameSignal.shape[0]) + ' raw, ' + str(round(dataFrameSignal['weight'].sum(), 1)) + ' with MC weights')
     print(Fore.BLUE + 'Masses in the signal (' + signal + ') sample: ' + str(np.sort(np.array(massesSignalList))) + ' GeV')
     if saveResults:
-        logFile.write('Number of signal (' + signal + ') events: ' + str(dataFrameSignal.shape[0]) + ' raw, ' + str(dataFrameSignal['weight'].sum()) + ' with MC weights\n')
+        logFile.write('Number of signal (' + signal + ') events: ' + str(dataFrameSignal.shape[0]) + ' raw, ' + str(round(dataFrameSignal['weight'].sum(), 1)) + ' with MC weights\n')
         logFile.write('Masses in the signal (' + signal + ') sample: ' + str(np.sort(np.array(massesSignalList))) + ' GeV\n')
 
     ### Scaling variables according to the variables.json file produced by the NN
     #modelDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + signal + '/' + background + '/' + NN + '/' ##### <--------- OK
+    #modelDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + signal + '/' + background + '/' + NN + '_2/' ##### <--------- OK
+    #modelDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + 'ggFandVBF/' + signal + '/' + background + '/' + NN + '/' ##### <--------- OK
     #modelDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + signal + '/' + background + '/tmp/' + NN + '/withoutDNNscore/' ##### <--------- OK
-    modelDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + signal + '/' + background + '/' + NN + '/withoutDNNscore/' ##### <--------- OK
+    #modelDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + signal + '/' + background + '/' + NN + '/withDNNscore/' ##### <--------- OK
     #modelDir = '/nfs/kloe/einstein4/HDBS/NNoutput/r33-24/UFO_PFLOW/merged/ggF/none/ggFVBF/Radion/all/PDNN/'
     #modelDir = '/nfs/kloe/einstein4/HDBS/NNoutput/r33-24/UFO_PFLOW/merged/VBF/none/VBFRSG/all/PDNN/withoutDNNscore/'
+    #modelDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + signal + '/' + background + '/' + NN + '/' + 'ggFsameStatAsVBF/' ##### <--------- OK
+    #modelDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + signal + '/' + background + '/' + 'ggFsameStatAsVBF/' + NN + '/' + 'ggFsameStatAsVBF/' ##### <--------- OK
+    #modelDir = '/nfs/kloe/einstein4/HDBS/NNoutput/r33-24/UFO_PFLOW/resolved/ggF/none/RSG/all/PDNN_prova1/loop_0/'
+    #modelDir = '/nfs/kloe/einstein4/HDBS/NNoutput/r33-24/UFO_PFLOW/resolved/ggF/none/RSG/all/PDNN_2layers12nodes/loop_0/'
+    #modelDir = '/nfs/kloe/einstein4/HDBS/NNoutput/r33-24/UFO_PFLOW/resolved/ggF/none/RSG/all/PDNN_4layers1000nodes/loop_0/'
+    #modelDir = '/nfs/kloe/einstein4/HDBS/NNoutput/r33-24/UFO_PFLOW/resolved/ggF/none/RSG/all/PDNN_2layers48nodesSwish/loop_0/'
+    #modelDir = '/nfs/kloe/einstein4/HDBS/NNoutput/r33-24/UFO_PFLOW/resolved/ggF/none/RSG/all/PDNN_2layers48nodesSwish_epxpypz/loop_0/'
+    #modelDir = '/nfs/kloe/einstein4/HDBS/NNoutput/r33-24/UFO_PFLOW/resolved/ggF/none/RSG/all/PDNN_2layers48nodesSwish_mptetaphi/loop_0/'
+    modelDir = '/nfs/kloe/einstein4/HDBS_new/NNoutput/r33-24/merged/ggF/none/RSG/all/PDNN_2layers48nodesSwish_epxpypz/'
+
     dataFrameSignal, dataFrameBkg = scaleVariables(modelDir, dataFrameSignal, dataFrameBkg, inputFeatures, outputDir)
 
     ### Assigning scaled to unscaled mass values
     scaledMassesSignalList = list(dict.fromkeys(list(dataFrameSignal['mass'])))
     massesDictionary = dict(zip(massesSignalList, scaledMassesSignalList))
-
-    #modelDir = '/nfs/kloe/einstein4/HDBS/NNoutput/r33-24/UFO_PFLOW/merged/ggF/none/HVTWZ/all/PDNN/withoutDNNscore/'
-    #print(Fore.RED + 'New modelDir' + modelDir)
 
     ### Loading model produced by the NN
     model, batchSize = loadModelAndWeights(modelDir, outputDir)
@@ -228,8 +171,8 @@ for regimeToTest in regime:
             print(Fore.GREEN + 'Copied input logFile to ' + outputDir + file)
 
     sortedMassList = np.sort(np.array(massesSignalList))
-    lowerHistoMassEdge = max(lowerHistoMassEdge, sortedMassList[1])
-    upperHistoMassEdge = min(upperHistoMassEdge, sortedMassList[len(sortedMassList) - 2])
+    #lowerHistoMassEdge = max(lowerHistoMassEdge, sortedMassList[1])
+    #upperHistoMassEdge = min(upperHistoMassEdge, sortedMassList[len(sortedMassList) - 2])
     significantBinsDict = {}
     massesToPlotTeV = np.array([])
 
@@ -239,7 +182,8 @@ for regimeToTest in regime:
     bkgEventsInMassResolutionDict = {}
     
     ### Saving the invariant mass distribution for the background
-    invariantMassBkg = dataFrameBkg['X_boosted_m']
+    #invariantMassBkg = dataFrameBkg['X_boosted_m']
+    invariantMassBkg = dataFrameBkg[invariantMassVariable]
     #invariantMassBkg = dataFrameBkg['X_boosted_m_unscaled'] ###tmp
     sortedBkgEvents, sortedBkgEventsWeights = sortColumns(invariantMassBkg, dataFrameBkg['weight'])                    
     
@@ -249,7 +193,7 @@ for regimeToTest in regime:
 
     for mass in sortedMassList:
         '''
-        if mass != 1500 and mass != 1000:
+        if mass != 200:# and mass != 1000:
             continue
         '''
         if mass < lowerHistoMassEdge or mass > upperHistoMassEdge:
@@ -264,29 +208,21 @@ for regimeToTest in regime:
         dataFrameSignalMass = dataFrameSignal[dataFrameSignal['mass'] == scaledMass]
         signalMCweightsMass = dataFrameSignalMass['weight'] # * 0.001
         print(Fore.BLUE + 'Number of signal (' + signal + ') events with mass ' + str(mass) + ' GeV: ' + str(dataFrameSignalMass.shape[0]) + ' raw, ' + str(dataFrameSignalMass['weight'].sum()) + ' with MC weights')
+        logFile.write('Number of signal (' + signal + ') events with mass ' + str(mass) + ' GeV: ' + str(dataFrameSignalMass.shape[0]) + ' raw, ' + str(dataFrameSignalMass['weight'].sum()) + ' with MC weights')
 
         for feature in featuresToPlot:
             print(Fore.CYAN + '########### ' + feature + ' ###########')
             if feature == 'InvariantMass':
-                hist_signal = dataFrameSignalMass['X_boosted_m']
-                #hist_signal = dataFrameSignalMass['X_boosted_m_unscaled'] ###tmp
+                hist_signal = dataFrameSignalMass[invariantMassVariable]
                 resolutionRangeLeft, resolutionRangeRight = weighted_percentile(hist_signal, signalMCweightsMass, feature)
-                Bins, bkgEventsInResolutionDict[mass] = defineVariableBins(sortedBkgEvents, sortedBkgEventsWeights, lowerHistoMassEdge, upperHistoMassEdge, resolutionRangeLeft, resolutionRangeRight, feature, 1, 1)
-                '''
-                hist_signal = 1 - (abs(hist_signal - resolutionRangeLeft) / diff)
-                BinsInvariantMass = defineBinsNew(hist_signal, signalMCweightsMass)
-                '''
-                prediction = 'X_boosted_m'
-                #prediction = 'X_boosted_m_unscaled' ###tmp
+                resolutionWidth = resolutionRangeRight - resolutionRangeLeft
+                leftEdge = min(min(sortedBkgEvents), min(hist_signal))
+                rightEdge = max(max(sortedBkgEvents), max(hist_signal))
+                Bins, bkgEventsInResolutionDict[mass] = defineVariableBinsNew(sortedBkgEvents, sortedBkgEventsWeights, resolutionWidth, leftEdge, rightEdge, feature, 1, 1)
+                prediction = invariantMassVariable
                 featureLabel = 'Invariant mass [GeV]'
                 hist_bkg = invariantMassBkg
-                #Bins = BinsInvariantMass
                 nBinsMassDict[mass] = len(Bins) - 1
-                '''
-                hist_bkg = 1 - (abs(dataFrameBkg['X_boosted_m'] - resolutionRangeLeft) / diff)
-                dataFrameBkgScaled = dataFrameBkg.copy()
-                dataFrameBkgScaled = dataFrameBkgScaled.assign(X_boosted_m = hist_bkg)
-                '''
 
             elif feature == 'Scores':
                 ### Prediction on signal
@@ -295,22 +231,14 @@ for regimeToTest in regime:
                 for i in range(len(hist_signal)):
                     hist_signal2 = np.append(hist_signal2, hist_signal[i]) ### TODO trovare un modo per risolvere!
                 ### Computing the resolution of the signal distribution
-                #hist_signal2 = (np.exp(hist_signal2) - 1) / np.exp(1)
                 resolutionRangeLeft, resolutionRangeRight = weighted_percentile(hist_signal2, signalMCweightsMass, feature)
+                resolutionWidth = resolutionRangeRight - resolutionRangeLeft
                 ### Assigning the mass hypothesis background
                 dataFrameBkg = dataFrameBkg.assign(mass = np.full(len(dataFrameBkg), scaledMass))
                 ### Prediction on background
                 hist_bkg = model.predict(np.array(dataFrameBkg[inputFeatures].values).astype(np.float32), batch_size = batchSize)
-                #hist_bkg = (np.exp(hist_bkg) - 1) / np.exp(1)
                 ### Computing the bins
-                Bins = defineVariableBins(hist_bkg, dataFrameBkg['weight'], 0, 1, resolutionRangeLeft, resolutionRangeRight, feature, nBinsMassDict[mass], bkgEventsInResolutionDict[mass])
-                '''
-                hist_signal2 = (hist_signal2 - min(hist_signal2)) / (1 - min(hist_signal2))
-                hist_bkg = (hist_bkg - min(hist_signal2)) / (1 - min(hist_signal2))
-                BinsScores = defineBinsNew(hist_signal2, signalMCweightsMass)
-                Bins = BinsScores
-                print(Bins)
-                '''
+                Bins = defineVariableBinsNew(hist_bkg, dataFrameBkg['weight'], resolutionWidth, 0, 1, feature, nBinsMassDict[mass], bkgEventsInResolutionDict[mass])
                 
                 ### Creating a new column in the background dataframes with the scores
                 dataFrameBkg = dataFrameBkg.assign(scores = hist_bkg)
@@ -330,13 +258,13 @@ for regimeToTest in regime:
             print('binContentsSignal:', binContentsSignal)
 
             if saveResults:
-                plt.legend() ###
+                #plt.legend() ###
                 plt.xlabel(featureLabel)
                 plt.ylabel('Weighted counts')
                 #plt.xscale('log')
                 plt.yscale('log')
                 plt.title(signalLabel + ' ' + str(mass) + ' GeV, ' + regimeToTest)
-                pltName = outputDir + feature + '_' + regimeToTest + '_' + str(mass) + '_' + tag + '_' + jetCollection + '_' + preselectionCuts + '_' + signal + '_' + background + '.png'
+                pltName = outputDir + feature + '_' + regimeToTest + '_' + str(mass) + '_' + tag + '_' + preselectionCuts + '_' + signal + '_' + background + '.png'
                 plt.savefig(pltName)
                 print(Fore.GREEN + 'Saved ' + pltName)
             plt.clf()
@@ -345,6 +273,7 @@ for regimeToTest in regime:
             total = 0
             delta = 0.3
             for b, s in zip(binContentsBkg, binContentsSignal):
+                #if s != 0 and b != 0: ### new
                 total += s * s / (s + 1.3 * b)
                 '''
                 if b > 0 and s > 0:
@@ -376,7 +305,7 @@ for regimeToTest in regime:
     gs = gridspec.GridSpec(2, 1, height_ratios = [3, 1], hspace = 0.2)
     ax1 = plt.subplot(gs[0])
     ax2 = plt.subplot(gs[1])
-    legendText = 'jet collection: ' + jetCollection + '\nsignal: ' + signalLabel + '\nbackground: ' + str(background) + '\nregime: ' + regimeToTest + '\nProduction: ' + tag + '\nwithout DNN scores'#\nwith pDNN trained on ggF'#'\nwith X_boosted_m'
+    legendText = 'signal: ' + signalLabel + '\nbackground: ' + str(background) + '\nregime: ' + regimeToTest + '\nProduction: ' + tag# + '\nwith DNN scores'#'\npDNN trained with the same raw stat as VBF'# + '\nwithout DNN scores'#\nwith pDNN trained on ggF'#'\nwith X_boosted_m'
     if (preselectionCuts != 'none'):
         legendText += '\npreselection cuts: ' + preselectionCuts
 
@@ -405,7 +334,7 @@ for regimeToTest in regime:
     print(Fore.GREEN + 'Saved ' + pltName)
     ax1.clear()
     ax2.clear()
-
+exit()
 if len(regime) > 1:
     plt.clf()
     fig = plt.figure(figsize = (8, 8))
@@ -429,7 +358,7 @@ if len(regime) > 1:
         ratioValues = ratioDict.values()
         ax2.plot(xValues, ratioValues, color = colorsDict[feature], marker = 'o')
 
-    legendText = 'jet collection: ' + jetCollection + '\nsignal: ' + signal + '\nbackground: ' + str(background)
+    legendText = 'signal: ' + signal + '\nbackground: ' + str(background)
     legendText += '\nregimes:'
     if (preselectionCuts != 'none'):
         legendText += '\npreselection cuts: ' + preselectionCuts
@@ -446,6 +375,6 @@ if len(regime) > 1:
     ax2.set(xlabel = 'Mass [TeV]')
     ax2.set(ylabel = 'Ratio to invariant mass')
     ax2.set(ylim = (0.5, 2))
-    pltName = 'CombinedSignificance_' + tag + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + signal + '_' + background + regimeString + '.png'
+    pltName = 'CombinedSignificance_' + tag + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + signal + '_' + background + regimeString + '.png'
     plt.savefig(outputDir + pltName)
     print(Fore.GREEN + 'Saved ' + outputDir + pltName)

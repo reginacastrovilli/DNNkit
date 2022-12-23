@@ -3,7 +3,6 @@ from keras.utils.vis_utils import plot_model
 import eli5
 from eli5.permutation_importance import get_score_importances
 from keras import backend
-#from keras.callbacks import ReduceLROnPlateau, Callback
 
 ### Setting a seed for reproducibility
 #tf.random.set_seed(1234)
@@ -15,29 +14,28 @@ batchSize = 2048
 patienceValue = 5
 
 ### Reading the command line
-tag, jetCollection, analysis, channel, preselectionCuts, background, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, testMass, doTrain, doTest, loop, doHpOptimization, drawPlots, trainSet, studyLearningRate = ReadArgParser()
+tag, analysis, channel, preselectionCuts, background, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, testMass, doTrain, doTest, loop, doHpOptimization, drawPlots, trainSet, doStudyLRpatience = ReadArgParser()
+originsBkgTest = list(background.split('_'))
 
 drawPlots = True
 doFeaturesRanking = False
-originsBkgTest = list(background.split('_'))
 doSameStatAsVBF = False
-#studyLearningRate = False
 doStatisticTest = False
 
 ### Reading the configuration file
-ntuplePath, dfPath, InputFeatures = ReadConfig(tag, analysis, jetCollection, signal)
+ntuplePath, dfPath, InputFeatures = ReadConfig(tag, analysis, signal)
 #inputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/ggFVBF' + '/' + signal + '/' + background + '/'# + 'tmp/' # + '_fullStat/'
 #inputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + signal + '/' + background + '/'# + 'tmp/' # + '_fullStat/'
 inputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + signal + '/' + background + '/'# + 'tmp/' # + '_fullStat/' <<<<<----- questo
+print(Fore.GREEN + 'Input files directory: ' + inputDir)
 #inputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + signal + '/' + background + '/' + 'ggFsameStatAsVBF/'# + 'tmp/' # + '_fullStat/'
-#print(Fore.GREEN + 'Input files directory: ' + inputDir)
-outputFileCommonName = NN + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + signal + '_' + background
+outputFileCommonName = NN + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + signal + '_' + background
 
 ### Creating the output directory and the logFile
 #outputDir = inputDir + NN + '_trainSet' + str(trainSet)#0'# + '_3'# + '/withDNNscore'# + '/test1'# + '/3layers'#'/ggFsameStatAsVBF'# + '/withDNNscore' #'/DNNScore_Z'# + '/' + preselectionCuts # + '_halfStat'
-outputDir = inputDir + NN + '_2layers48nodesSwish_epxpypz'
+outputDir = inputDir + NN + '_2layers48nodesSwish_mptetaphi'
 #outputDir = inputDir + NN + 'hpOptimization'
-print(format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))#inputDir = outputDir ########## TOGLIERE!!!!
+print(format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
 print(Fore.GREEN + 'Input files directory: ' + inputDir)
 
 logFileName = outputDir + '/logFile_' + outputFileCommonName + '.txt'
@@ -46,116 +44,94 @@ logInfo = ''
 logString = WriteLogFile(tag, ntuplePath, InputFeatures, inputDir, doHpOptimization, doTrain, doTest, validationFraction, batchSize, patienceValue)
 logFile.write(logString)
 logInfo += logString
+
+### If doStatisticTest, open files where to score AUC, loss and scores values in each iteration
 if doStatisticTest:
     AUCfile = open(outputDir + '/AUCvalues.txt', 'w')
-    AUCfile.write('AUC values in each of the 20 iterations\n')
+    AUCfile.write('AUC values in each iteration\n')
     lossFile = open(outputDir + '/lossValues.txt', 'w')
-    lossFile.write('Train loss minimum - validation loss minimum - train loss at the validation loss minimum (in each of the 20 iterations)\n')
+    lossFile.write('Train loss minimum - validation loss minimum - train loss at the validation loss minimum (in each iteration)\n')
     scoresFileName = outputDir + '/scoresValues.txt'
     scoresFile = open(scoresFileName, 'w')
-    scoresFile.write('Scores of the 20 fixed events in each of the 20 iterations\n')
+    scoresFile.write('Scores of the 20 fixed events in each iteration\n')
     
 ### Loading input data
-#data_train, data_test, X_train, X_test, y_train, y_test, w_train, w_test = LoadData(inputDir, tag, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures, trainSet)
-data_train, data_test = LoadData(inputDir, tag, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures, trainSet)
+data_train, data_test = LoadData(inputDir, tag, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures, trainSet)
+
+### Computing dataframe statistics
+rawTrain = data_train.shape[0]
+rawTrainSignal = data_train[data_train['isSignal'] == 1].shape[0]
+rawTrainBkg = data_train[data_train['isSignal'] == 0].shape[0]
+MCtrain = round(sum(data_train['weight']), 1)
+MCtrainSignal = round(sum(data_train[data_train['isSignal'] == 1]['weight']), 1)
+MCtrainBkg = round(sum(data_train[data_train['isSignal'] == 0]['weight']), 1)
+rawTest = data_test.shape[0]
+rawTestSignal = data_test[data_test['isSignal'] == 1].shape[0]
+rawTestBkg = data_test[data_test['isSignal'] == 0].shape[0]
+MCtest = round(sum(data_test['weight']), 1)
+MCtestSignal = round(sum(data_test[data_test['isSignal'] == 1]['weight']), 1)
+MCtestBkg = round(sum(data_test[data_test['isSignal'] == 0]['weight']), 1)
+print(Fore.BLUE + 'Number of train events: ' + str(rawTrain) + ' (' + str(rawTrainSignal) + ' signal and ' + str(rawTrainBkg) + ' background), with MC weights: ' + str(MCtrain) + ' (' + str(MCtrainSignal) + ' signal and ' + str(MCtrainBkg) + ' background)\nNumber of test events: ' + str(rawTest) + ' (' + str(rawTestSignal) + ' signal and ' + str(rawTestBkg) + ' background), with MC weights: ' + str(MCtest) + ' (' + str(MCtestSignal) + ' signal and ' + str(MCtestBkg) + ' background)')
+logString = '\nNumber of train events: ' + str(rawTrain) + ' (' + str(rawTrainSignal) + ' signal and ' + str(rawTrainBkg) + ' background), with MC weights: ' + str(MCtrain) + ' (' + str(MCtrainSignal) + ' signal and ' + str(MCtrainBkg) + ' background)\nNumber of test events: ' + str(rawTest) + ' (' + str(rawTestSignal) + ' signal and ' + str(rawTestBkg) + ' background), with MC weights: ' + str(MCtest) + ' (' + str(MCtestSignal) + ' signal and ' + str(MCtestBkg) + ' background)'
+logFile.write(logString)
+logInfo += logString
+
+### Scaling input features
+data_train = scaleTrainTestDataset(data_train, inputDir, InputFeatures, 'train')    
+data_test = scaleTrainTestDataset(data_test, inputDir, InputFeatures, 'test')
+outputFileName = outputDir + '/variables.json'
+shutil.copyfile(inputDir + 'variables.json', outputFileName)
+print(Fore.GREEN + 'Copied variables file to ' + outputFileName)
+
+### Saving input features, truth and train weights vectors
+X_train, y_train, w_train = extractFeatures(data_train, InputFeatures)
+X_test, y_test, w_test = extractFeatures(data_test, InputFeatures)
 
 '''
 ### to make same stat as VBF
 if doSameStatAsVBF:
     data_train, X_train, y_train = SameStatAsVBF(data_train)
 '''
-### Writing dataframes composition to the log file
-logString = '\nNumber of train events: ' + str(data_train.shape[0]) + ' (' + str(data_train[data_train['isSignal'] == 1].shape[0]) + ' signal and ' + str(data_train[data_train['isSignal'] == 0].shape[0]) + ' background), with MC weights: ' + str(sum(data_train['weight'])) + ' (' + str(sum(data_train[data_train['isSignal'] == 1]['weight']))+ ' signal and ' + str(sum(data_train[data_train['isSignal'] == 0]['weight'])) + ' background)\nNumber of test events: ' + str(data_test.shape[0]) + ' (' + str(data_test[data_test['isSignal'] == 1].shape[0]) + ' signal and ' + str(data_test[data_test['isSignal'] == 1].shape[0]) + ' background), with MC weights: ' + str(sum(data_test['weight'])) + ' (' + str(sum(data_test[data_test['isSignal'] == 1]['weight'])) + ' signal and ' + str(sum(data_test[data_test['isSignal'] == 0]['weight'])) + ' background)'
-logFile.write(logString)
-logInfo += logString
-
 if doHpOptimization:
-    model, logString = HpOptimization(InputFeatures, patienceValue, X_train, y_train, w_train, numberOfEpochs, validationFraction, batchSize, outputDir)
+    model, logString = HpOptimization(patienceValue, X_train, y_train, w_train, numberOfEpochs, validationFraction, batchSize, outputDir)
     logFile.write(logString)
     logInfo += logString
 
 else: 
     ### Building and compiling the PDNN
-    model, Loss, Metrics, learningRate, Optimizer = BuildNN(len(InputFeatures), numberOfNodes, numberOfLayers, dropout, studyLearningRate)
+    model, Loss, Metrics, learningRate, Optimizer, activationFunction = BuildNN(len(InputFeatures), numberOfNodes, numberOfLayers, dropout, doStudyLRpatience)
     model.compile(loss = Loss, optimizer = Optimizer, weighted_metrics = Metrics)
     NNdiagramName = outputDir + '/trainedModel.png'
-    #plot_model(model, to_file = NNdiagramName, show_shapes = True, show_layer_names = True)
+    plot_model(model, to_file = NNdiagramName, show_shapes = True, show_layer_names = True)
     print(Fore.GREEN + 'Saved ' + NNdiagramName)
-    logString = '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of hidden layers: ' + str(numberOfLayers) + '\nDropout: ' + str(dropout) + '\nLoss: ' + Loss + '\nOptimizer: ' + str(Optimizer) + '\nLearning rate: ' + str(learningRate) + '\nMetrics: ' + str(Metrics)
+    logString = '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of hidden layers: ' + str(numberOfLayers) + '\nDropout: ' + str(dropout) + '\nLoss: ' + Loss + '\nOptimizer: ' + str(Optimizer) + '\nInitial learning rate: ' + str(learningRate) + '\nMetrics: ' + str(Metrics) + '\nActivation function in hidden layers: ' + activationFunction
     logFile.write(logString)
     logInfo += logString
                 
-if studyLearningRate:
-    patiences = [5]#[2, 5, 10, 15]
-    print(Fore.RED + 'Training ' + str(len(patiences)) + ' pDNN with decreasing learning rate and different patience values')
-    lr_list, loss_list, acc_list, = list(), list(), list()
-    for iPatience in range(len(patiences)):
-        iPatienceValue = patiences[iPatience]
-        print(Fore.BLUE + 'NN number ' + str(iPatience) + ' out of ' + str(len(patiences) - 1) + ' -> patience = ' + str(iPatienceValue))
-        modelMetricsHistory, lrm_rates = TrainNN(X_train, y_train, w_train, iPatienceValue, numberOfEpochs, batchSize, validationFraction, model, studyLearningRate)#, iLoop, loop)
-        #modelMetricsHistory, lrm_rates = TrainNN(X_train, y_train, w_train, iPatienceValue, numberOfEpochs, batchSize, validationFraction, NN, model, Loss, Optimizer, Metrics, iLoop, loop)
-        loss_list.append(modelMetricsHistory.history['loss'])
-        acc_list.append(modelMetricsHistory.history['accuracy'])
-        lr_list.append(lrm_rates)
-        
-    # plot learning rates
-    plotHistory(patiences, lr_list, 'LearningRate', outputDir, outputFileCommonName)
-    # plot loss
-    plotHistory(patiences, loss_list, 'Loss', outputDir, outputFileCommonName)
-    # plot accuracy
-    plotHistory(patiences, acc_list, 'Accuracy', outputDir, outputFileCommonName)
+if doStudyLRpatience:
+    studyLRpatience(X_train, y_train, w_train, numberOfEpochs, batchSize, validationFraction, model, outputDir, outputFileCommonName)
 
 for iLoop in range(loop):
 
-    outputDirLoop = outputDir + '/loop_' + str(iLoop)
+    if iLoop != 0:
+        outputDirLoop = outputDir + '/loop' + str(iLoop)
+        outputFileCommonName += '_loop' + str(iLoop)
+    else: 
+        outputDirLoop = outputDir
     print(format('Output directory: ' + Fore.GREEN + outputDirLoop), checkCreateDir(outputDirLoop))
 
     if not doTrain:
-        #model = LoadNN(outputDir)
         model = LoadNN(outputDirLoop)
 
     if doTrain:
-        data_train = scaleTrainDataset(data_train, inputDir, InputFeatures, outputDirLoop)
-        '''
-        if not doHpOptimization:
-            ### Building and compiling the PDNN
-            model, Loss, Metrics, learningRate, Optimizer = BuildDNN(len(InputFeatures), numberOfNodes, numberOfLayers, dropout)
-            model.compile(loss = Loss, optimizer = Optimizer, weighted_metrics = Metrics)
-            if iLoop == 0:
-                logString = '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of hidden layers: ' + str(numberOfLayers) + '\nDropout: ' + str(dropout) + '\nLoss: ' + Loss + '\nOptimizer: ' + str(Optimizer) + '\nLearning rate: ' + str(learningRate) + '\nMetrics: ' + str(Metrics)
-                logFile.write(logString)
-                logInfo += logString
-        '''
 
-        '''
-        if not doHpOptimization:
-            ### Building and compiling the PDNN
-            model, Loss, Metrics, learningRate, Optimizer = BuildDNN(len(InputFeatures), numberOfNodes, numberOfLayers, dropout)
-            model.compile(loss = Loss, optimizer = Optimizer, weighted_metrics = Metrics)
-            NNdiagramName = outputDirLoop + '/trainedModel.png'
-            plot_model(model, to_file = NNdiagramName, show_shapes = True, show_layer_names = True)
-            print(Fore.GREEN + 'Saved ' + NNdiagramName)
-            if iLoop == 0:
-                logString = '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of hidden layers: ' + str(numberOfLayers) + '\nDropout: ' + str(dropout) + '\nLoss: ' + Loss + '\nOptimizer: ' + str(Optimizer) + '\nLearning rate: ' + str(learningRate) + '\nMetrics: ' + str(Metrics)
-                logFile.write(logString)
-                logInfo += logString
-        '''
-        
-        '''
-            ### Training
-            if not doHpOptimization:
-            ### Building and compiling the PDNN
-            model, Loss, Metrics, learningRate, Optimizer = BuildDNN(len(InputFeatures), numberOfNodes, numberOfLayers, dropout)
-            model.compile(loss = Loss, optimizer = Optimizer, weighted_metrics = Metrics)
-        '''
-           
-        #modelMetricsHistory, lrm.lrates = TrainNN(X_train, y_train, w_train, patienceValue, numberOfEpochs, batchSize, validationFraction, NN, model, Loss, Optimizer, Metrics, iLoop, loop)
-        if not studyLearningRate:
+        ### Trainig the pDNN if not doStudyLRpatience, otherwise first choose the patience and then run this script withouth doStudyLRpatience
+        if not doStudyLRpatience:
             print(Fore.BLUE + 'Training the ' + NN + ' -- loop ' + str(iLoop) + ' out of ' + str(loop - 1))
-
-            #model.compile(loss = Loss, optimizer = Optimizer, weighted_metrics = Metrics) ### here?
-            #justcommented modelMetricsHistory = TrainNN(X_train, y_train, w_train, patienceValue, numberOfEpochs, batchSize, validationFraction, model, studyLearningRate)#, iLoop, loop)
-            modelMetricsHistory = TrainNN(data_train[InputFeatures], data_train['isSignal'], data_train['train_weight'], patienceValue, numberOfEpochs, batchSize, validationFraction, model, studyLearningRate)#, iLoop, loop)
+            modelMetricsHistory, callbacksList, patienceEarlyStopping, monitorEarlyStopping, patienceLR, deltaLR, minLR = TrainNN(X_train, y_train, w_train, patienceValue, numberOfEpochs, batchSize, validationFraction, model, doStudyLRpatience)#, iLoop, loop)
+            logString = '\nCallbacks list: ' + str(callbacksList) + '\nPatience early stopping: ' + str(patienceEarlyStopping) + '\nMonitor early stopping: ' + monitorEarlyStopping + '\nLearning rate decrease at each step: ' + str(deltaLR) + '\nPatience learning rate: ' + str(patienceLR) + '\nMinimum learning rate: ' + str(minLR)
+            logFile.write(logString)
+            logInfo += logString
 
         if doStatisticTest:
             ### Writing best losses to file
@@ -169,11 +145,10 @@ for iLoop in range(loop):
         SaveModel(model, outputDirLoop, NN)
         plot_model(model, to_file = 'trainedModel.png', show_shapes = True, show_layer_names = True)
 
-    '''
     if doTest:
         ### Evaluating the performance of the PDNN on the test sample and writing results to the log file
         print(Fore.BLUE + 'Evaluating the performance of the ' + NN)
-        testLoss, testAccuracy = EvaluatePerformance(model, X_test, y_test, w_test, batchSize)
+        testLoss, testAccuracy = EvaluatePerformance(model, X_test, y_test, w_test, batchSize) ### using train_weight
 
         if iLoop == 0:
             logString = '\nTest loss: ' + str(testLoss) + '\nTest accuracy: ' + str(testAccuracy)
@@ -182,19 +157,25 @@ for iLoop in range(loop):
             
     else:
         testLoss = testAccuracy = None
-    '''
-    testLoss = testAccuracy = None
-    #if doTrain and doTest:
+
     ### Drawing accuracy and loss
     if drawPlots and doTrain: ### THINK
-        DrawLoss(modelMetricsHistory, testLoss, patienceValue, outputDirLoop, NN, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName)
-        DrawAccuracy(modelMetricsHistory, testAccuracy, patienceValue, outputDirLoop, NN, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName)
-
+        DrawLoss(modelMetricsHistory, testLoss, patienceValue, outputDirLoop, NN, analysis, channel, preselectionCuts, signal, background, outputFileCommonName)
+        DrawAccuracy(modelMetricsHistory, testAccuracy, patienceValue, outputDirLoop, NN, analysis, channel, preselectionCuts, signal, background, outputFileCommonName)
+    '''
     if iLoop == 0:
         logFile.close()
         print(Fore.GREEN + 'Saved ' + logFileName)
-
-
+    '''
+    
+    logFile.close()
+    if loop != 0:
+        logFileLoop = outputDirLoop + '/logFile_' + outputFileCommonName + '.txt'
+        shutil.move(logFileName, logFileLoop)
+        print(Fore.GREEN + 'Saved ' + logFileLoop)
+    else:
+        print(Fore.GREEN + 'Saved ' + logFileName)
+    
     if doTest == False:
         exit()
 
@@ -289,7 +270,7 @@ for iLoop in range(loop):
         y_test_mass = np.concatenate((np.ones(len(yhat_test_signal_mass)), np.zeros(len(yhat_test_bkg_mass))))
         wMC_test_mass = np.concatenate((wMC_test_signal_mass, wMC_test_bkg))
 
-        TNR, FPR, FNR, TPR = DrawCM(yhat_test_mass, y_test_mass, wMC_test_mass, newOutputDir, unscaledMass, background, outputFileCommonName, jetCollection, analysis, channel, preselectionCuts, signal, drawPlots)
+        TNR, FPR, FNR, TPR = DrawCM(yhat_test_mass, y_test_mass, wMC_test_mass, newOutputDir, unscaledMass, background, outputFileCommonName, analysis, channel, preselectionCuts, signal, drawPlots)
         newLogFile.write('\nTNR (TN/N): ' + str(TNR) + '\nFPR (FP/N): ' + str(FPR) + '\nFNR (FN/P): ' + str(FNR) + '\nTPR (TP/P): ' + str(TPR))
 
         ### Computing ROC AUC
@@ -312,7 +293,7 @@ for iLoop in range(loop):
         '''
 
         ### Plotting ROC, background rejection and scores
-        WP, bkgRejWP = DrawROCbkgRejectionScores(fpr, tpr, roc_auc, newOutputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName, yhat_train_signal_mass, yhat_test_signal_mass, yhat_train_bkg_mass, yhat_test_bkg_mass, wMC_train_signal_mass, wMC_test_signal_mass, wMC_train_bkg, wMC_test_bkg, drawPlots)
+        WP, bkgRejWP = DrawROCbkgRejectionScores(fpr, tpr, roc_auc, newOutputDir, NN, unscaledMass, analysis, channel, preselectionCuts, signal, background, outputFileCommonName, yhat_train_signal_mass, yhat_test_signal_mass, yhat_train_bkg_mass, yhat_test_bkg_mass, wMC_train_signal_mass, wMC_test_signal_mass, wMC_train_bkg, wMC_test_bkg, drawPlots)
         newLogFile.write('\nWorking points: ' + str(WP) + '\nBackground rejection at each working point: ' + str(bkgRejWP))
         
         ### Closing the newLogFile
@@ -329,7 +310,7 @@ for iLoop in range(loop):
         
 
     #if (len(testMass) > 1):
-    #    DrawRejectionVsMass(testMass, WP, bkgRej90, bkgRej94, bkgRej97, bkgRej99, outputDir, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName) 
+    #    DrawRejectionVsMass(testMass, WP, bkgRej90, bkgRej94, bkgRej97, bkgRej99, outputDir, analysis, channel, preselectionCuts, signal, background, outputFileCommonName) 
 
 if doStatisticTest:
     AUCfile.close()

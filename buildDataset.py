@@ -22,15 +22,15 @@ import math
 overwriteDataFrame = False
 #print(str(sys))
 ### Reading the command line
-tag, jetCollection, analysis, channel, preselectionCuts, signal, background, drawPlots = ReadArgParser()
+tag, analysis, channel, preselectionCuts, signal, background, drawPlots = ReadArgParser()
 
 ### Reading from config file
-InputFeatures, dfPath, variablesToSave, variablesToDerive, backgroundsList = ReadConfig(tag, analysis, jetCollection, signal)
+ntuplePath, InputFeatures, dfPath, variablesToSave, variablesToDerive, backgroundsList = ReadConfig(tag, analysis, signal)
 
 ### Creating output directories and logFile
 tmpOutputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts# + '/ggFandVBF'# + '/ggFVBF'
 print(format('First output directory: ' + Fore.GREEN + tmpOutputDir), checkCreateDir(tmpOutputDir))
-tmpFileCommonName = tag + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts
+tmpFileCommonName = tag + '_' + analysis + '_' + channel + '_' + preselectionCuts
 
 outputDir = tmpOutputDir + '/' + signal + '/' + background
 print(format('Second output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
@@ -38,7 +38,7 @@ fileCommonName = tmpFileCommonName + '_' + signal + '_' + background
 logFileName = outputDir + '/logFile_buildDataset_' + fileCommonName + '.txt'
 
 logFile = open(logFileName, 'w')
-logFile.write('Input files path: ' + dfPath + 'CxAOD tag: ' + tag + '\nJet collection: ' + jetCollection + '\nAnalysis: ' + analysis + '\nChannel: ' + channel + '\nPreselection cuts: ' + preselectionCuts + '\nSignal: ' + signal + '\nBackground: ' + background)
+logFile.write('Input files path: ' + dfPath + 'CxAOD tag: ' + tag + '\nAnalysis: ' + analysis + '\nChannel: ' + channel + '\nPreselection cuts: ' + preselectionCuts + '\nSignal: ' + signal + '\nBackground: ' + background)
 
 ### Loading DSID-mass map and storing it into a dictionary
 DictDSID = {}
@@ -57,7 +57,6 @@ if background == 'all':
 else:
     inputOrigins = list(background.split('_'))
 inputOrigins.append(signal)
-print(dfPath)
 
 ### Creating empty signal and background dataframe 
 dataFrameSignal = []
@@ -80,11 +79,14 @@ for target in inputOrigins:
     if overwriteDataFrame or not os.path.isfile(fileName):
         ### Defining local dataframe (we might have found only one among many dataframes)
         partialDataFrameBkg = []
-        for file in os.listdir(dfPath):
+        #for file in os.listdir(dfPath):
+        for file in os.listdir(ntuplePath):
             ### Loading input file
             if file.startswith(target) and file.endswith('.pkl'):
-                print(Fore.GREEN + 'Loading ' + dfPath + file)
-                inputDf = pd.read_pickle(dfPath + file)
+                #print(Fore.GREEN + 'Loading ' + dfPath + file)
+                #inputDf = pd.read_pickle(dfPath + file)
+                print(Fore.GREEN + 'Loading ' + ntuplePath + file)
+                inputDf = pd.read_pickle(ntuplePath + file)
                 ### Selecting events according to merged/resolved regime and ggF/VBF channel
                 inputDf = SelectEvents(inputDf, channel, analysis, preselectionCuts, signal)
                 ### Creating new column in the dataframe with the origin
@@ -163,6 +165,8 @@ dataFrame = dataFrame.query(selection)
 ### Shuffling the dataframe
 dataFrame = ShufflingData(dataFrame)
 
+print(dataFrame.columns)
+
 ### Saving number of events for each origin
 for origin in inputOrigins:
     logFile.write('\nNumber of ' + origin + ' events: ' + str(dataFrame[dataFrame['origin'] == origin].shape[0]) + ' (raw), ' + str(sum(dataFrame[dataFrame['origin'] == origin]['weight'])) +' (with MC weights)')
@@ -182,5 +186,5 @@ print(Fore.GREEN + 'Saved ' + logFileName)
 if drawPlots:
     histoOutputDir = outputDir + '/trainTestHistograms'
     checkCreateDir(histoOutputDir)
-    DrawVariablesHisto(dataFrame, InputFeatures, histoOutputDir, fileCommonName, jetCollection, analysis, channel, signal, backgroundLegend, preselectionCuts, False)
-    DrawCorrelationMatrix(dataFrame, InputFeatures, outputDir, fileCommonName, analysis, channel, signal, backgroundLegend)
+    DrawVariablesHisto(dataFrame, histoOutputDir, fileCommonName, analysis, channel, signal, backgroundLegend, preselectionCuts, False)
+    #DrawCorrelationMatrix(dataFrame, InputFeatures, outputDir, fileCommonName, analysis, channel, signal, backgroundLegend)

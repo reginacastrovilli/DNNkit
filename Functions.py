@@ -21,7 +21,7 @@ def ReadArgParser():
     parser.add_argument('-a', '--Analysis', help = 'Type of analysis: \'merged\' or \'resolved\'', type = str)
     parser.add_argument('-c', '--Channel', help = 'Channel: \'ggF\' or \'VBF\'', type = str)
     parser.add_argument('-s', '--Signal', help = 'Signal: \'VBFHVTWZ\', \'Radion\', \'RSG\', \'VBFRSG\', \'HVTWZ\' or \'VBFRadion\'', type = str)
-    parser.add_argument('-j', '--JetCollection', help = 'Jet collection: \'TCC\', \'UFO_PFLOW\'', type = str, default = 'UFO_PFLOW')
+    #parser.add_argument('-j', '--JetCollection', help = 'Jet collection: \'TCC\', \'UFO_PFLOW\'', type = str, default = 'UFO_PFLOW')
     parser.add_argument('-b', '--Background', help = 'Background: \'Zjets\', \'Wjets\', \'stop\', \'Diboson\', \'ttbar\' or \'all\' (in quotation mark separated by a space)', type = str, default = 'all')
     parser.add_argument('-t', '--TrainingFraction', help = 'Relative size of the training sample, between 0 and 1', default = 0.8)
     parser.add_argument('-p', '--PreselectionCuts', help = 'Preselection cut', type = str)
@@ -40,7 +40,7 @@ def ReadArgParser():
     parser.add_argument('-r', '--regime', help = '')
     parser.add_argument('-f', '--FeatureToPlot', help = 'Feature to plot to compute significance', default = 'score')
     parser.add_argument('--trainSet', help = 'trainSet')
-    parser.add_argument('--studyLearningRate', default = 0)
+    parser.add_argument('--doStudyLRpatience', default = 0)
 
     args = parser.parse_args()
 
@@ -61,11 +61,13 @@ def ReadArgParser():
         parser.error(Fore.RED + 'Signal can be only \'Radion\', \'RSG\' or \'HVTWZ\'')
     if args.Channel and channel == 'VBF':
         signal = channel + signal
+    '''
     jetCollection = args.JetCollection
     if args.JetCollection is None:
         parser.error(Fore.RED + 'Requested jet collection (\'TCC\' or \'UFO_PFLOW\')')
     elif args.JetCollection != 'TCC' and args.JetCollection != 'UFO_PFLOW':
         parser.error(Fore.RED + 'Jet collection can be \'TCC\', \'UFO_PFLOW\'')
+    '''
     background = args.Background.split()
     for bkg in background:
         if (bkg !=  'Zjets' and bkg != 'Wjets' and bkg != 'stop' and bkg != 'Diboson' and bkg != 'ttbar' and bkg != 'all'):
@@ -110,27 +112,27 @@ def ReadArgParser():
     if args.regime:
         regime = regime.split()
     feature = args.FeatureToPlot
-    studyLearningRate = bool(int(args.studyLearningRate))
+    doStudyLRpatience = bool(int(args.doStudyLRpatience))
 
     if fileNameSaveToPkl in sys.argv[0]:
         print(Fore.BLUE + '           tag = ' + tag)
-        print(Fore.BLUE + 'jet collection = ' + jetCollection)
-        return tag, jetCollection
+        #print(Fore.BLUE + 'jet collection = ' + jetCollection)
+        return tag
 
     if fileNameBuildDataSet in sys.argv[0]:
         print(Fore.BLUE + '                    tag = ' + tag)
-        print(Fore.BLUE + '         jet collection = ' + jetCollection)
+        #print(Fore.BLUE + '         jet collection = ' + jetCollection)
         print(Fore.BLUE + '          background(s) = ' + str(backgroundString))
         print(Fore.BLUE + '              drawPlots = ' + str(drawPlots))
-        return tag, jetCollection, analysis, channel, preselectionCuts, signal, backgroundString, drawPlots
+        return tag, analysis, channel, preselectionCuts, signal, backgroundString, drawPlots
 
     if fileNameSplitDataSet in sys.argv[0] or fileNamePlots in sys.argv[0]:
         print(Fore.BLUE + '              tag = ' + tag)
-        print(Fore.BLUE + '   jet collection = ' + jetCollection)
+        #print(Fore.BLUE + '   jet collection = ' + jetCollection)
         print(Fore.BLUE + '       background = ' + str(backgroundString))
         print(Fore.BLUE + 'training fraction = ' + str(trainingFraction))
         print(Fore.BLUE + '        drawPlots = ' + str(drawPlots))
-        return tag, jetCollection, analysis, channel, preselectionCuts, backgroundString, signal, trainingFraction, drawPlots
+        return tag, analysis, channel, preselectionCuts, backgroundString, signal, trainingFraction, drawPlots
 
     if fileNameBuildDNN in sys.argv[0] or fileNameBuildPDNN in sys.argv[0]:# or sys.argv[0] == fileName6):
         print(Fore.BLUE + '               background(s) = ' + str(backgroundString))
@@ -146,36 +148,38 @@ def ReadArgParser():
             print(Fore.BLUE + '             number of nodes = ' + str(numberOfNodes))
             print(Fore.BLUE + '     number of hidden layers = ' + str(numberOfLayers))
             print(Fore.BLUE + '                     dropout = ' + str(dropout))
-        return tag, jetCollection, analysis, channel, preselectionCuts, backgroundString, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, mass, doTrain, doTest, loop, hpOptimization, drawPlots, trainSet, studyLearningRate
+        return tag, analysis, channel, preselectionCuts, backgroundString, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, mass, doTrain, doTest, loop, hpOptimization, drawPlots, trainSet, doStudyLRpatience
 
     if fileNameComputeSignificance in sys.argv[0]:
-        return tag, jetCollection, regime, preselectionCuts, signal, backgroundString
+        return tag, regime, preselectionCuts, signal, backgroundString
 
     if fileNameCreateScoresBranch in sys.argv[0]:
         print(Fore.BLUE + '          background(s) = ' + str(backgroundString))
         print(Fore.BLUE + '                 signal = ' + str(signal))
-        return tag, jetCollection, analysis, channel, preselectionCuts, signal, backgroundString
+        return tag, analysis, channel, preselectionCuts, signal, backgroundString
 
 ### Reading from the configuration file
 import configparser, ast
 import shutil
 
-def ReadConfigSaveToPkl(tag, jetCollection):
-    configurationFile = 'Configuration_' + jetCollection + '_' + tag + '.ini'
+def ReadConfigSaveToPkl(tag):#, jetCollection):
+    #configurationFile = 'Configuration_' + jetCollection + '_' + tag + '.ini'
+    configurationFile = 'Configuration_' + '_' + tag + '.ini'
     print(Fore.GREEN  + 'Reading configuration file: ' + configurationFile)
     config = configparser.ConfigParser()
     config.read(configurationFile)
     ntuplePath = config.get('config', 'ntuplePath')
     inputFiles = ast.literal_eval(config.get('config', 'inputFiles'))
     dfPath = config.get('config', 'dfPath')
-    dfPath += tag + '/' + jetCollection + '/'
+    dfPath += tag + '/'# + jetCollection + '/'
     rootBranchSubSample = ast.literal_eval(config.get('config', 'rootBranchSubSample'))
     #print (format('Output directory: ' + Fore.GREEN + dfPath), checkCreateDir(dfPath))
     #shutil.copyfile(configurationFile, dfPath + configurationFile)
     return ntuplePath, inputFiles, dfPath, rootBranchSubSample
 
-def ReadConfig(tag, analysis, jetCollection, signal):
-    configurationFile = 'Configuration_' + jetCollection + '_' + tag + '.ini'
+#def ReadConfig(tag, analysis, jetCollection, signal):
+def ReadConfig(tag, analysis, signal):
+    configurationFile = 'Configuration_' + tag + '.ini'
     print(Fore.GREEN  + 'Reading configuration file: ' + configurationFile)
     config = configparser.ConfigParser()
     config.read(configurationFile)
@@ -185,9 +189,11 @@ def ReadConfig(tag, analysis, jetCollection, signal):
     signalsList = ast.literal_eval(config.get('config', 'signals'))
     backgroundsList = ast.literal_eval(config.get('config', 'backgrounds'))
     dfPath = config.get('config', 'dfPath')
-    dfPath += tag + '/' + jetCollection + '/'
+    #dfPath += tag + '/' + jetCollection + '/'
+    dfPath += tag + '/'
     if analysis == 'merged':
         InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesMerged'))
+        variablesToDerive = ast.literal_eval(config.get('config', 'variablesToDeriveMerged'))
         variablesToSave = ast.literal_eval(config.get('config', 'variablesToSaveMerged'))
     elif analysis == 'resolved':
         #if signal == 'Radion' or signal == 'RSG':
@@ -199,13 +205,13 @@ def ReadConfig(tag, analysis, jetCollection, signal):
             InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesResolvedHVT'))
             variablesToSave = ast.literal_eval(config.get('config', 'variablesToSaveResolvedHVT'))
     if fileNameBuildDataSet in sys.argv[0]:
-        return InputFeatures, dfPath, variablesToSave, variablesToDerive, backgroundsList
+        return ntuplePath, InputFeatures, dfPath, variablesToSave, variablesToDerive, backgroundsList
     if fileNameComputeSignificance in sys.argv[0] or fileNameCreateScoresBranch in sys.argv[0]:
         return inputFiles, rootBranchSubSample, InputFeatures, dfPath, variablesToSave, backgroundsList
     if fileNamePlots in sys.argv[0]:
         return dfPath, InputFeatures
     if fileNameSplitDataSet in sys.argv[0]:
-        return dfPath, InputFeatures, signalsList, backgroundsList
+        return dfPath, signalsList, backgroundsList
     if fileNameBuildDNN in sys.argv[0] or fileNameBuildPDNN in sys.argv[0] or fileName6 in sys.argv[0]:
         return ntuplePath, dfPath, InputFeatures
 
@@ -231,12 +237,13 @@ def enablePrint():
 import pandas as pd
 import numpy as np
 
-def LoadData(dfPath, tag, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures, iLoop):
-    fileCommonName = tag + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + str(signal) + '_' + background + '_' + str(trainingFraction) + 't'
+#def LoadData(dfPath, tag, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures, iLoop):
+def LoadData(dfPath, tag, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures, iLoop):
+    fileCommonName = tag + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + str(signal) + '_' + background + '_' + str(trainingFraction) + 't'
     print(Fore.GREEN + 'Loading ' + dfPath + 'data_train_' + fileCommonName + '.pkl')
     dataTrain = pd.read_pickle(dfPath + '/data_train_' + fileCommonName + '.pkl')
     #dataTrain = dataTrain.query('Pass_MergHP_GGF_WZ_SR == True or Pass_MergLP_GGF_WZ_SR == True or Pass_MergHP_VBF_WZ_SR == True or Pass_MergLP_VBF_WZ_SR == True')
-    print('# of events in dataTrain: ' + str(len(dataTrain)))
+    #print('# of events in dataTrain: ' + str(len(dataTrain)))
     '''
     passCols = ['Pass_MergHP_GGF_ZZ_Tag_ZCR', 'Pass_MergHP_GGF_ZZ_Untag_ZCR', 'Pass_MergLP_GGF_ZZ_Tag_ZCR', 'Pass_MergLP_GGF_ZZ_Untag_ZCR', 'Pass_MergHP_GGF_WZ_ZCR', 'Pass_MergLP_GGF_WZ_ZCR', 'Pass_MergHP_VBF_WZ_ZCR', 'Pass_MergHP_VBF_ZZ_ZCR', 'Pass_MergLP_VBF_WZ_ZCR', 'Pass_MergLP_VBF_ZZ_ZCR']
     for col in passCols:
@@ -259,7 +266,7 @@ def LoadData(dfPath, tag, jetCollection, signal, analysis, channel, background, 
 
 ### Writing in the log file
 def WriteLogFile(tag, ntuplePath, InputFeatures, dfPath, hpOptimization, doTrain, doTest, validationFraction, batchSize, patienceValue):
-    logString = 'CxAOD tag: ' + tag + '\nntuple path: ' + ntuplePath + '\nInputFeatures: ' + str(InputFeatures) + '\ndfPath: ' + dfPath + '\nHperparameters optimization: ' + str(hpOptimization) + '\ndoTrain: ' + str(doTrain) + '\ndoTest: ' + str(doTest) + '\nValidation fraction: ' + str(validationFraction) + '\nBatch size: ' + str(batchSize) + '\nPatience value: ' + str(patienceValue)# + '\nNumber of train events: ' + str(len(data_train)) + ' (' + str(len(data_train_signal)) + ' signal and ' + str(len(data_train_bkg)) + ' background)' + '\nNumber of test events: ' + str(len(data_test)) + ' (' + str(len(data_test_signal)) + ' signal and ' + str(len(data_test_bkg)) + ' background)'
+    logString = 'CxAOD tag: ' + tag + '\nntuple path: ' + ntuplePath + '\nInputFeatures: ' + str(InputFeatures) + '\ndfPath: ' + dfPath + '\nHyperparameters optimization: ' + str(hpOptimization) + '\ndoTrain: ' + str(doTrain) + '\ndoTest: ' + str(doTest) + '\nValidation fraction: ' + str(validationFraction) + '\nBatch size: ' + str(batchSize)# + '\nPatience value: ' + str(patienceValue)# + '\nNumber of train events: ' + str(len(data_train)) + ' (' + str(len(data_train_signal)) + ' signal and ' + str(len(data_train_bkg)) + ' background)' + '\nNumber of test events: ' + str(len(data_test)) + ' (' + str(len(data_test_signal)) + ' signal and ' + str(len(data_test_bkg)) + ' background)'
     return logString
 
 def SelectEvents(dataFrame, channel, analysis, preselectionCuts, signal):
@@ -358,7 +365,9 @@ def integral(y,x,bins):
         s=s+y[i]*(bins[i+1]-bins[i])
     return s
 
-def DrawVariablesHisto(dataFrame, InputFeatures, outputDir, outputFileCommonName, jetCollection, analysis, channel, signal, background, preselectionCuts, scaled = False):
+#def DrawVariablesHisto(dataFrame, InputFeatures, outputDir, outputFileCommonName, jetCollection, analysis, channel, signal, background, preselectionCuts, scaled = False):
+#def DrawVariablesHisto(dataFrame, InputFeatures, outputDir, outputFileCommonName, analysis, channel, signal, background, preselectionCuts, scaled = False):
+def DrawVariablesHisto(dataFrame, outputDir, outputFileCommonName, analysis, channel, signal, background, preselectionCuts, scaled = False):
     '''
     ### Replacing '0' with 'Background' and '1' with 'Signal' in the 'isSignal' column
     dataFrame['isSignal'].replace(to_replace = [0, 1], value = ['Background', 'Signal'], inplace = True)
@@ -367,18 +376,22 @@ def DrawVariablesHisto(dataFrame, InputFeatures, outputDir, outputFileCommonName
     '''
     dataFrameSignal = dataFrame[dataFrame['origin'] == signal]
     dataFrameBkg = dataFrame[dataFrame['origin'] != signal]
-    print(list(set(list(dataFrameBkg['origin']))))
+    #print(list(set(list(dataFrameBkg['origin']))))
     if 'VBF' in signal:
         signalLabel = signal.replace('VBF', '')
         dataFrame['origin'].replace(to_replace = [signal], value = [signalLabel], inplace = True)
     else:
         signalLabel = signal
     featureLogX = ['fatjet_D2', 'fatjet_m', 'fatjet_pt', 'lep1_pt', 'lep2_pt', 'Zcand_pt']
-    legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + ', '.join(background)
+    legendText = 'analysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + ', '.join(background)
     if (preselectionCuts != 'none'):
         legendText += '\npreselection cuts: ' + preselectionCuts
     for feature in dataFrame.columns:
+        '''
         if feature not in InputFeatures and feature != 'origin' and feature != 'weight' and feature != 'DNNScore_t':
+            continue
+        '''
+        if 'Pass' in feature or feature == 'train_weight':
             continue
         print(feature)
         statType = 'density'#'probability'
@@ -389,28 +402,37 @@ def DrawVariablesHisto(dataFrame, InputFeatures, outputDir, outputFileCommonName
             statType = 'count'
             hueType = dataFrame['origin']
             legendBool = False
-        binsDict = {'lep1_m': np.linspace(0, 0.12, 4), 'lep1_pt': np.linspace(0, 2000, 51), 'lep1_eta': np.linspace(-3, 3, 21), 'lep1_phi': np.linspace(-3.5, 3.5, 21), 'lep2_m': np.linspace(0, 0.12, 4), 'lep2_pt': np.linspace(0, 2000, 51), 'lep2_eta': np.linspace(-3, 3, 21), 'lep2_phi': np.linspace(-3.5, 3.5, 21), 'fatjet_m': np.linspace(0, 500, 51), 'fatjet_pt': np.linspace(0, 3000, 51), 'fatjet_eta': np.linspace(-3, 3, 21), 'fatjet_phi': np.linspace(-3.5, 3.5, 21), 'fatjet_D2': np.linspace(0, 15, 51), 'Zcand_m': np.linspace(60, 140, 21), 'Zcand_pt': np.linspace(0, 7000, 31), 'mass': 'auto', 'origin': 'auto', 'Zdijet_m': np.linspace(60, 140, 21), 'Zdijet_pt': 'auto', 'Zdijet_eta': np.linspace(-4, 4, 11), 'Zdijet_phi': np.linspace(-3.5, 3.5, 11), 'sigZJ1_m': np.linspace(0, 120, 21), 'sigZJ1_pt': np.linspace(0, 1000, 11), 'sigZJ1_eta': np.linspace(-3, 3, 21), 'sigZJ1_phi': np.linspace(-3.5, 3.5, 21), 'sigZJ2_m': np.linspace(0, 40, 16), 'sigZJ2_pt': np.linspace(0, 300, 11), 'sigZJ2_eta': np.linspace(-3, 3, 21), 'sigZJ2_phi': np.linspace(-3.5, 3.5, 21), 'DNNScore_W': np.linspace(0, 1, 21), 'DNNScore_Z': np.linspace(0, 1, 21), 'DNNScore_h': np.linspace(0, 1, 21), 'DNNScore_t': np.linspace(0, 1, 21), 'DNNScore_qg': np.linspace(0, 1, 21)} ## for Radion merged ggF
+        #binsDict = {'lep1_m': np.linspace(0, 0.12, 4), 'lep1_pt': np.linspace(0, 2000, 51), 'lep1_eta': np.linspace(-3, 3, 21), 'lep1_phi': np.linspace(-3.5, 3.5, 21), 'lep2_m': np.linspace(0, 0.12, 4), 'lep2_pt': np.linspace(0, 2000, 51), 'lep2_eta': np.linspace(-3, 3, 21), 'lep2_phi': np.linspace(-3.5, 3.5, 21), 'fatjet_m': np.linspace(0, 500, 51), 'fatjet_pt': np.linspace(0, 3000, 51), 'fatjet_eta': np.linspace(-3, 3, 21), 'fatjet_phi': np.linspace(-3.5, 3.5, 21), 'fatjet_D2': np.linspace(0, 15, 51), 'Zcand_m': np.linspace(60, 140, 21), 'Zcand_pt': np.linspace(0, 7000, 31), 'mass': 'auto', 'origin': 'auto', 'Zdijet_m': np.linspace(60, 140, 21), 'Zdijet_pt': 'auto', 'Zdijet_eta': np.linspace(-4, 4, 11), 'Zdijet_phi': np.linspace(-3.5, 3.5, 11), 'sigZJ1_m': np.linspace(0, 120, 21), 'sigZJ1_pt': np.linspace(0, 1000, 11), 'sigZJ1_eta': np.linspace(-3, 3, 21), 'sigZJ1_phi': np.linspace(-3.5, 3.5, 21), 'sigZJ2_m': np.linspace(0, 40, 16), 'sigZJ2_pt': np.linspace(0, 300, 11), 'sigZJ2_eta': np.linspace(-3, 3, 21), 'sigZJ2_phi': np.linspace(-3.5, 3.5, 21), 'DNNScore_W': np.linspace(0, 1, 21), 'DNNScore_Z': np.linspace(0, 1, 21), 'DNNScore_h': np.linspace(0, 1, 21), 'DNNScore_t': np.linspace(0, 1, 21), 'DNNScore_qg': np.linspace(0, 1, 21)} ## for Radion merged ggF
+        binsDict = {}
+        minBin = min(min(dataFrameBkg[feature]), min(dataFrameSignal[feature]))
+        maxBin = max(max(dataFrameBkg[feature]), max(dataFrameSignal[feature]))
+        Bins = np.linspace(minBin, maxBin, 16)
         if feature not in binsDict:
             binsDict[feature] = 'auto'
         if feature == 'weight':
-            ax = seaborn.histplot(data = dataFrame['weight'], x = dataFrame['weight'], hue = dataFrame['isSignal'], common_norm = False, stat = statType, legend = True) 
+            #ax = seaborn.histplot(data = dataFrame['weight'], x = dataFrame['weight'], hue = dataFrame['isSignal'], common_norm = False, stat = statType, legend = True) 
+            ax = seaborn.histplot(data = dataFrame['weight'], x = dataFrame['weight'], hue = dataFrame['isSignal'], bins = np.linspace(min(dataFrame['weight']), max(dataFrame['weight']), 21), common_norm = False, stat = statType, legend = True) 
         if feature == 'origin':
             ax = seaborn.histplot(data = dataFrame[feature], x = dataFrame[feature], hue = dataFrame['origin'], common_norm = False, stat = statType, legend = True)
         else:
+            '''
             if scaled == False and feature in binsDict:
                 ax = seaborn.histplot(data = dataFrameBkg[feature], x = dataFrameBkg[feature], weights = dataFrameBkg['weight'], bins = np.array(binsDict[feature]), hue = hueType, legend = legendBool, multiple = 'stack', stat = 'probability', common_norm = True) #stat = statType
             if scaled == False and feature not in binsDict:
                 ax = seaborn.histplot(data = dataFrame[feature], x = dataFrame[feature], weights = dataFrame['weight'], hue = hueType, common_norm = False, stat = statType, legend = legendBool)#, multiple = 'stack')
             elif scaled == True:
                 ax = seaborn.histplot(data = dataFrame[feature], x = dataFrame[feature], weights = dataFrame['weight'], hue = hueType, common_norm = False, stat = statType, legend = legendBool)#, multiple = 'stack')
-            seaborn.histplot(data = dataFrameSignal[feature], x = dataFrameSignal[feature], weights = dataFrameSignal['weight'], bins = np.array(binsDict[feature]), element = 'step', fill = False, stat = 'probability', color = 'red')#, lw = 2, color = 'blue', label = signalLabel)#, density = True)
+            '''
+            ax = seaborn.histplot(data = dataFrame[feature], x = dataFrame[feature], weights = dataFrame['weight'], hue = hueType, bins = Bins, common_norm = False, stat = statType, legend = legendBool)#, multiple = 'stack')
+            #seaborn.histplot(data = dataFrameSignal[feature], x = dataFrameSignal[feature], weights = dataFrameSignal['weight'], bins = np.array(binsDict[feature]), element = 'step', fill = False, stat = 'probability', color = 'red')#, lw = 2, color = 'blue', label = signalLabel)#, density = True)
+            seaborn.histplot(data = dataFrameSignal[feature], x = dataFrameSignal[feature], weights = dataFrameSignal['weight'], bins = Bins, element = 'step', fill = False, stat = 'probability', color = 'red')#, lw = 2, color = 'blue', label = signalLabel)#, density = True)
         #elif fileNameSplitDataSet in sys.argv[0]:
         ''' histogram of train_weight without bins is slow 
             if feature == 'train_weight':
                 ax = seaborn.histplot(data = dataFrame['weight'], x = dataFrame['weight'], hue = dataFrame['isSignal'], common_norm = False, stat = 'count', legend = True)
         '''
         #    contents, bins, _ = plt.hist(dataFrame[feature], weights = dataFrame['train_weight'], bins = 100, label = legendText)
-        labelDict = {'lep1_E': r'lep$_1$ E [GeV]', 'lep1_m': r'lep$_1$ m [GeV]', 'lep1_pt': r'lep$_1$ p$_T$ [GeV]', 'lep1_eta': r'lep$_1$ $\eta$', 'lep1_phi': r'lep$_1$ $\phi$', 'lep2_E': r'lep$_2$ E [GeV]', 'lep2_m': r'lep$_2$ m [GeV]', 'lep2_pt': r'lep$_2$ p$_t$ [GeV]', 'lep2_eta': r'lep$_2$ $\eta$', 'lep2_phi': r'lep$_2$ $\phi$', 'fatjet_m': 'fat jet m [GeV]', 'fatjet_pt': r'fat jet p$_t$ [GeV]', 'fat jet_eta': r'fat jet $\eta$', 'fat jet_phi': r'fat jet $\phi$', 'fat jet_D2': r'fat jet D$_2$', 'Zcand_m': 'Z$_{cand}$ m [GeV]', 'Zcand_pt': r'Z$_{cand}$ p$_t$ [GeV]', 'X_boosted_m': 'X_boosted m [GeV]', 'X_resolved_ZZ_m': 'X_resolved_ZZ m [GeV]', 'X_resolved_WZ_m': 'X_resolved_WZ m [GeV]', 'mass': 'mass [GeV]', 'weight': 'weight', 'isSignal': 'isSignal', 'origin': 'origin', 'Wdijet_m': 'Wdijet m [GeV]', 'Wdijet_pt': 'Wdijet p$_T$ [GeV]', 'Wdijet_eta': 'Wdijet $\eta$', 'Wdijet_phi': 'Wdijet $\phi$', 'Zdijet_m': 'Z$_{dijet}$ m [GeV]', 'Zdijet_pt': 'Z$_{dijet}$ p$_T$ [GeV]', 'Zdijet_eta': 'Z$_{dijet}$ $\eta$', 'Zdijet_phi': 'Z$_{dijet}$ $\phi$', 'sigWJ1_m': 'sigWJ1 m', 'sigWJ1_pt': 'sigWJ1 p$_T$', 'sigWJ1_eta': 'sigWJ1 $\eta$', 'sigWJ1_phi': 'sigWJ1 $\phi$', 'sigWJ2_m': 'sigWJ2 m', 'sigWJ2_pt': 'sigWJ2 p$_T$', 'sigWJ2_eta': 'sigWJ2 $\eta$', 'sigWJ2_phi': 'sigWJ2 $\phi$', 'sigZJ1_m': 'sigZJ1 m', 'sigZJ1_pt': 'sigZJ1 p$_T$', 'sigZJ1_eta': 'sigZJ1 $\eta$', 'sigZJ1_phi': 'sigZJ1 $\phi$', 'sigZJ2_m': 'sigZJ2 m', 'sigZJ2_pt': 'sigZJ2 p$_T$', 'sigZJ2_eta': 'sigZJ2 $\eta$', 'sigZJ2_phi': 'sigZJ2 $\phi$'}
+        labelDict = {'lep1_e': r'lep$_1$ e [GeV]', 'lep1_m': r'lep$_1$ m [GeV]', 'lep1_pt': r'lep$_1$ p$_T$ [GeV]', 'lep1_eta': r'lep$_1$ $\eta$', 'lep1_phi': r'lep$_1$ $\phi$', 'lep2_e': r'lep$_2$ e [GeV]', 'lep2_m': r'lep$_2$ m [GeV]', 'lep2_pt': r'lep$_2$ p$_t$ [GeV]', 'lep2_eta': r'lep$_2$ $\eta$', 'lep2_phi': r'lep$_2$ $\phi$', 'fatjet_m': 'fat jet m [GeV]', 'fatjet_pt': r'fat jet p$_t$ [GeV]', 'fatjet_eta': r'fat jet $\eta$', 'fatjet_phi': r'fat jet $\phi$', 'fatjet_D2': r'fat jet D$_2$', 'Zcand_m': 'Z$_{cand}$ m [GeV]', 'Zcand_pt': r'Z$_{cand}$ p$_t$ [GeV]', 'X_boosted_m': 'X_boosted m [GeV]', 'X_resolved_ZZ_m': 'X_resolved_ZZ m [GeV]', 'X_resolved_WZ_m': 'X_resolved_WZ m [GeV]', 'mass': 'mass [GeV]', 'weight': 'weight', 'isSignal': 'isSignal', 'origin': 'origin', 'Wdijet_m': 'Wdijet m [GeV]', 'Wdijet_pt': 'Wdijet p$_T$ [GeV]', 'Wdijet_eta': 'Wdijet $\eta$', 'Wdijet_phi': 'Wdijet $\phi$', 'Zdijet_m': 'Z$_{dijet}$ m [GeV]', 'Zdijet_pt': 'Z$_{dijet}$ p$_T$ [GeV]', 'Zdijet_eta': 'Z$_{dijet}$ $\eta$', 'Zdijet_phi': 'Z$_{dijet}$ $\phi$', 'sigWJ1_m': 'sigWJ1 m', 'sigWJ1_pt': 'sigWJ1 p$_T$', 'sigWJ1_eta': 'sigWJ1 $\eta$', 'sigWJ1_phi': 'sigWJ1 $\phi$', 'sigWJ2_m': 'sigWJ2 m', 'sigWJ2_pt': 'sigWJ2 p$_T$', 'sigWJ2_eta': 'sigWJ2 $\eta$', 'sigWJ2_phi': 'sigWJ2 $\phi$', 'sigZJ1_m': 'sigZJ1 m', 'sigZJ1_pt': 'sigZJ1 p$_T$', 'sigZJ1_eta': 'sigZJ1 $\eta$', 'sigZJ1_phi': 'sigZJ1 $\phi$', 'sigZJ2_m': 'sigZJ2 m', 'sigZJ2_pt': 'sigZJ2 p$_T$', 'sigZJ2_eta': 'sigZJ2 $\eta$', 'sigZJ2_phi': 'sigZJ2 $\phi$', 'lep1_px': r'lep$_1$ p$_x$ [GeV]', 'lep1_py': r'lep$_1$ p$_y$ [GeV]', 'lep1_pz': r'lep$_1$ p$_z$ [GeV]', 'lep2_px': r'lep$_2$ p$_x$ [GeV]', 'lep2_py': r'lep$_2$ p$_y$ [GeV]', 'lep2_pz': r'lep$_2$ p$_z$ [GeV]', 'fatjet_e': 'fat jet e [GeV]', 'fatjet_px': r'fat jet p$_x$ [GeV]', 'fatjet_py': r'fat jet p$_y$', 'fatjet_pz': r'fat jet p$_z$'}
         '''
         if feature in featureLogX:
             ax.set_xscale('log')
@@ -420,12 +442,12 @@ def DrawVariablesHisto(dataFrame, InputFeatures, outputDir, outputFileCommonName
         #plt.subplots_adjust(left = 0.1, right = 0.75)
         if feature in labelDict:
             if scaled == True:
-                plt.xlabel('scaled ' + labelDict[feature])
+                plt.xlabel('Scaled ' + labelDict[feature])
             else:
                 plt.xlabel(labelDict[feature])
         else:
             if scaled == True and feature != 'origin':
-                plt.xlabel('scaled ' + feature)
+                plt.xlabel('Scaled ' + feature)
             if scaled == False or feature == 'origin':
                 plt.xlabel(feature)
         '''
@@ -457,7 +479,8 @@ def DrawVariablesHisto(dataFrame, InputFeatures, outputDir, outputFileCommonName
     return
 
 ### Computing train weight
-def ComputeTrainWeights(dataSetSignal, dataSetBackground, massesSignalList, outputDir, fileCommonName, jetCollection, analysis, channel, signal, background, preselectionCuts, drawPlots):
+#def ComputeTrainWeights(dataSetSignal, dataSetBackground, massesSignalList, outputDir, fileCommonName, jetCollection, analysis, channel, signal, background, preselectionCuts, drawPlots):
+def ComputeTrainWeights(dataSetSignal, dataSetBackground, massesSignalList, outputDir, fileCommonName, analysis, channel, signal, background, preselectionCuts, drawPlots):
     numbersDict = {}
     logString = ''
     for signalMass in massesSignalList:
@@ -497,7 +520,7 @@ def ComputeTrainWeights(dataSetSignal, dataSetBackground, massesSignalList, outp
         plt.bar('background', dataSetBackground['train_weight'].sum(), color = 'green')
         plt.ylabel('Weighted counts')
         plt.xticks(rotation = 'vertical')
-        legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + ', '.join(background)
+        legendText = 'analysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + ', '.join(background)
         if (preselectionCuts != 'none'):
             legendText += '\npreselection cuts: ' + preselectionCuts
         plt.figtext(0.25, 0.7, legendText, wrap = True, horizontalalignment = 'left')
@@ -642,14 +665,15 @@ import tensorflow as tf
 from keras.optimizers import SGD
 
 def BuildNN(N_input, nodesNumber, layersNumber, dropout, studyLearningRate):
+    activationFunction = 'swish'
     model = Sequential()
-    model.add(Dense(units = nodesNumber, input_dim = N_input, activation = 'relu'))
+    model.add(Dense(units = nodesNumber, input_dim = N_input, activation = activationFunction))
     #model.add(Dense(units = 88, input_dim = N_input, activation = 'relu'))
     #model.add(Activation('relu'))
     if dropout > 0:
         model.add(Dropout(dropout))
     for i in range(0, layersNumber):
-        model.add(Dense(nodesNumber, activation = 'swish')) ##swish
+        model.add(Dense(nodesNumber, activation = activationFunction)) ##swish
     #    model.add(Activation('relu'))
         model.add(Dropout(dropout))
     model.add(Dense(1, activation = 'sigmoid'))
@@ -665,7 +689,7 @@ def BuildNN(N_input, nodesNumber, layersNumber, dropout, studyLearningRate):
         #Optimizer = tf.keras.optimizers.Adam(learning_rate = learningRate) #Adam
     '''
     Optimizer = tf.keras.optimizers.Nadam(learning_rate = learningRate) #Adam
-    return model, Loss, Metrics, learningRate, Optimizer
+    return model, Loss, Metrics, learningRate, Optimizer, activationFunction
 
 def scheduler(epoch, lr):
     if epoch <= 5:
@@ -680,10 +704,10 @@ def SaveArchAndWeights(model, outputDir):
     outputArch = outputDir + '/architecture.json'
     with open(outputArch, 'w') as arch_file:
         arch_file.write(arch)
-    print(Fore.GREEN + 'Saved architecture in ' + outputArch)
+    print(Fore.GREEN + 'Saved NN architecture in ' + outputArch)
     outputWeights = outputDir + '/weights.h5'
     model.save_weights(outputWeights)
-    print(Fore.GREEN + 'Saved weights in ' + outputWeights)
+    print(Fore.GREEN + 'Saved NN weights in ' + outputWeights)
 
 def SaveVariables(outputDir, X_input):
     outputVar = outputDir + '/variables.json'
@@ -751,6 +775,12 @@ def SaveModel(model, outputDir, NN):
     #print('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA ' + variablesDir + variablesFileName)
     #shutil.copyfile(variablesDir + variablesFileName, outputDir + variablesFileName)
 
+def extractFeatures(dataFrame, inputFeatures):
+    X = dataFrame[inputFeatures]
+    y = dataFrame['isSignal']
+    w = dataFrame['train_weight']
+    return X, y, w
+
 '''
 import matplotlib
 import matplotlib.pyplot as plt
@@ -806,7 +836,8 @@ def DrawCorrelationMatrix(dataFrame, InputFeatures, outputDir, outputFileCommonN
     plt.close()
 
 ### Drawing Accuracy
-def DrawAccuracy(modelMetricsHistory, testAccuracy, patienceValue, outputDir, NN, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, outputFileCommonName, mass = 0):
+#def DrawAccuracy(modelMetricsHistory, testAccuracy, patienceValue, outputDir, NN, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, outputFileCommonName, mass = 0):
+def DrawAccuracy(modelMetricsHistory, testAccuracy, patienceValue, outputDir, NN, analysis, channel, PreselectionCuts, signal, bkg, outputFileCommonName, mass = 0):
     plt.plot(modelMetricsHistory.history['accuracy'], label = 'Training')
     lines = plt.plot(modelMetricsHistory.history['val_accuracy'], label = 'Validation')
     xvalues = lines[0].get_xdata()
@@ -826,7 +857,8 @@ def DrawAccuracy(modelMetricsHistory, testAccuracy, patienceValue, outputDir, NN
     #plt.legend()
     #legend1 = plt.legend(['Training', 'Validation'], loc = 'lower right')
     legend1 = plt.legend(loc = 'center right')
-    legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg)
+    #legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg)
+    legendText = 'analysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg)
     if (PreselectionCuts != 'none'):
         legendText += '\npreselection cuts: ' + PreselectionCuts
     #legendText += '\nTest accuracy: ' + str(round(testAccuracy, 2))
@@ -843,7 +875,8 @@ def DrawAccuracy(modelMetricsHistory, testAccuracy, patienceValue, outputDir, NN
     plt.close()
 
 ### Drawing Loss
-def DrawLoss(modelMetricsHistory, testLoss, patienceValue, outputDir, NN, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, outputFileCommonName, mass = 0):
+#def DrawLoss(modelMetricsHistory, testLoss, patienceValue, outputDir, NN, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, outputFileCommonName, mass = 0):
+def DrawLoss(modelMetricsHistory, testLoss, patienceValue, outputDir, NN, analysis, channel, PreselectionCuts, signal, bkg, outputFileCommonName, mass = 0):
     plt.plot(modelMetricsHistory.history['loss'], label = 'Training')
     lines = plt.plot(modelMetricsHistory.history['val_loss'], label = 'Validation')
     xvalues = lines[0].get_xdata()
@@ -863,7 +896,8 @@ def DrawLoss(modelMetricsHistory, testLoss, patienceValue, outputDir, NN, jetCol
     plt.xlabel('Epoch')
     #plt.legend(['Training', 'Validation'], loc = 'upper right')
     legend1 = plt.legend(loc = 'upper center')
-    legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\npreselection cuts: ' + PreselectionCuts + '\nsignal: ' + signal + '\nbackground: ' + str(bkg)
+    #legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\npreselection cuts: ' + PreselectionCuts + '\nsignal: ' + signal + '\nbackground: ' + str(bkg)
+    legendText = 'analysis: ' + analysis + '\nchannel: ' + channel + '\npreselection cuts: ' + PreselectionCuts + '\nsignal: ' + signal + '\nbackground: ' + str(bkg)
     if (PreselectionCuts != 'none'):
         legendText += '\npreselection cuts: ' + PreselectionCuts
     #legendText += '\nTest loss: ' + str(round(testLoss, 2))
@@ -896,7 +930,8 @@ def DrawROC(fpr, tpr, AUC, outputDir, NN, unscaledMass, jetCollection, analysis,
 '''
 
 ### Drawing ROC and background rejection vs efficiency
-def DrawROCbkgRejectionScores(fpr, tpr, AUC, outputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName, yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, wMC_train_signal_mass, wMC_test_signal_mass, wMC_train_bkg, wMC_test_bkg, drawPlots):
+#def DrawROCbkgRejectionScores(fpr, tpr, AUC, outputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName, yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, wMC_train_signal_mass, wMC_test_signal_mass, wMC_train_bkg, wMC_test_bkg, drawPlots):
+def DrawROCbkgRejectionScores(fpr, tpr, AUC, outputDir, NN, unscaledMass, analysis, channel, preselectionCuts, signal, background, outputFileCommonName, yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, wMC_train_signal_mass, wMC_test_signal_mass, wMC_train_bkg, wMC_test_bkg, drawPlots):
 
     ### ROC
     if drawPlots:
@@ -917,7 +952,8 @@ def DrawROCbkgRejectionScores(fpr, tpr, AUC, outputDir, NN, unscaledMass, jetCol
             titleROC = NN + ' ROC curve (mass: ' + str(int(unscaledMass)) + ' GeV)'#, bkg: ' + background + ')'
             BkgRejTitle = NN + ' rejection curve (mass: ' + str(int(unscaledMass)) + ' GeV)'#, bkg: ' + background + ')'
         plt.title(titleROC)
-        legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(background)
+        #legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(background)
+        legendText = 'analysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(background)
         if (preselectionCuts != 'none'):
             legendText += '\npreselection cuts: ' + preselectionCuts
         legend2 = plt.legend([emptyPlot], [legendText], loc = 'lower right', handlelength = 0, handletextpad = 0)
@@ -992,7 +1028,8 @@ def integral(y,x,bins):
     return s
 
 ### Drawing scores, ROC and efficiency
-def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, mass, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, outputFileCommonName):
+#def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, mass, jetCollection, analysis, channel, PreselectionCuts, signal, bkg, outputFileCommonName):
+def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_test_bkg, outputDir, NN, mass, analysis, channel, PreselectionCuts, signal, bkg, outputFileCommonName):
 
     ### Scores
     Nbins = 1000
@@ -1010,7 +1047,7 @@ def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_tes
             titleScores = NN + ' scores (mass: ' + str(int(mass)) + ' GeV, bkg: ' + bkg + ')'
         plt.title(titleScores)
         plt.legend(loc = 'upper center')
-        legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg)
+        legendText = 'analysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg)
         if (PreselectionCuts != 'none'):
             legendText += '\npreselection cuts: ' + PreselectionCuts
         #plt.figtext(0.35, 0.45, legendText, wrap = True, horizontalalignment = 'left')
@@ -1046,7 +1083,8 @@ def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_tes
         else:
             titleROC = NN + ' ROC curve (mass: ' + str(int(mass)) + ' GeV, bkg: ' + bkg + ')'
         plt.title(titleROC)
-        legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg)
+        #legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg)
+        legendText = 'analysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(bkg)
         if (PreselectionCuts != 'none'):
             legendText += '\npreselection cuts: ' + PreselectionCuts
         plt.figtext(0.4, 0.25, legendText, wrap = True, horizontalalignment = 'left')
@@ -1088,7 +1126,8 @@ def DrawEfficiency(yhat_train_signal, yhat_test_signal, yhat_train_bkg, yhat_tes
         plt.close()
     return Area, WP, WP_rej 
 
-def DrawRejectionVsMass(massVec, WP, bkgRej90, bkgRej94, bkgRej97, bkgRej99, outputDir, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName):
+#def DrawRejectionVsMass(massVec, WP, bkgRej90, bkgRej94, bkgRej97, bkgRej99, outputDir, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName):
+def DrawRejectionVsMass(massVec, WP, bkgRej90, bkgRej94, bkgRej97, bkgRej99, outputDir, analysis, channel, preselectionCuts, signal, background, outputFileCommonName):
 
     emptyPlot, = plt.plot(massVec[0], bkgRej90[0], color = 'white')
     plt.plot(massVec, bkgRej90, color = 'blue', label = 'WP: ' + str(WP[0]), marker = 'o', mec = 'blue')
@@ -1099,7 +1138,8 @@ def DrawRejectionVsMass(massVec, WP, bkgRej90, bkgRej94, bkgRej97, bkgRej99, out
     legend1 = plt.legend()
     plt.xlabel('Mass [GeV]')
     plt.ylabel('Background rejection')
-    legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(background)
+    #legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(background)
+    legendText = 'analysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(background)
     if (preselectionCuts != 'none'):
         legendText += '\npreselection cuts: ' + preselectionCuts
     '''
@@ -1116,7 +1156,8 @@ def DrawRejectionVsMass(massVec, WP, bkgRej90, bkgRej94, bkgRej97, bkgRej99, out
     plt.subplots_adjust(left = 0.15, right = 0.95)
     plt.close()
 
-def DrawRejectionVsStat(massVec, fracTrain, WP, bkgRej90Dict, bkgRej94Dict, bkgRej97Dict, bkgRej99Dict, outputDir, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName):
+#def DrawRejectionVsStat(massVec, fracTrain, WP, bkgRej90Dict, bkgRej94Dict, bkgRej97Dict, bkgRej99Dict, outputDir, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName):
+def DrawRejectionVsStat(massVec, fracTrain, WP, bkgRej90Dict, bkgRej94Dict, bkgRej97Dict, bkgRej99Dict, outputDir, analysis, channel, preselectionCuts, signal, background, outputFileCommonName):
     emptyPlot, = plt.plot(massVec[0], bkgRej90Dict[fracTrain[0]], color = 'white')
     linestyles = ['loosely dotted', 'dotted', 'loosely dashed', 'solid']
     for i in range(len(fracTrain)):
@@ -1130,7 +1171,7 @@ def DrawRejectionVsStat(massVec, fracTrain, WP, bkgRej90Dict, bkgRej94Dict, bkgR
     legend1 = plt.legend()
     plt.xlabel('Mass [GeV]')
     plt.ylabel('Background rejection')
-    legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(background)
+    legendText = 'analysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(background)
     if (preselectionCuts != 'none'):
         legendText += '\npreselection cuts: ' + preselectionCuts
     '''
@@ -1151,7 +1192,8 @@ def DrawRejectionVsStat(massVec, fracTrain, WP, bkgRej90Dict, bkgRej94Dict, bkgR
 from sklearn.metrics import confusion_matrix
 import itertools
 
-def DrawCM(yhat_test, y_test, w_test, outputDir, mass, background, outputFileCommonName, jetCollection, analysis, channel, preselectionCuts, signal, drawPlots):
+#def DrawCM(yhat_test, y_test, w_test, outputDir, mass, background, outputFileCommonName, jetCollection, analysis, channel, preselectionCuts, signal, drawPlots):
+def DrawCM(yhat_test, y_test, w_test, outputDir, mass, background, outputFileCommonName, analysis, channel, preselectionCuts, signal, drawPlots):
     yResult_test_cls = np.array([ int(round(x[0])) for x in yhat_test])
     cm = confusion_matrix(y_test, yResult_test_cls, sample_weight = w_test, normalize = 'true')
     TNR, FPR, FNR, TPR = cm.ravel()
@@ -1177,7 +1219,7 @@ def DrawCM(yhat_test, y_test, w_test, outputDir, mass, background, outputFileCom
         plt.ylabel('True label')
         plt.xlabel('Predicted label')
         CMPltName = outputDir + '/ConfusionMatrix_' + outputFileCommonName + '_' + str(mass) + '.png'
-        legendText = 'jet collection: ' + jetCollection + '\nanalysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(background)
+        legendText = 'analysis: ' + analysis + '\nchannel: ' + channel + '\nsignal: ' + signal + '\nbackground: ' + str(background)
         if (preselectionCuts != 'none'):
             legendText += '\npreselection cuts: ' + preselectionCuts
         plt.figtext(0.77, 0.45, legendText, wrap = True, horizontalalignment = 'left')
@@ -1799,7 +1841,7 @@ def scaleVariables(modelDir, dataFrameSignal, dataFrameBkg, inputFeatures, outpu
     return dataFrameSignal, dataFrameBkg
 
 ### Scaling train dataset according to the scale factor saved in variables.json file
-def scaleTrainDataset(dataTrain, variablesDir, inputFeatures, outputDir):
+def scaleTrainTestDataset(dataTrain, variablesDir, inputFeatures, sampleType):
     variablesFileName = 'variables.json'
     variablesFile = variablesDir + variablesFileName 
     print(Fore.GREEN + 'Loading scaling factors from ' + variablesFile)
@@ -1809,14 +1851,16 @@ def scaleTrainDataset(dataTrain, variablesDir, inputFeatures, outputDir):
         feature = field['name']
         if feature not in inputFeatures:
             continue
-        print('Scaling ' + feature)
+        print('Scaling ' + feature + ' for ' + sampleType + ' dataFrame')
         offset = field['offset']
         scale = field['scale']
         dataTrain[feature] = (dataTrain[feature] - offset) / scale
     jsonFile.close()
+    '''
     outputFileName = outputDir + '/' + variablesFileName
     shutil.copyfile(variablesFile, outputFileName)
     print(Fore.GREEN + 'Copied variables file to ' + outputFileName)
+    '''
     return dataTrain
 
 
@@ -2041,7 +2085,7 @@ def buildOptimizedModel(hp):
     plot_model(model, to_file='untrainedModel.png', show_shapes=True, show_layer_names=True)                                                                         
     return model
 
-def HpOptimization(inputFeatures, patienceValue, X, y, w, numberOfEpochs, validationFraction, batchSize, outputDir):
+def HpOptimization(patienceValue, X, y, w, numberOfEpochs, validationFraction, batchSize, outputDir):
     tuner = RandomSearch(
         buildOptimizedModel,
         objective = keras_tuner.Objective('val_loss', direction = 'min'),
@@ -2117,12 +2161,17 @@ def TrainNN(X_train, y_train, w_train, patienceValue, numberOfEpochs, batchSize,
 
     ### If we want to stop the training when we don't have an improvement in $monitor after $patience epochs
     #earlyStoppingCB = EarlyStopping(verbose = True, patience = patienceValue, monitor = 'val_loss', restore_best_weights = True)
-    earlyStoppingCB = EarlyStopping(verbose = True, patience = 15, monitor = 'val_loss', restore_best_weights = True)
+    patienceEarlyStopping = 15
+    monitorEarlyStopping = 'val_loss'
+    earlyStoppingCB = EarlyStopping(verbose = True, patience = patienceEarlyStopping, monitor = monitorEarlyStopping, restore_best_weights = True)
 
     ### If we want to reduce the LR when we don't have an improvement in $monitor after $patience epochs
     decreaseLR = tf.keras.callbacks.LearningRateScheduler(scheduler) ### needed?
     #rlrp = ReduceLROnPlateau(monitor = 'val_loss', factor = 0.1, patience = patienceValue, min_lr = 0.0001)
-    rlrp = ReduceLROnPlateau(monitor = 'val_loss', factor = 0.1, patience = 5, min_lr = 0.00001)
+    patienceLR = 5
+    deltaLR = 0.1
+    minLR = 0.00001
+    rlrp = ReduceLROnPlateau(monitor = monitorEarlyStopping, factor = deltaLR, patience = patienceLR, min_lr = minLR)
 
     checkpoint_filepath = 'tmp/checkpoint/model.hdf5'
     model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
@@ -2148,7 +2197,8 @@ def TrainNN(X_train, y_train, w_train, patienceValue, numberOfEpochs, batchSize,
             self.lrates.append(lrate)
 
     if studyLearningRate:
-        lrm = LearningRateMonitor(Callback)
+        #lrm = LearningRateMonitor(Callback)
+        lrm = LearningRateMonitor()
         CallbacksList = [rlrp, lrm, earlyStoppingCB] #earlyStoppingCB
 
     else:
@@ -2162,7 +2212,7 @@ def TrainNN(X_train, y_train, w_train, patienceValue, numberOfEpochs, batchSize,
     if studyLearningRate:
         return modelMetricsHistory, lrm.lrates
     else:
-        return modelMetricsHistory
+        return modelMetricsHistory, CallbacksList, patienceEarlyStopping, monitorEarlyStopping, patienceLR, deltaLR, minLR
 
 
 def WeightedDistributionComparison(dataTrainSignal, dataTrainBkg, dataTestSignal, dataTestBkg, scoresTrainSignal, scoresTrainBkg, scoresTestSignal, scoresTestBkg, featureToPlot):
@@ -2245,3 +2295,25 @@ def computeDerivedVariables(variablesToDerive, dataFrame):
         #dataFrame = dataFrame.assign({variableToDerive: newColumn})
         dataFrame[variableToDerive] = newColumn
     return dataFrame
+
+
+### Training the newtork with different learning rate and saving plots of learning rate, accuracy and loss vs epochs
+def studyLRpatience(X_train, y_train, w_train, numberOfEpochs, batchSize, validationFraction, model, outputDir, outputFileCommonName):
+    patiences = [2, 5, 10, 15]                                                                                                                                    
+    print(Fore.RED + 'Training ' + str(len(patiences)) + ' pDNN with decreasing learning rate and different patience values')
+    lr_list, loss_list, acc_list, = list(), list(), list()
+    for iPatience in range(len(patiences)):
+        iPatienceValue = patiences[iPatience]
+        print(Fore.BLUE + 'NN number ' + str(iPatience) + ' out of ' + str(len(patiences) - 1) + ' -> patience = ' + str(iPatienceValue))
+        modelMetricsHistory, lrm_rates = TrainNN(X_train, y_train, w_train, iPatienceValue, numberOfEpochs, batchSize, validationFraction, model, True)#, iLoop, loop)
+        #modelMetricsHistory, lrm_rates = TrainNN(X_train, y_train, w_train, iPatienceValue, numberOfEpochs, batchSize, validationFraction, NN, model, Loss, Optimizer, Metrics, iLoop, loop)
+        loss_list.append(modelMetricsHistory.history['loss'])
+        acc_list.append(modelMetricsHistory.history['accuracy'])
+        lr_list.append(lrm_rates)
+
+    # plotting learning rates vs epochs
+    plotHistory(patiences, lr_list, 'LearningRateLRstudies', outputDir, outputFileCommonName)
+    # plotting loss vs epochs
+    plotHistory(patiences, loss_list, 'LossLRstudies', outputDir, outputFileCommonName)
+    # plotting accuracy vs epochs
+    plotHistory(patiences, acc_list, 'AccuracyLRstudies', outputDir, outputFileCommonName)
