@@ -9,7 +9,17 @@ void makeMyQuickPlot2022_pdnn(std::string myvar, int nBins=200, double xmin=0., 
 			      std::string scoreSignal="Radion", bool savePlots=false)
 {
   bool showSignal = false;
+  bool showData = false;
   
+  if (userCut.find("ZCR") != std::string::npos) {
+    showData = true;
+  }
+  else
+    {
+      //showSignal = true;
+      showData = true;
+    }
+
   std::string anStr = "resolved";
   if (userCut.find("Merg") != std::string::npos) {
     anStr = "merged";
@@ -254,7 +264,7 @@ void makeMyQuickPlot2022_pdnn(std::string myvar, int nBins=200, double xmin=0., 
       
       houtData->SetMarkerStyle(20);
       houtData->SetMarkerSize(0.75);
-      houtData->Draw("SAMEP");
+      if (showData) houtData->Draw("SAMEP");
     }
 
   TLegend * leg = new TLegend(0.55,0.6,0.9,0.85);
@@ -273,7 +283,7 @@ void makeMyQuickPlot2022_pdnn(std::string myvar, int nBins=200, double xmin=0., 
   sprintf(buffer, "%10.1f Total SM", totBkgw);  
   leg->AddEntry(hout,    buffer,  "l");
   sprintf(buffer, "%10.0f Data", xData);  
-  leg->AddEntry(houtData,buffer,    "p");
+  if (showData) leg->AddEntry(houtData,buffer,    "p");
   leg->SetTextAlign(12);
   leg->SetBorderSize(0);
   leg->SetFillStyle(0);

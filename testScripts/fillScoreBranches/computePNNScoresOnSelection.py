@@ -48,7 +48,7 @@ print(inpF)
 print(Fore.BLUE + 'Arguments are ' + inpF + ' ' + analysis + ' ' + channel + ' ' + signal + ' ' + mcType + ' ' + dirTag)
 
 
-modelDir = '/nfs/kloe/einstein4/HDBS/NNoutput/r33-22/UFO_PFLOW/' + analysis + '/' + channel + '/' + signal + '/' + background + '_fullStat/PDNN/'
+modelDir = '/nfs/kloe/einstein4/HDBS/NNoutput/r33-22/UFO_PFLOW/' + analysis + '/' + channel + '/' + signal + '/' + background + '_fullStat/loosePDNN/'
 inputFeatures = np.array([])
 inputFeaturesAndFlags = np.array([])
 

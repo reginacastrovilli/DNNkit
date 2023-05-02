@@ -43,7 +43,7 @@ echo "Running with ${dataType} ${analysis} ${channel} ${signal} ${mcType} ${tag}
 ## input directory 
 fileLocation="/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_${mcType}_VV_2lep_PFlow_UFO/fetch/data-MVATree/"
 ## output directory
-outFileLocation="/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_${mcType}_VV_2lep_PFlow_UFO_Scores/"
+outFileLocation="/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_${mcType}_VV_2lep_PFlow_UFO_Scores_loosePDNN/"
 if [ ! -d "$outFileLocation" ]; then
     echo ERROR output directory ${outFileLocation} does not exist -  stop here
     exit
