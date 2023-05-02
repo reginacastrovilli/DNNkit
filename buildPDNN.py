@@ -1,4 +1,9 @@
 from Functions import *
+from keras.utils.vis_utils import plot_model
+import eli5
+from eli5.permutation_importance import get_score_importances
+from keras import backend
+
 ### Setting a seed for reproducibility
 #tf.random.set_seed(1234)
 
@@ -9,174 +14,141 @@ batchSize = 2048
 patienceValue = 5
 
 ### Reading the command line
-tag, jetCollection, analysis, channel, preselectionCuts, background, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, testMass, doTrain, doTest, loop, hpOptimization, drawPlots = ReadArgParser()
-
+tag, analysis, channel, preselectionCuts, background, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, testMass, doTrain, doTest, loop, doHpOptimization, drawPlots, trainSet, doStudyLRpatience = ReadArgParser()
 originsBkgTest = list(background.split('_'))
 
+drawPlots = True
+doFeaturesRanking = False
+doSameStatAsVBF = False
+doStatisticTest = False
+
 ### Reading the configuration file
-ntuplePath, dfPath, InputFeatures = ReadConfig(tag, analysis, jetCollection)
-dfPath += analysis + '/' + channel + '/' + signal + '/' + background + '_fullStat/'
-print(Fore.GREEN + 'Input files directory: ' + dfPath)
-outputFileCommonName = jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + signal + '_' + background + '_' + NN
+ntuplePath, dfPath, InputFeatures = ReadConfig(tag, analysis, signal)
+#inputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/ggFVBF' + '/' + signal + '/' + background + '/'# + 'tmp/' # + '_fullStat/'
+#inputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + signal + '/' + background + '/'# + 'tmp/' # + '_fullStat/'
+inputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + signal + '/' + background + '/'# + 'tmp/' # + '_fullStat/' <<<<<----- questo
+print(Fore.GREEN + 'Input files directory: ' + inputDir)
+#inputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + signal + '/' + background + '/' + 'ggFsameStatAsVBF/'# + 'tmp/' # + '_fullStat/'
+outputFileCommonName = NN + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + signal + '_' + background
 
 ### Creating the output directory and the logFile
-outputDir = dfPath + NN # + '_halfStat'
+#outputDir = inputDir + NN + '_trainSet' + str(trainSet)#0'# + '_3'# + '/withDNNscore'# + '/test1'# + '/3layers'#'/ggFsameStatAsVBF'# + '/withDNNscore' #'/DNNScore_Z'# + '/' + preselectionCuts # + '_halfStat'
+outputDir = inputDir + NN + '_2layers48nodesSwish_mptetaphi'
+#outputDir = inputDir + NN + 'hpOptimization'
 print(format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
+print(Fore.GREEN + 'Input files directory: ' + inputDir)
 
 logFileName = outputDir + '/logFile_' + outputFileCommonName + '.txt'
 logFile = open(logFileName, 'w')
 logInfo = ''
-logString = WriteLogFile(tag, ntuplePath, InputFeatures, dfPath, hpOptimization, doTrain, doTest, validationFraction, batchSize, patienceValue)
+logString = WriteLogFile(tag, ntuplePath, InputFeatures, inputDir, doHpOptimization, doTrain, doTest, validationFraction, batchSize, patienceValue)
 logFile.write(logString)
 logInfo += logString
 
+### If doStatisticTest, open files where to score AUC, loss and scores values in each iteration
+if doStatisticTest:
+    AUCfile = open(outputDir + '/AUCvalues.txt', 'w')
+    AUCfile.write('AUC values in each iteration\n')
+    lossFile = open(outputDir + '/lossValues.txt', 'w')
+    lossFile.write('Train loss minimum - validation loss minimum - train loss at the validation loss minimum (in each iteration)\n')
+    scoresFileName = outputDir + '/scoresValues.txt'
+    scoresFile = open(scoresFileName, 'w')
+    scoresFile.write('Scores of the 20 fixed events in each iteration\n')
+    
 ### Loading input data
-data_train, data_test, X_train, X_test, y_train, y_test, w_train, w_test = LoadData(dfPath, tag, jetCollection, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures)
+data_train, data_test = LoadData(inputDir, tag, signal, analysis, channel, background, trainingFraction, preselectionCuts, InputFeatures, trainSet)
 
-### Writing dataframes composition to the log file
-logString = '\nNumber of train events: ' + str(len(X_train)) + ' (' + str(int(sum(y_train))) + ' signal and ' + str(int(len(y_train) - sum(y_train))) + ' background)' + '\nNumber of test events: ' + str(len(X_test)) + ' (' + str(int(sum(y_test))) + ' signal and ' + str(int(len(y_test) - sum(y_test))) + ' background)'
+### Computing dataframe statistics
+rawTrain = data_train.shape[0]
+rawTrainSignal = data_train[data_train['isSignal'] == 1].shape[0]
+rawTrainBkg = data_train[data_train['isSignal'] == 0].shape[0]
+MCtrain = round(sum(data_train['weight']), 1)
+MCtrainSignal = round(sum(data_train[data_train['isSignal'] == 1]['weight']), 1)
+MCtrainBkg = round(sum(data_train[data_train['isSignal'] == 0]['weight']), 1)
+rawTest = data_test.shape[0]
+rawTestSignal = data_test[data_test['isSignal'] == 1].shape[0]
+rawTestBkg = data_test[data_test['isSignal'] == 0].shape[0]
+MCtest = round(sum(data_test['weight']), 1)
+MCtestSignal = round(sum(data_test[data_test['isSignal'] == 1]['weight']), 1)
+MCtestBkg = round(sum(data_test[data_test['isSignal'] == 0]['weight']), 1)
+print(Fore.BLUE + 'Number of train events: ' + str(rawTrain) + ' (' + str(rawTrainSignal) + ' signal and ' + str(rawTrainBkg) + ' background), with MC weights: ' + str(MCtrain) + ' (' + str(MCtrainSignal) + ' signal and ' + str(MCtrainBkg) + ' background)\nNumber of test events: ' + str(rawTest) + ' (' + str(rawTestSignal) + ' signal and ' + str(rawTestBkg) + ' background), with MC weights: ' + str(MCtest) + ' (' + str(MCtestSignal) + ' signal and ' + str(MCtestBkg) + ' background)')
+logString = '\nNumber of train events: ' + str(rawTrain) + ' (' + str(rawTrainSignal) + ' signal and ' + str(rawTrainBkg) + ' background), with MC weights: ' + str(MCtrain) + ' (' + str(MCtrainSignal) + ' signal and ' + str(MCtrainBkg) + ' background)\nNumber of test events: ' + str(rawTest) + ' (' + str(rawTestSignal) + ' signal and ' + str(rawTestBkg) + ' background), with MC weights: ' + str(MCtest) + ' (' + str(MCtestSignal) + ' signal and ' + str(MCtestBkg) + ' background)'
 logFile.write(logString)
 logInfo += logString
 
+### Scaling input features
+data_train = scaleTrainTestDataset(data_train, inputDir, InputFeatures, 'train')    
+data_test = scaleTrainTestDataset(data_test, inputDir, InputFeatures, 'test')
+outputFileName = outputDir + '/variables.json'
+shutil.copyfile(inputDir + 'variables.json', outputFileName)
+print(Fore.GREEN + 'Copied variables file to ' + outputFileName)
 
-bkgRejFile = open(outputDir + '/BkgRejectionVsMass.txt', 'w')
-#bkgRejFile.write('Background rejection obtained using the version of the software 02-feb-2022, lepton masses as input feature, WP = 0.90, 0.94, 0.97, 0.99\n')
-bkgRej90File = open(outputDir + '/BkgRejectionVsMassWP90.txt', 'w')
-bkgRej94File = open(outputDir + '/BkgRejectionVsMassWP94.txt', 'w')
-bkgRej97File = open(outputDir + '/BkgRejectionVsMassWP97.txt', 'w')
-bkgRej99File = open(outputDir + '/BkgRejectionVsMassWP99.txt', 'w')
+### Saving input features, truth and train weights vectors
+X_train, y_train, w_train = extractFeatures(data_train, InputFeatures)
+X_test, y_test, w_test = extractFeatures(data_test, InputFeatures)
 
+'''
+### to make same stat as VBF
+if doSameStatAsVBF:
+    data_train, X_train, y_train = SameStatAsVBF(data_train)
+'''
+if doHpOptimization:
+    model, logString = HpOptimization(patienceValue, X_train, y_train, w_train, numberOfEpochs, validationFraction, batchSize, outputDir)
+    logFile.write(logString)
+    logInfo += logString
 
-bkgRej90 = []
-bkgRej94 = []
-bkgRej97 = []
-bkgRej99 = []
-
-### hp optimization
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
-from tensorflow.keras.optimizers import RMSprop
-import keras_tuner
-from keras_tuner.tuners import RandomSearch
-if hpOptimization:
-
-    def buildOptimizedModel(hp):
-        model = tf.keras.Sequential()
-        model.add(layers.Dense(units = hp.Int('units', min_value = 8, max_value = 128, step = 1), input_dim = len(InputFeatures), activation = 'relu'))
-        model.add(tf.keras.layers.Dropout(hp.Float('dropout', 0, 0.3, step = 0.1)))
-        for iLayer in range(hp.Int('layers', 1, 6)):
-            model.add(tf.keras.layers.Dense(units = hp.Int('units_' + str(iLayer), 8, 128, step = 2), activation = 'relu'))
-            model.add(tf.keras.layers.Dropout(hp.Float('dropout_' + str(iLayer), 0, 0.3, step = 0.1)))
-        model.add(Dense(1, activation = 'sigmoid'))
-        hp_lr = tf.keras.optimizers.schedules.ExponentialDecay(
-            initial_learning_rate = hp.Choice('learning_rate', values = [1e-2, 1e-3, 1e-4]),
-            decay_steps = 10000,
-            decay_rate = 0.95)
-        optimizer = hp.Choice('optimizer', values = ['RMSprop', 'Adam'])
-        if optimizer == 'RMSprop':
-            optimizer = tf.keras.optimizers.RMSprop(learning_rate = hp_lr)
-        elif optimizer == 'Adam':
-            optimizer = tf.keras.optimizers.Adam(learning_rate = hp_lr)
-        else:
-            raise
-        model.compile(optimizer = optimizer, loss = 'binary_crossentropy', weighted_metrics = ['accuracy'])#, run_eagerly = True)
-        return model
-
-    tuner = RandomSearch(
-        buildOptimizedModel,
-        objective = keras_tuner.Objective('val_accuracy', direction = 'max'),
-        max_trials = 1,#00, 
-        executions_per_trial = 1,
-        directory = outputDir + '/tunerTrials/',  
-        overwrite = True
-    )
-
-    print(tuner.search_space_summary())
-    stop_early = tf.keras.callbacks.EarlyStopping(monitor = 'val_loss', patience = patienceValue)
-    tuner.search(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, validation_split = validationFraction, callbacks = [stop_early], batch_size = batchSize)
-    tuner.results_summary()
-    best_hps = tuner.get_best_hyperparameters(num_trials = 1)[0]
-    model = tuner.hypermodel.build(best_hps)
-    #print(model.summary())
-
-    logFile.write('\n************************** HYPERPARAMETERS OPTIMIZATION RESULTS **************************')
-    print('Number of nodes in layer number 0: ', tuner.get_best_hyperparameters()[0].get('units'))
-    logFile.write('\nNumber of nodes in layer number 0: ' + str(tuner.get_best_hyperparameters()[0].get('units')))
-    print('Dropout in layer number 0: ', tuner.get_best_hyperparameters()[0].get('dropout'))
-    logFile.write('\nDropout in layer number 0: ' + str(tuner.get_best_hyperparameters()[0].get('dropout')))
-    layersNumber = tuner.get_best_hyperparameters()[0].get('layers')
-    print('Number of hidden layers: ', layersNumber)
-    logFile.write('\nNumber of hidden layers: ' + str(layersNumber))
-    for iLayer in range(1, layersNumber + 1):
-        hp_nodes = 'units_' + str(iLayer - 1)
-        hp_dropout = 'dropout_' + str(iLayer - 1)
-        print('Number of nodes in hidden layer number ' + str(iLayer) + ': ' + str(tuner.get_best_hyperparameters()[0].get(hp_nodes)))
-        logFile.write('\nNumber of nodes in hidden layer number ' + str(iLayer) + ': ' + str(tuner.get_best_hyperparameters()[0].get(hp_nodes)))
-        print('Dropout in hidden layer number ' + str(iLayer) + ': ' + str(tuner.get_best_hyperparameters()[0].get(hp_dropout)))
-        logFile.write('\nDropout in hidden layer number ' + str(iLayer) + ': ' + str(tuner.get_best_hyperparameters()[0].get(hp_dropout)))
-    print('Optimizer:', model.optimizer.get_config())
-    logFile.write('\nOptimizer: ' + str(model.optimizer.get_config()))
-    logFile.write('\n*******************************************************************************************')
-
-bkgRej90Dict = {}
-bkgRej94Dict = {}
-bkgRej97Dict = {}
-bkgRej99Dict = {}
+else: 
+    ### Building and compiling the PDNN
+    model, Loss, Metrics, learningRate, Optimizer, activationFunction = BuildNN(len(InputFeatures), numberOfNodes, numberOfLayers, dropout, doStudyLRpatience)
+    model.compile(loss = Loss, optimizer = Optimizer, weighted_metrics = Metrics)
+    NNdiagramName = outputDir + '/trainedModel.png'
+    plot_model(model, to_file = NNdiagramName, show_shapes = True, show_layer_names = True)
+    print(Fore.GREEN + 'Saved ' + NNdiagramName)
+    logString = '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of hidden layers: ' + str(numberOfLayers) + '\nDropout: ' + str(dropout) + '\nLoss: ' + Loss + '\nOptimizer: ' + str(Optimizer) + '\nInitial learning rate: ' + str(learningRate) + '\nMetrics: ' + str(Metrics) + '\nActivation function in hidden layers: ' + activationFunction
+    logFile.write(logString)
+    logInfo += logString
+                
+if doStudyLRpatience:
+    studyLRpatience(X_train, y_train, w_train, numberOfEpochs, batchSize, validationFraction, model, outputDir, outputFileCommonName)
 
 for iLoop in range(loop):
 
-    #enablePrint()
-    #print(Fore.RED + 'loop: ' + str(iLoop))
-    #blockPrint()
+    if iLoop != 0:
+        outputDirLoop = outputDir + '/loop' + str(iLoop)
+        outputFileCommonName += '_loop' + str(iLoop)
+    else: 
+        outputDirLoop = outputDir
+    print(format('Output directory: ' + Fore.GREEN + outputDirLoop), checkCreateDir(outputDirLoop))
 
-    #if iLoop == 0:
-        #logString = '\nLoss: ' + Loss + '\nLearning rate: ' + str(learningRate) + '\nOptimizer: ' + str(Optimizer) + '\nweighted_metrics: ' + str(Metrics)
-        #logFile.write(logString)
-        #logInfo += logString
-    
     if not doTrain:
-        from keras.models import model_from_json
-        ### Loading architecture and weights from file
-        print(Fore.BLUE + 'Loading architecture and weights')
-        architectureFileName = outputDir + '/architecture.json'
-        with open(architectureFileName, 'r') as architectureFile:
-            loadedModel = architectureFile.read()
-        print(Fore.GREEN + 'Loaded ' + architectureFileName) 
-        model = model_from_json(loadedModel)
-        weightsFileName = outputDir + '/weights.h5'
-        model.load_weights(weightsFileName)
-        print(Fore.GREEN + 'Loaded ' + weightsFileName)
-        '''
-        ### Reading loss, optimizer and metrics from file
-        Loss, Metrics, OptimizerLoaded, learningRate = ReadLossOptimizerMetrics(outputDir)
-        if OptimizerLoaded == 'RMSprop':
-            Optimizer = tf.keras.optimizers.RMSprop(learning_rate = learningRate)
-        elif OptimizerLoaded == 'Adam':
-            Optimizer = tf.keras.optimizers.Adam(learning_rate = learningRate)
-        '''
-        model.compile(loss = 'binary_crossentropy', weighted_metrics = ['accuracy']) #-> We don't care about the optimizer since we will only perform test, if loss and/or metric change save and then load them
+        model = LoadNN(outputDirLoop)
 
     if doTrain:
-        if not hpOptimization:
-            ### Building and compiling the PDNN
-            model, Loss, Metrics, learningRate, Optimizer = BuildDNN(len(InputFeatures), numberOfNodes, numberOfLayers, dropout)
-            model.compile(loss = Loss, optimizer = Optimizer, weighted_metrics = Metrics)
-            logString = '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of layers: ' + str(numberOfLayers) + '\nDropout: ' + str(dropout) + '\nLoss: ' + Loss + '\nOptimizer: ' + str(Optimizer) + '\nLearning rate: ' + str(learningRate) + '\nMetrics: ' + str(Metrics)
+
+        ### Trainig the pDNN if not doStudyLRpatience, otherwise first choose the patience and then run this script withouth doStudyLRpatience
+        if not doStudyLRpatience:
+            print(Fore.BLUE + 'Training the ' + NN + ' -- loop ' + str(iLoop) + ' out of ' + str(loop - 1))
+            modelMetricsHistory, callbacksList, patienceEarlyStopping, monitorEarlyStopping, patienceLR, deltaLR, minLR = TrainNN(X_train, y_train, w_train, patienceValue, numberOfEpochs, batchSize, validationFraction, model, doStudyLRpatience)#, iLoop, loop)
+            logString = '\nCallbacks list: ' + str(callbacksList) + '\nPatience early stopping: ' + str(patienceEarlyStopping) + '\nMonitor early stopping: ' + monitorEarlyStopping + '\nLearning rate decrease at each step: ' + str(deltaLR) + '\nPatience learning rate: ' + str(patienceLR) + '\nMinimum learning rate: ' + str(minLR)
             logFile.write(logString)
             logInfo += logString
 
-        ### Training
-        print(Fore.BLUE + 'Training the ' + NN)
-        modelMetricsHistory = model.fit(X_train, y_train, sample_weight = w_train, epochs = numberOfEpochs, batch_size = batchSize, validation_split = validationFraction, verbose = 1, shuffle = False, callbacks = EarlyStopping(verbose = True, patience = patienceValue, monitor = 'val_loss', restore_best_weights = True))
+        if doStatisticTest:
+            ### Writing best losses to file
+            loss_hist = modelMetricsHistory.history['loss']
+            val_loss_hist = modelMetricsHistory.history['val_loss']
+            best_epoch = np.argmin(loss_hist)# + 1
+            lossFile.write(str(np.min(loss_hist)) + ' ' + str(np.min(val_loss_hist)) + ' ' + str(loss_hist[best_epoch]) + '\n')
 
         ### Saving to files
-        SaveModel(model, outputDir, NN)
+        #model.load_weights('tmp/checkpoint/model.hdf5')
+        SaveModel(model, outputDirLoop, NN)
+        plot_model(model, to_file = 'trainedModel.png', show_shapes = True, show_layer_names = True)
 
     if doTest:
         ### Evaluating the performance of the PDNN on the test sample and writing results to the log file
         print(Fore.BLUE + 'Evaluating the performance of the ' + NN)
-        testLoss, testAccuracy = EvaluatePerformance(model, X_test, y_test, w_test, batchSize)
+        testLoss, testAccuracy = EvaluatePerformance(model, X_test, y_test, w_test, batchSize) ### using train_weight
 
         if iLoop == 0:
             logString = '\nTest loss: ' + str(testLoss) + '\nTest accuracy: ' + str(testAccuracy)
@@ -186,18 +158,29 @@ for iLoop in range(loop):
     else:
         testLoss = testAccuracy = None
 
-    #if doTrain and doTest:
     ### Drawing accuracy and loss
-    if drawPlots:
-        DrawLoss(modelMetricsHistory, testLoss, patienceValue, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName)
-        DrawAccuracy(modelMetricsHistory, testAccuracy, patienceValue, outputDir, NN, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName)
-
+    if drawPlots and doTrain: ### THINK
+        DrawLoss(modelMetricsHistory, testLoss, patienceValue, outputDirLoop, NN, analysis, channel, preselectionCuts, signal, background, outputFileCommonName)
+        DrawAccuracy(modelMetricsHistory, testAccuracy, patienceValue, outputDirLoop, NN, analysis, channel, preselectionCuts, signal, background, outputFileCommonName)
+    '''
     if iLoop == 0:
         logFile.close()
         print(Fore.GREEN + 'Saved ' + logFileName)
-
+    '''
+    
+    logFile.close()
+    if loop != 0:
+        logFileLoop = outputDirLoop + '/logFile_' + outputFileCommonName + '.txt'
+        shutil.move(logFileName, logFileLoop)
+        print(Fore.GREEN + 'Saved ' + logFileLoop)
+    else:
+        print(Fore.GREEN + 'Saved ' + logFileName)
+    
     if doTest == False:
         exit()
+
+    if doFeaturesRanking:
+        deltasDict = {}
         
     ### Dividing signal from background
     data_test_signal = data_test[data_test['isSignal'] == 1]
@@ -217,23 +200,20 @@ for iLoop in range(loop):
     testMass.sort()
 
     for unscaledMass in testMass:
-
+        '''
+        if unscaledMass != 1000:# and unscaledMass != 600:
+            continue
+        '''
         ### Checking whether there are test events with the selected mass
         if unscaledMass not in unscaledTestMassPointsList:
             print(Fore.RED + 'No test signal with mass ' + str(unscaledMass))
             continue
 
         ### Creating new output directory and log file
-        newOutputDir = outputDir + '/' + str(int(unscaledMass))
+        newOutputDir = outputDirLoop + '/' + str(int(unscaledMass))
         print(format('Output directory: ' + Fore.GREEN + newOutputDir), checkCreateDir(newOutputDir))
         newLogFileName = newOutputDir + '/logFile_' + outputFileCommonName + '_' + str(unscaledMass) + '.txt'
         newLogFile = open(newLogFileName, 'w')
-
-        if (iLoop == 0 and loop > 1):
-            bkgRej90Dict[unscaledMass] = []
-            bkgRej94Dict[unscaledMass] = []
-            bkgRej97Dict[unscaledMass] = []
-            bkgRej99Dict[unscaledMass] = []
 
         ### Selecting only test signal events with the same mass value and saving them as an array
         data_test_signal_mass = data_test_signal[data_test_signal['unscaledMass'] == unscaledMass]
@@ -246,7 +226,32 @@ for iLoop in range(loop):
         data_test_bkg = data_test_bkg.assign(mass = np.full(len(data_test_bkg), scaledMass))
         X_test_bkg = np.asarray(data_test_bkg[InputFeatures].values).astype(np.float32)
         wMC_test_bkg = np.array(data_test_bkg['weight'])
-        
+
+        if doFeaturesRanking:
+            FeaturesRanking(X_test_signal_mass, X_test_bkg, deltasDict, InputFeatures, signal, analysis, channel, outputDir, outputFileCommonName, drawPlots)
+
+        if doStatisticTest:
+            if iLoop == 0:
+                ### Creating dataset with just 20 events
+                data_test_signal_mass_10 = data_test_signal_mass[:10]
+                data_test_bkg_10 = data_test_bkg[:10]
+                data_test_20 = pd.concat((data_test_signal_mass_10, data_test_bkg_10))
+                #print(data_test_20)
+                #print(data_test_20.shape)
+                data_test_20.to_pickle(outputDir + '/20events_test.pkl')
+                print(Fore.GREEN + 'Saved ' + outputDir + '/20events_test.pkl')
+                #print(yhat_20)
+                #print(len(yhat_20))
+            else:
+                data_test_20 = pd.read_pickle(outputDir + '/20events_test.pkl')
+
+            yhat_20 = np.array(model.predict(data_test_20[InputFeatures], batch_size = batchSize))
+
+            for iScore in range(len(yhat_20)):
+                scoresFile.write(str(yhat_20[iScore][0]) + ' ')
+                if iScore == (len(yhat_20) - 1):
+                    scoresFile.write('\n')
+
         ### Selecting train signal events with the same mass
         data_train_signal_mass = data_train_signal[data_train_signal['unscaledMass'] == unscaledMass]
         X_train_signal_mass = np.asarray(data_train_signal_mass[InputFeatures].values).astype(np.float32)
@@ -265,16 +270,18 @@ for iLoop in range(loop):
         y_test_mass = np.concatenate((np.ones(len(yhat_test_signal_mass)), np.zeros(len(yhat_test_bkg_mass))))
         wMC_test_mass = np.concatenate((wMC_test_signal_mass, wMC_test_bkg))
 
-        
-        TNR, FPR, FNR, TPR = DrawCM(yhat_test_mass, y_test_mass, wMC_test_mass, newOutputDir, unscaledMass, background, outputFileCommonName, jetCollection, analysis, channel, preselectionCuts, signal, drawPlots)
-        newLogFile.write('\TNR (TN/N): ' + str(TNR) + '\nFPR (FP/N): ' + str(FPR) + '\FNR (FN/P): ' + str(FNR) + '\n TPR (TP/P): ' + str(TPR))
+        TNR, FPR, FNR, TPR = DrawCM(yhat_test_mass, y_test_mass, wMC_test_mass, newOutputDir, unscaledMass, background, outputFileCommonName, analysis, channel, preselectionCuts, signal, drawPlots)
+        newLogFile.write('\nTNR (TN/N): ' + str(TNR) + '\nFPR (FP/N): ' + str(FPR) + '\nFNR (FN/P): ' + str(FNR) + '\nTPR (TP/P): ' + str(TPR))
 
         ### Computing ROC AUC
         fpr, tpr, thresholds = roc_curve(y_test_mass, yhat_test_mass)#, sample_weight = wMC_test_mass)
         roc_auc = auc(fpr, tpr)
         print(format(Fore.BLUE + 'ROC_AUC: ' + str(roc_auc)))
         newLogFile.write('\nROC_AUC: ' + str(roc_auc))
-        
+        if doStatisticTest:
+            AUCfile.write(str(roc_auc) + '\n')
+
+        '''
         from scipy import integrate
         sorted_index = np.argsort(fpr)
         fpr_sorted =  np.array(fpr)[sorted_index]
@@ -282,51 +289,33 @@ for iLoop in range(loop):
         #auc = integrate.trapz(y = tpr_sorted, x = fpr_sorted)
         #print(format(Fore.BLUE + 'ROC_AUC: ' + str(auc)))
         #newLogFile.write('\nROC_AUC: ' + str(auc))
-        
-        ### Plotting ROC, background rejection and scores
         #WP, bkgRejWP = DrawROCbkgRejectionScores(fpr_sorted, tpr_sorted, auc, newOutputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName, yhat_train_signal_mass, yhat_test_signal_mass, yhat_train_bkg_mass, yhat_test_bkg_mass, wMC_train_signal_mass, wMC_test_signal_mass, wMC_train_bkg, wMC_test_bkg)
-        WP, bkgRejWP = DrawROCbkgRejectionScores(fpr, tpr, roc_auc, newOutputDir, NN, unscaledMass, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName, yhat_train_signal_mass, yhat_test_signal_mass, yhat_train_bkg_mass, yhat_test_bkg_mass, wMC_train_signal_mass, wMC_test_signal_mass, wMC_train_bkg, wMC_test_bkg, drawPlots)
+        '''
+
+        ### Plotting ROC, background rejection and scores
+        WP, bkgRejWP = DrawROCbkgRejectionScores(fpr, tpr, roc_auc, newOutputDir, NN, unscaledMass, analysis, channel, preselectionCuts, signal, background, outputFileCommonName, yhat_train_signal_mass, yhat_test_signal_mass, yhat_train_bkg_mass, yhat_test_bkg_mass, wMC_train_signal_mass, wMC_test_signal_mass, wMC_train_bkg, wMC_test_bkg, drawPlots)
         newLogFile.write('\nWorking points: ' + str(WP) + '\nBackground rejection at each working point: ' + str(bkgRejWP))
         
-        bkgRej90.append(bkgRejWP[0])
-        bkgRej94.append(bkgRejWP[1])
-        bkgRej97.append(bkgRejWP[2])
-        bkgRej99.append(bkgRejWP[3])
-        bkgRejFile.write(str(unscaledMass) + ' ' + str(bkgRejWP[0]) + ' ' + str(bkgRejWP[1]) + ' ' + str(bkgRejWP[2]) + ' ' + str(bkgRejWP[3]) + '\n')
-        '''
-        bkgRej90Dict[unscaledMass].append(bkgRejWP[0])
-        bkgRej94Dict[unscaledMass].append(bkgRejWP[1])
-        bkgRej97Dict[unscaledMass].append(bkgRejWP[2])
-        bkgRej99Dict[unscaledMass].append(bkgRejWP[3])
-        print(bkgRej90Dict[unscaledMass])
-        '''
         ### Closing the newLogFile
         newLogFile.close()
         print(Fore.GREEN + 'Saved ' + newLogFileName)
-        '''
-        if iLoop == (loop - 1):
-            bkgRej90File.write(str(unscaledMass) + ' ')
-            for rejValue in bkgRej90Dict[unscaledMass]:
-                bkgRej90File.write(str(rejValue) + ' ')
-            bkgRej90File.write('\n')
-            bkgRej94File.write(str(unscaledMass) + ' ')
-            for rejValue in bkgRej94Dict[unscaledMass]:
-                bkgRej94File.write(str(rejValue) + ' ')
-            bkgRej94File.write('\n')
-            bkgRej97File.write(str(unscaledMass) + ' ')
-            for rejValue in bkgRej97Dict[unscaledMass]:
-                bkgRej97File.write(str(rejValue) + ' ')
-            bkgRej97File.write('\n')
-            bkgRej99File.write(str(unscaledMass) + ' ')
-            for rejValue in bkgRej99Dict[unscaledMass]:
-                bkgRej99File.write(str(rejValue) + ' ')
-            bkgRej99File.write('\n')
-        '''
-    if (len(testMass) > 1):
-        DrawRejectionVsMass(testMass, WP, bkgRej90, bkgRej94, bkgRej97, bkgRej99, outputDir, jetCollection, analysis, channel, preselectionCuts, signal, background, outputFileCommonName) 
 
-bkgRejFile.close()
-bkgRej90File.close()
-bkgRej94File.close()
-bkgRej97File.close()
-bkgRej99File.close()
+        if drawPlots and doFeaturesRanking:
+            PlotFeaturesRanking(InputFeatures, deltasDict, newOutputDir, outputFileCommonName)
+
+        ### Plotting calibration curve on signal (train + test) scores
+        #CalibrationCurves(wMC_test_signal_mass, wMC_train_signal_mass, yhat_test_signal_mass, yhat_train_signal_mass, wMC_test_bkg, wMC_train_bkg, yhat_test_bkg_mass, yhat_train_bkg_mass, unscaledMass, newOutputDir, outputFileCommonName)
+
+        #WeightedDistributionComparison(data_train_signal_mass, data_train_bkg, data_test_signal_mass, data_test_bkg, yhat_train_signal_mass, yhat_train_bkg_mass, yhat_test_signal_mass, yhat_test_bkg_mass, 'lep1_eta')
+        
+
+    #if (len(testMass) > 1):
+    #    DrawRejectionVsMass(testMass, WP, bkgRej90, bkgRej94, bkgRej97, bkgRej99, outputDir, analysis, channel, preselectionCuts, signal, background, outputFileCommonName) 
+
+if doStatisticTest:
+    AUCfile.close()
+    print(Fore.GREEN + 'Saved ' + outputDir + '/AUCvalues.txt')
+    lossFile.close()
+    print(Fore.GREEN + 'Saved ' + outputDir + '/lossValues.txt')
+    scoresFile.close()
+    print(Fore.GREEN + 'Saved ' + outputDir + '/scoresValues.txt')

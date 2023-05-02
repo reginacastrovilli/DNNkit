@@ -4,33 +4,41 @@
 ### A cut on the mass value is performed according to the regime selected.
 ### Histograms and a correlation matrix of the relevat variables can be saved.
 
-from Functions import ReadArgParser, ReadConfig, checkCreateDir, ShufflingData, SelectEvents, CutMasses, DrawVariablesHisto, DrawCorrelationMatrix
+from Functions import ReadArgParser, ReadConfig, checkCreateDir, ShufflingData, SelectEvents, CutMasses, DrawVariablesHisto, DrawCorrelationMatrix, computeDerivedVariables
 import pandas as pd
 import numpy as np
 import random
 import os
+import matplotlib
+import matplotlib.pyplot as plt
+#import sys
+#import shlex
 from colorama import init, Fore
 init(autoreset = True)
+import math
+
+#print(sys.executable, ' '.join(map(shlex.quote, sys.argv)))
 
 overwriteDataFrame = False
-
+#print(str(sys))
 ### Reading the command line
-tag, jetCollection, analysis, channel, preselectionCuts, signal, background, drawPlots = ReadArgParser()
+tag, analysis, channel, preselectionCuts, signal, background, drawPlots = ReadArgParser()
 
 ### Reading from config file
-InputFeatures, dfPath, variablesToSave, backgroundsList = ReadConfig(tag, analysis, jetCollection)
+ntuplePath, InputFeatures, dfPath, variablesToSave, variablesToDerive, backgroundsList = ReadConfig(tag, analysis, signal)
 
 ### Creating output directories and logFile
-tmpOutputDir = dfPath + analysis + '/' + channel
+tmpOutputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts# + '/ggFandVBF'# + '/ggFVBF'
 print(format('First output directory: ' + Fore.GREEN + tmpOutputDir), checkCreateDir(tmpOutputDir))
-tmpFileCommonName = tag + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts
+tmpFileCommonName = tag + '_' + analysis + '_' + channel + '_' + preselectionCuts
 
-outputDir = dfPath + analysis + '/' + channel + '/' + signal + '/' + background
+outputDir = tmpOutputDir + '/' + signal + '/' + background
 print(format('Second output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
-fileCommonName = tag + '_' + jetCollection + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + signal + '_' + background
-logFileName = outputDir + '/logFileBuildDataset_' + fileCommonName + '.txt'
+fileCommonName = tmpFileCommonName + '_' + signal + '_' + background
+logFileName = outputDir + '/logFile_buildDataset_' + fileCommonName + '.txt'
+
 logFile = open(logFileName, 'w')
-logFile.write('Input files path: ' + dfPath + 'CxAOD tag: ' + tag + '\nJet collection: ' + jetCollection + '\nAnalysis: ' + analysis + '\nChannel: ' + channel + '\nPreselection cuts: ' + preselectionCuts + '\nSignal: ' + signal + '\nBackground: ' + background)
+logFile.write('Input files path: ' + dfPath + 'CxAOD tag: ' + tag + '\nAnalysis: ' + analysis + '\nChannel: ' + channel + '\nPreselection cuts: ' + preselectionCuts + '\nSignal: ' + signal + '\nBackground: ' + background)
 
 ### Loading DSID-mass map and storing it into a dictionary
 DictDSID = {}
@@ -71,15 +79,19 @@ for target in inputOrigins:
     if overwriteDataFrame or not os.path.isfile(fileName):
         ### Defining local dataframe (we might have found only one among many dataframes)
         partialDataFrameBkg = []
-        for file in os.listdir(dfPath):
+        #for file in os.listdir(dfPath):
+        for file in os.listdir(ntuplePath):
             ### Loading input file
             if file.startswith(target) and file.endswith('.pkl'):
-                print(Fore.GREEN + 'Loading ' + dfPath + file)
-                inputDf = pd.read_pickle(dfPath + file)
+                #print(Fore.GREEN + 'Loading ' + dfPath + file)
+                #inputDf = pd.read_pickle(dfPath + file)
+                print(Fore.GREEN + 'Loading ' + ntuplePath + file)
+                inputDf = pd.read_pickle(ntuplePath + file)
                 ### Selecting events according to merged/resolved regime and ggF/VBF channel
-                inputDf = SelectEvents(inputDf, channel, analysis, preselectionCuts)
+                inputDf = SelectEvents(inputDf, channel, analysis, preselectionCuts, signal)
                 ### Creating new column in the dataframe with the origin
                 inputDf = inputDf.assign(origin = target)
+
                 ### Filling signal/background dataframes
                 if target == signal:
                     dataFrameSignal.append(inputDf)
@@ -89,11 +101,13 @@ for target in inputOrigins:
         if target == signal:
             dataFrameSignal = pd.concat(dataFrameSignal, ignore_index = True)
             dataFrameSignal.to_pickle(fileName)
+
         elif target != signal:
             partialDataFrameBkg = pd.concat(partialDataFrameBkg, ignore_index = True)
             partialDataFrameBkg.to_pickle(fileName)
             ### Appending the local background dataframe to the final one
             dataFrameBkg.append(partialDataFrameBkg)
+
         print(Fore.GREEN + 'Saved ' + fileName)
 
 ### Concatening the global background dataframe
@@ -102,7 +116,10 @@ dataFrameBkg = pd.concat(dataFrameBkg, ignore_index = True)
 ### Creating a new isSignal column with values 1 (0) for signal (background) events
 dataFrameSignal = dataFrameSignal.assign(isSignal = 1)
 dataFrameBkg = dataFrameBkg.assign(isSignal = 0)
-
+'''
+### Removing isolated event with high lep1_m
+dataFrameBkg = dataFrameBkg.query('lep1_m < 0.15')
+'''
 ### Converting DSID to mass in the signal dataframe
 massesSignal = dataFrameSignal['DSID'].copy()
 DSIDsignal = np.array(list(set(list(dataFrameSignal['DSID']))))
@@ -131,17 +148,30 @@ dataFrameBkg = dataFrameBkg.assign(mass = massesBkg)
 ### Concatening signal and background dataframes
 dataFrame = pd.concat([dataFrameSignal, dataFrameBkg], ignore_index = True)
 
+### Computing derived variables
+dataFrame = computeDerivedVariables(variablesToDerive, dataFrame)
+
 ### Selecting in the dataframe only the variables relevant for the next steps
-dataFrame = dataFrame[variablesToSave]
+dataFrame = dataFrame[variablesToSave + variablesToDerive]
+
+'''
+### Removing events with high absoulte MC weights
+meanWeight = dataFrame['weight'].mean()
+stdWeight = dataFrame['weight'].std()
+selection = 'abs(weight - ' + str(meanWeight) + ') <= 5 * ' + str(stdWeight)
+dataFrame = dataFrame.query(selection)
+'''
 
 ### Shuffling the dataframe
 dataFrame = ShufflingData(dataFrame)
 
+print(dataFrame.columns)
+
 ### Saving number of events for each origin
 for origin in inputOrigins:
-    logFile.write('\nNumber of ' + origin + ' events: ' + str(dataFrame[dataFrame['origin'] == origin].shape[0]))
-    print(Fore.BLUE + 'Number of ' + origin + ' events: ' + str(dataFrame[dataFrame['origin'] == origin].shape[0]))
-    
+    logFile.write('\nNumber of ' + origin + ' events: ' + str(dataFrame[dataFrame['origin'] == origin].shape[0]) + ' (raw), ' + str(sum(dataFrame[dataFrame['origin'] == origin]['weight'])) +' (with MC weights)')
+    print(Fore.BLUE + 'Number of ' + origin + ' events: ' + str(dataFrame[dataFrame['origin'] == origin].shape[0]) + ' (raw), ' + str(sum(dataFrame[dataFrame['origin'] == origin]['weight'])) +' (with MC weights)')
+
 ### Saving the combined dataframe
 outputFileName = '/MixData_' + fileCommonName + '.pkl'
 dataFrame.to_pickle(outputDir + outputFileName)
@@ -156,6 +186,5 @@ print(Fore.GREEN + 'Saved ' + logFileName)
 if drawPlots:
     histoOutputDir = outputDir + '/trainTestHistograms'
     checkCreateDir(histoOutputDir)
-    DrawVariablesHisto(dataFrame, InputFeatures, histoOutputDir, fileCommonName, jetCollection, analysis, channel, signal, backgroundLegend, preselectionCuts)
-    DrawCorrelationMatrix(dataFrame, InputFeatures, outputDir, fileCommonName, analysis, channel, signal, backgroundLegend)
-
+    DrawVariablesHisto(dataFrame, histoOutputDir, fileCommonName, analysis, channel, signal, backgroundLegend, preselectionCuts, False)
+    #DrawCorrelationMatrix(dataFrame, InputFeatures, outputDir, fileCommonName, analysis, channel, signal, backgroundLegend)
