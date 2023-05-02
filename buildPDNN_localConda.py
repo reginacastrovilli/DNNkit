@@ -14,7 +14,7 @@ batchSize = 2048
 patienceValue = 5
 
 ### Reading the command line
-tag, analysis, channel, preselectionCuts, background, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, testMass, doTrain, doTest, loop, doHpOptimization, drawPlots, trainSet, doStudyLRpatience, configFile = ReadArgParser()
+tag, analysis, channel, preselectionCuts, background, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, testMass, doTrain, doTest, loop, doHpOptimization, drawPlots, trainSet, doStudyLRpatience = ReadArgParser()
 originsBkgTest = list(background.split('_'))
 
 drawPlots = True
@@ -22,15 +22,8 @@ doFeaturesRanking = False
 doSameStatAsVBF = False
 doStatisticTest = False
 
-if channel == 'ggF':
-    signalLabel = signal
-elif channel == 'VBF':
-    signalLabel = signal.replace('VBF', '')
-if 'WZ' in signalLabel:
-    signalLabel = signal.replace('WZ', '')
-
 ### Reading the configuration file
-ntuplePath, dfPath, InputFeatures = ReadConfig(tag, analysis, signal, configFile)
+ntuplePath, dfPath, InputFeatures = ReadConfig(tag, analysis, signal)
 #inputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/ggFVBF' + '/' + signal + '/' + background + '/'# + 'tmp/' # + '_fullStat/'
 #inputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + signal + '/' + background + '/'# + 'tmp/' # + '_fullStat/'
 inputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + signal + '/' + background + '/'# + 'tmp/' # + '_fullStat/' <<<<<----- questo
@@ -40,13 +33,7 @@ outputFileCommonName = NN + '_' + analysis + '_' + channel + '_' + preselectionC
 
 ### Creating the output directory and the logFile
 #outputDir = inputDir + NN + '_trainSet' + str(trainSet)#0'# + '_3'# + '/withDNNscore'# + '/test1'# + '/3layers'#'/ggFsameStatAsVBF'# + '/withDNNscore' #'/DNNScore_Z'# + '/' + preselectionCuts # + '_halfStat'
-#outputDir = inputDir + NN + '_2layers48nodesSwish_mptetaphi/withoutLowWeights'
-if 'mptetaphi' in configFile:
-    outtt = 'mptetaphi'
-else:
-    outtt = 'deltaphi'
-outputDir = inputDir + NN + '_2layers48nodesSwish_' + outtt + '/10feb2023'
-#outputDir = inputDir + NN + '_3layers48nodesRelu_deltaphi'
+outputDir = inputDir + NN + '_2layers48nodesSwish_mptetaphi'
 #outputDir = inputDir + NN + 'hpOptimization'
 print(format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
 print(Fore.GREEN + 'Input files directory: ' + inputDir)
@@ -54,7 +41,7 @@ print(Fore.GREEN + 'Input files directory: ' + inputDir)
 logFileName = outputDir + '/logFile_' + outputFileCommonName + '.txt'
 logFile = open(logFileName, 'w')
 logInfo = ''
-logString = WriteLogFile(tag, ntuplePath, InputFeatures, inputDir, doHpOptimization, doTrain, doTest, validationFraction, batchSize)#, patienceValue)
+logString = WriteLogFile(tag, ntuplePath, InputFeatures, inputDir, doHpOptimization, doTrain, doTest, validationFraction, batchSize, patienceValue)
 logFile.write(logString)
 logInfo += logString
 
@@ -134,14 +121,14 @@ for iLoop in range(loop):
     print(format('Output directory: ' + Fore.GREEN + outputDirLoop), checkCreateDir(outputDirLoop))
 
     if not doTrain:
-        model = LoadNN('/nfs/kloe/einstein4/HDBS_new/NNoutput/r33-24/merged/ggF/none/Radion/all/PDNN_2layers48nodesSwish_deltaphi/')#outputDirLoop)
+        model = LoadNN(outputDirLoop)
 
     if doTrain:
 
         ### Trainig the pDNN if not doStudyLRpatience, otherwise first choose the patience and then run this script withouth doStudyLRpatience
         if not doStudyLRpatience:
             print(Fore.BLUE + 'Training the ' + NN + ' -- loop ' + str(iLoop) + ' out of ' + str(loop - 1))
-            modelMetricsHistory, callbacksList, patienceEarlyStopping, monitorEarlyStopping, patienceLR, deltaLR, minLR = TrainNN(X_train, y_train, w_train, numberOfEpochs, batchSize, validationFraction, model, doStudyLRpatience)#, iLoop, loop)
+            modelMetricsHistory, callbacksList, patienceEarlyStopping, monitorEarlyStopping, patienceLR, deltaLR, minLR = TrainNN(X_train, y_train, w_train, patienceValue, numberOfEpochs, batchSize, validationFraction, model, doStudyLRpatience)#, iLoop, loop)
             logString = '\nCallbacks list: ' + str(callbacksList) + '\nPatience early stopping: ' + str(patienceEarlyStopping) + '\nMonitor early stopping: ' + monitorEarlyStopping + '\nLearning rate decrease at each step: ' + str(deltaLR) + '\nPatience learning rate: ' + str(patienceLR) + '\nMinimum learning rate: ' + str(minLR)
             logFile.write(logString)
             logInfo += logString
@@ -173,8 +160,8 @@ for iLoop in range(loop):
 
     ### Drawing accuracy and loss
     if drawPlots and doTrain: ### THINK
-        DrawLoss(modelMetricsHistory, testLoss, patienceEarlyStopping, outputDirLoop, NN, analysis, channel, preselectionCuts, signal, background, outputFileCommonName)
-        DrawAccuracy(modelMetricsHistory, testAccuracy, patienceEarlyStopping, outputDirLoop, NN, analysis, channel, preselectionCuts, signal, background, outputFileCommonName)
+        DrawLoss(modelMetricsHistory, testLoss, patienceValue, outputDirLoop, NN, analysis, channel, preselectionCuts, signal, background, outputFileCommonName)
+        DrawAccuracy(modelMetricsHistory, testAccuracy, patienceValue, outputDirLoop, NN, analysis, channel, preselectionCuts, signal, background, outputFileCommonName)
     '''
     if iLoop == 0:
         logFile.close()
@@ -194,12 +181,6 @@ for iLoop in range(loop):
 
     if doFeaturesRanking:
         deltasDict = {}
-
-    def PredictionAndAUC(X, Y):
-        y_pred = model.predict(X)
-        fpr, tpr, thresholds = roc_curve(Y, y_pred)
-        roc_auc = auc(fpr, tpr)
-        return roc_auc
         
     ### Dividing signal from background
     data_test_signal = data_test[data_test['isSignal'] == 1]
@@ -219,10 +200,10 @@ for iLoop in range(loop):
     testMass.sort()
 
     for unscaledMass in testMass:
-
+        '''
         if unscaledMass != 1000:# and unscaledMass != 600:
             continue
-
+        '''
         ### Checking whether there are test events with the selected mass
         if unscaledMass not in unscaledTestMassPointsList:
             print(Fore.RED + 'No test signal with mass ' + str(unscaledMass))
@@ -247,22 +228,7 @@ for iLoop in range(loop):
         wMC_test_bkg = np.array(data_test_bkg['weight'])
 
         if doFeaturesRanking:
-            X = np.concatenate((X_test_signal_mass, X_test_bkg))
-            y = np.concatenate((np.ones(len(X_test_signal_mass)), np.zeros(len(X_test_bkg))))
-            nIter = 100
-            base_score, score_decreases = get_score_importances(PredictionAndAUC, X, y, n_iter = nIter)
-            print('###### base_score ########')
-            print(base_score)
-            print('###### score_decreases ########')
-            print(score_decreases)
-            feature_importances = np.mean(score_decreases, axis = 0)
-            print('###### mean score_decreases #######')
-            print(feature_importances)
-            relative_feature_importances = feature_importances / base_score
-            print('##### relative_feature_importances ######')
-            deltasDict[unscaledMass] = relative_feature_importances
-            print(deltasDict)
-            #FeaturesRanking(model, X_test_signal_mass, X_test_bkg, deltasDict, InputFeatures, signal, analysis, channel, outputDir, outputFileCommonName, drawPlots)
+            FeaturesRanking(X_test_signal_mass, X_test_bkg, deltasDict, InputFeatures, signal, analysis, channel, outputDir, outputFileCommonName, drawPlots)
 
         if doStatisticTest:
             if iLoop == 0:
