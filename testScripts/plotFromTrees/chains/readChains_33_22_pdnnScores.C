@@ -1,11 +1,13 @@
 #ifndef READCHAINS_33_22_PDNN_H
 #define READCHAINS_33_22_PDNN_H
 
+//std::string typeStr = "PFlow_UFO_Scores";
+std::string typeStr = "PFlow_UFO_Scores_loosePDNN";
 
 void myChain33_22_pdnnForRSG_ggF_merged_Zjet(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/ggF/RSG/";
   f->Add((filedir+"Scores_Zjets-0_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_merged_ggF_RSG.root").c_str());
@@ -34,7 +36,7 @@ void myChain33_22_pdnnForRSG_ggF_merged_Zjet(TChain *f)
   f->Add((filedir+"Scores_Zjets-7_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-8_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-9_merged_ggF_RSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/ggF/RSG/";
   f->Add((filedir+"Scores_Zjets-0_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_merged_ggF_RSG.root").c_str());
@@ -65,7 +67,7 @@ void myChain33_22_pdnnForRSG_ggF_merged_Zjet(TChain *f)
   f->Add((filedir+"Scores_Zjets-7_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-8_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-9_merged_ggF_RSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/ggF/RSG/";
   f->Add((filedir+"Scores_Zjets-0_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_merged_ggF_RSG.root").c_str());
@@ -103,7 +105,7 @@ void myChain33_22_pdnnForRSG_ggF_merged_Zjet(TChain *f)
 void myChain33_22_pdnnForRSG_ggF_merged_Wjet(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/ggF/RSG/";
   f->Add((filedir+"Scores_Wjets-0_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_merged_ggF_RSG.root").c_str());
@@ -122,7 +124,7 @@ void myChain33_22_pdnnForRSG_ggF_merged_Wjet(TChain *f)
   f->Add((filedir+"Scores_Wjets-7_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-8_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-9_merged_ggF_RSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/ggF/RSG/";
   f->Add((filedir+"Scores_Wjets-0_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_merged_ggF_RSG.root").c_str());
@@ -140,7 +142,7 @@ void myChain33_22_pdnnForRSG_ggF_merged_Wjet(TChain *f)
   f->Add((filedir+"Scores_Wjets-7_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-8_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-9_merged_ggF_RSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/ggF/RSG/";
   f->Add((filedir+"Scores_Wjets-0_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_merged_ggF_RSG.root").c_str());
@@ -178,18 +180,18 @@ void myChain33_22_pdnnForRSG_ggF_merged_Wjet(TChain *f)
 void myChain33_22_pdnnForRSG_ggF_merged_Diboson(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/ggF/RSG/";
   f->Add((filedir+"Scores_Diboson-0_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-3_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-4_merged_ggF_RSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/ggF/RSG/";
   f->Add((filedir+"Scores_Diboson-0_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-3_merged_ggF_RSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/ggF/RSG/";
   f->Add((filedir+"Scores_Diboson-0_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_merged_ggF_RSG.root").c_str());
@@ -199,7 +201,7 @@ void myChain33_22_pdnnForRSG_ggF_merged_Diboson(TChain *f)
 void myChain33_22_pdnnForRSG_ggF_merged_ttbar(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/ggF/RSG/";
   f->Add((filedir+"Scores_ttbar-0_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-1_merged_ggF_RSG.root").c_str());
@@ -211,7 +213,7 @@ void myChain33_22_pdnnForRSG_ggF_merged_ttbar(TChain *f)
   f->Add((filedir+"Scores_ttbar-7_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-8_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-9_merged_ggF_RSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/ggF/RSG/";
   f->Add((filedir+"Scores_ttbar-0_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-11_merged_ggF_RSG.root").c_str());
@@ -227,7 +229,7 @@ void myChain33_22_pdnnForRSG_ggF_merged_ttbar(TChain *f)
   f->Add((filedir+"Scores_ttbar-7_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-8_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-9_merged_ggF_RSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/ggF/RSG/";
   f->Add((filedir+"Scores_ttbar-0_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-11_merged_ggF_RSG.root").c_str());
@@ -249,17 +251,17 @@ void myChain33_22_pdnnForRSG_ggF_merged_ttbar(TChain *f)
 void myChain33_22_pdnnForRSG_ggF_merged_stop(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/ggF/RSG/";
   f->Add((filedir+"Scores_stop-0_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_stop-1_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_stop-2_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_stop-3_merged_ggF_RSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/ggF/RSG/";
   f->Add((filedir+"Scores_stop-0_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_stop-1_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_stop-2_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_stop-3_merged_ggF_RSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/ggF/RSG/";
   f->Add((filedir+"Scores_stop-0_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_stop-1_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_stop-2_merged_ggF_RSG.root").c_str());
@@ -270,7 +272,7 @@ void myChain33_22_pdnnForRSG_ggF_merged_stop(TChain *f)
 void myChain33_22_pdnnForRSG_ggF_merged_data(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/ggF/RSG/";
   f->Add((filedir+"Scores_data15-0_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_data15-10_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_data15-11_merged_ggF_RSG.root").c_str());
@@ -356,7 +358,7 @@ void myChain33_22_pdnnForRSG_ggF_merged_data(TChain *f)
   f->Add((filedir+"Scores_data16-7_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_data16-8_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_data16-9_merged_ggF_RSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/ggF/RSG/";
   f->Add((filedir+"Scores_data17-0_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_data17-10_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_data17-11_merged_ggF_RSG.root").c_str());
@@ -418,7 +420,7 @@ void myChain33_22_pdnnForRSG_ggF_merged_data(TChain *f)
   f->Add((filedir+"Scores_data17-7_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_data17-8_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_data17-9_merged_ggF_RSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/ggF/RSG/";
   f->Add((filedir+"Scores_data18-0_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_data18-10_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_data18-11_merged_ggF_RSG.root").c_str());
@@ -499,17 +501,17 @@ void myChain33_22_pdnnForRSG_ggF_merged_data(TChain *f)
 void myChain33_22_pdnnForRSG_ggF_merged_RSG(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/ggF/RSG/";
   f->Add((filedir+"Scores_RSG-0_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_RSG-1_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_RSG-2_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_RSG-3_merged_ggF_RSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/ggF/RSG/";
   f->Add((filedir+"Scores_RSG-0_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_RSG-1_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_RSG-2_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_RSG-3_merged_ggF_RSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/ggF/RSG/";
   f->Add((filedir+"Scores_RSG-0_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_RSG-1_merged_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_RSG-2_merged_ggF_RSG.root").c_str());
@@ -518,7 +520,7 @@ void myChain33_22_pdnnForRSG_ggF_merged_RSG(TChain *f)
 void myChain33_22_pdnnForRSG_ggF_resolved_Zjet(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/ggF/RSG/";
   f->Add((filedir+"Scores_Zjets-0_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_resolved_ggF_RSG.root").c_str());
@@ -547,7 +549,7 @@ void myChain33_22_pdnnForRSG_ggF_resolved_Zjet(TChain *f)
   f->Add((filedir+"Scores_Zjets-7_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-8_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-9_resolved_ggF_RSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/ggF/RSG/";
   f->Add((filedir+"Scores_Zjets-0_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_resolved_ggF_RSG.root").c_str());
@@ -578,7 +580,7 @@ void myChain33_22_pdnnForRSG_ggF_resolved_Zjet(TChain *f)
   f->Add((filedir+"Scores_Zjets-7_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-8_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-9_resolved_ggF_RSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/ggF/RSG/";
   f->Add((filedir+"Scores_Zjets-0_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_resolved_ggF_RSG.root").c_str());
@@ -616,7 +618,7 @@ void myChain33_22_pdnnForRSG_ggF_resolved_Zjet(TChain *f)
 void myChain33_22_pdnnForRSG_ggF_resolved_Wjet(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/ggF/RSG/";
   f->Add((filedir+"Scores_Wjets-0_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_resolved_ggF_RSG.root").c_str());
@@ -635,7 +637,7 @@ void myChain33_22_pdnnForRSG_ggF_resolved_Wjet(TChain *f)
   f->Add((filedir+"Scores_Wjets-7_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-8_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-9_resolved_ggF_RSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/ggF/RSG/";
   f->Add((filedir+"Scores_Wjets-0_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_resolved_ggF_RSG.root").c_str());
@@ -653,7 +655,7 @@ void myChain33_22_pdnnForRSG_ggF_resolved_Wjet(TChain *f)
   f->Add((filedir+"Scores_Wjets-7_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-8_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-9_resolved_ggF_RSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/ggF/RSG/";
   f->Add((filedir+"Scores_Wjets-0_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_resolved_ggF_RSG.root").c_str());
@@ -691,18 +693,18 @@ void myChain33_22_pdnnForRSG_ggF_resolved_Wjet(TChain *f)
 void myChain33_22_pdnnForRSG_ggF_resolved_Diboson(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/ggF/RSG/";
   f->Add((filedir+"Scores_Diboson-0_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-3_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-4_resolved_ggF_RSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/ggF/RSG/";
   f->Add((filedir+"Scores_Diboson-0_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-3_resolved_ggF_RSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/ggF/RSG/";
   f->Add((filedir+"Scores_Diboson-0_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_resolved_ggF_RSG.root").c_str());
@@ -712,7 +714,7 @@ void myChain33_22_pdnnForRSG_ggF_resolved_Diboson(TChain *f)
 void myChain33_22_pdnnForRSG_ggF_resolved_ttbar(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/ggF/RSG/";
   f->Add((filedir+"Scores_ttbar-0_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-1_resolved_ggF_RSG.root").c_str());
@@ -724,7 +726,7 @@ void myChain33_22_pdnnForRSG_ggF_resolved_ttbar(TChain *f)
   f->Add((filedir+"Scores_ttbar-7_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-8_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-9_resolved_ggF_RSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/ggF/RSG/";
   f->Add((filedir+"Scores_ttbar-0_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-11_resolved_ggF_RSG.root").c_str());
@@ -740,7 +742,7 @@ void myChain33_22_pdnnForRSG_ggF_resolved_ttbar(TChain *f)
   f->Add((filedir+"Scores_ttbar-7_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-8_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-9_resolved_ggF_RSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/ggF/RSG/";
   f->Add((filedir+"Scores_ttbar-0_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-11_resolved_ggF_RSG.root").c_str());
@@ -762,17 +764,17 @@ void myChain33_22_pdnnForRSG_ggF_resolved_ttbar(TChain *f)
 void myChain33_22_pdnnForRSG_ggF_resolved_stop(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/ggF/RSG/";
   f->Add((filedir+"Scores_stop-0_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_stop-1_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_stop-2_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_stop-3_resolved_ggF_RSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/ggF/RSG/";
   f->Add((filedir+"Scores_stop-0_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_stop-1_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_stop-2_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_stop-3_resolved_ggF_RSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/ggF/RSG/";
   f->Add((filedir+"Scores_stop-0_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_stop-1_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_stop-2_resolved_ggF_RSG.root").c_str());
@@ -783,7 +785,7 @@ void myChain33_22_pdnnForRSG_ggF_resolved_stop(TChain *f)
 void myChain33_22_pdnnForRSG_ggF_resolved_data(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/ggF/RSG/";
   f->Add((filedir+"Scores_data15-0_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_data15-10_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_data15-11_resolved_ggF_RSG.root").c_str());
@@ -869,7 +871,7 @@ void myChain33_22_pdnnForRSG_ggF_resolved_data(TChain *f)
   f->Add((filedir+"Scores_data16-7_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_data16-8_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_data16-9_resolved_ggF_RSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/ggF/RSG/";
   f->Add((filedir+"Scores_data17-0_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_data17-10_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_data17-11_resolved_ggF_RSG.root").c_str());
@@ -931,7 +933,7 @@ void myChain33_22_pdnnForRSG_ggF_resolved_data(TChain *f)
   f->Add((filedir+"Scores_data17-7_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_data17-8_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_data17-9_resolved_ggF_RSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/ggF/RSG/";
   f->Add((filedir+"Scores_data18-0_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_data18-10_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_data18-11_resolved_ggF_RSG.root").c_str());
@@ -1012,17 +1014,17 @@ void myChain33_22_pdnnForRSG_ggF_resolved_data(TChain *f)
 void myChain33_22_pdnnForRSG_ggF_resolved_RSG(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/ggF/RSG/";
   f->Add((filedir+"Scores_RSG-0_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_RSG-1_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_RSG-2_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_RSG-3_resolved_ggF_RSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/ggF/RSG/";
   f->Add((filedir+"Scores_RSG-0_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_RSG-1_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_RSG-2_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_RSG-3_resolved_ggF_RSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/ggF/RSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/ggF/RSG/";
   f->Add((filedir+"Scores_RSG-0_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_RSG-1_resolved_ggF_RSG.root").c_str());
   f->Add((filedir+"Scores_RSG-2_resolved_ggF_RSG.root").c_str());
@@ -1031,7 +1033,7 @@ void myChain33_22_pdnnForRSG_ggF_resolved_RSG(TChain *f)
 void myChain33_22_pdnnForVBFRSG_VBF_merged_Zjet(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/VBF/VBFRSG/";
   f->Add((filedir+"Scores_Zjets-0_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_merged_VBF_VBFRSG.root").c_str());
@@ -1060,7 +1062,7 @@ void myChain33_22_pdnnForVBFRSG_VBF_merged_Zjet(TChain *f)
   f->Add((filedir+"Scores_Zjets-7_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-8_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-9_merged_VBF_VBFRSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/VBF/VBFRSG/";
   f->Add((filedir+"Scores_Zjets-0_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_merged_VBF_VBFRSG.root").c_str());
@@ -1091,7 +1093,7 @@ void myChain33_22_pdnnForVBFRSG_VBF_merged_Zjet(TChain *f)
   f->Add((filedir+"Scores_Zjets-7_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-8_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-9_merged_VBF_VBFRSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/VBF/VBFRSG/";
   f->Add((filedir+"Scores_Zjets-0_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_merged_VBF_VBFRSG.root").c_str());
@@ -1129,7 +1131,7 @@ void myChain33_22_pdnnForVBFRSG_VBF_merged_Zjet(TChain *f)
 void myChain33_22_pdnnForVBFRSG_VBF_merged_Wjet(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/VBF/VBFRSG/";
   f->Add((filedir+"Scores_Wjets-0_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_merged_VBF_VBFRSG.root").c_str());
@@ -1148,7 +1150,7 @@ void myChain33_22_pdnnForVBFRSG_VBF_merged_Wjet(TChain *f)
   f->Add((filedir+"Scores_Wjets-7_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-8_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-9_merged_VBF_VBFRSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/VBF/VBFRSG/";
   f->Add((filedir+"Scores_Wjets-0_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_merged_VBF_VBFRSG.root").c_str());
@@ -1166,7 +1168,7 @@ void myChain33_22_pdnnForVBFRSG_VBF_merged_Wjet(TChain *f)
   f->Add((filedir+"Scores_Wjets-7_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-8_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-9_merged_VBF_VBFRSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/VBF/VBFRSG/";
   f->Add((filedir+"Scores_Wjets-0_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_merged_VBF_VBFRSG.root").c_str());
@@ -1204,18 +1206,18 @@ void myChain33_22_pdnnForVBFRSG_VBF_merged_Wjet(TChain *f)
 void myChain33_22_pdnnForVBFRSG_VBF_merged_Diboson(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/VBF/VBFRSG/";
   f->Add((filedir+"Scores_Diboson-0_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-3_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-4_merged_VBF_VBFRSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/VBF/VBFRSG/";
   f->Add((filedir+"Scores_Diboson-0_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-3_merged_VBF_VBFRSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/VBF/VBFRSG/";
   f->Add((filedir+"Scores_Diboson-0_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_merged_VBF_VBFRSG.root").c_str());
@@ -1225,7 +1227,7 @@ void myChain33_22_pdnnForVBFRSG_VBF_merged_Diboson(TChain *f)
 void myChain33_22_pdnnForVBFRSG_VBF_merged_ttbar(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/VBF/VBFRSG/";
   f->Add((filedir+"Scores_ttbar-0_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-1_merged_VBF_VBFRSG.root").c_str());
@@ -1237,7 +1239,7 @@ void myChain33_22_pdnnForVBFRSG_VBF_merged_ttbar(TChain *f)
   f->Add((filedir+"Scores_ttbar-7_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-8_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-9_merged_VBF_VBFRSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/VBF/VBFRSG/";
   f->Add((filedir+"Scores_ttbar-0_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-11_merged_VBF_VBFRSG.root").c_str());
@@ -1253,7 +1255,7 @@ void myChain33_22_pdnnForVBFRSG_VBF_merged_ttbar(TChain *f)
   f->Add((filedir+"Scores_ttbar-7_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-8_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-9_merged_VBF_VBFRSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/VBF/VBFRSG/";
   f->Add((filedir+"Scores_ttbar-0_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-11_merged_VBF_VBFRSG.root").c_str());
@@ -1275,17 +1277,17 @@ void myChain33_22_pdnnForVBFRSG_VBF_merged_ttbar(TChain *f)
 void myChain33_22_pdnnForVBFRSG_VBF_merged_stop(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/VBF/VBFRSG/";
   f->Add((filedir+"Scores_stop-0_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_stop-1_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_stop-2_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_stop-3_merged_VBF_VBFRSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/VBF/VBFRSG/";
   f->Add((filedir+"Scores_stop-0_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_stop-1_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_stop-2_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_stop-3_merged_VBF_VBFRSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/VBF/VBFRSG/";
   f->Add((filedir+"Scores_stop-0_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_stop-1_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_stop-2_merged_VBF_VBFRSG.root").c_str());
@@ -1296,7 +1298,7 @@ void myChain33_22_pdnnForVBFRSG_VBF_merged_stop(TChain *f)
 void myChain33_22_pdnnForVBFRSG_VBF_merged_data(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/VBF/VBFRSG/";
   f->Add((filedir+"Scores_data15-0_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_data15-10_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_data15-11_merged_VBF_VBFRSG.root").c_str());
@@ -1382,7 +1384,7 @@ void myChain33_22_pdnnForVBFRSG_VBF_merged_data(TChain *f)
   f->Add((filedir+"Scores_data16-7_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_data16-8_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_data16-9_merged_VBF_VBFRSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/VBF/VBFRSG/";
   f->Add((filedir+"Scores_data17-0_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_data17-10_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_data17-11_merged_VBF_VBFRSG.root").c_str());
@@ -1444,7 +1446,7 @@ void myChain33_22_pdnnForVBFRSG_VBF_merged_data(TChain *f)
   f->Add((filedir+"Scores_data17-7_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_data17-8_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_data17-9_merged_VBF_VBFRSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/VBF/VBFRSG/";
   f->Add((filedir+"Scores_data18-0_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_data18-10_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_data18-11_merged_VBF_VBFRSG.root").c_str());
@@ -1525,17 +1527,17 @@ void myChain33_22_pdnnForVBFRSG_VBF_merged_data(TChain *f)
 void myChain33_22_pdnnForVBFRSG_VBF_merged_VBFRSG(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/VBF/VBFRSG/";
   f->Add((filedir+"Scores_VBFRSG-0_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_VBFRSG-1_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_VBFRSG-2_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_VBFRSG-3_merged_VBF_VBFRSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/VBF/VBFRSG/";
   f->Add((filedir+"Scores_VBFRSG-0_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_VBFRSG-1_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_VBFRSG-2_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_VBFRSG-3_merged_VBF_VBFRSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/VBF/VBFRSG/";
   f->Add((filedir+"Scores_VBFRSG-0_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_VBFRSG-1_merged_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_VBFRSG-2_merged_VBF_VBFRSG.root").c_str());
@@ -1545,7 +1547,7 @@ void myChain33_22_pdnnForVBFRSG_VBF_merged_VBFRSG(TChain *f)
 void myChain33_22_pdnnForVBFRSG_VBF_resolved_Zjet(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/VBF/VBFRSG/";
   f->Add((filedir+"Scores_Zjets-0_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_resolved_VBF_VBFRSG.root").c_str());
@@ -1574,7 +1576,7 @@ void myChain33_22_pdnnForVBFRSG_VBF_resolved_Zjet(TChain *f)
   f->Add((filedir+"Scores_Zjets-7_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-8_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-9_resolved_VBF_VBFRSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/VBF/VBFRSG/";
   f->Add((filedir+"Scores_Zjets-0_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_resolved_VBF_VBFRSG.root").c_str());
@@ -1605,7 +1607,7 @@ void myChain33_22_pdnnForVBFRSG_VBF_resolved_Zjet(TChain *f)
   f->Add((filedir+"Scores_Zjets-7_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-8_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-9_resolved_VBF_VBFRSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/VBF/VBFRSG/";
   f->Add((filedir+"Scores_Zjets-0_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_resolved_VBF_VBFRSG.root").c_str());
@@ -1643,7 +1645,7 @@ void myChain33_22_pdnnForVBFRSG_VBF_resolved_Zjet(TChain *f)
 void myChain33_22_pdnnForVBFRSG_VBF_resolved_Wjet(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/VBF/VBFRSG/";
   f->Add((filedir+"Scores_Wjets-0_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_resolved_VBF_VBFRSG.root").c_str());
@@ -1662,7 +1664,7 @@ void myChain33_22_pdnnForVBFRSG_VBF_resolved_Wjet(TChain *f)
   f->Add((filedir+"Scores_Wjets-7_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-8_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-9_resolved_VBF_VBFRSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/VBF/VBFRSG/";
   f->Add((filedir+"Scores_Wjets-0_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_resolved_VBF_VBFRSG.root").c_str());
@@ -1680,7 +1682,7 @@ void myChain33_22_pdnnForVBFRSG_VBF_resolved_Wjet(TChain *f)
   f->Add((filedir+"Scores_Wjets-7_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-8_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-9_resolved_VBF_VBFRSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/VBF/VBFRSG/";
   f->Add((filedir+"Scores_Wjets-0_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_resolved_VBF_VBFRSG.root").c_str());
@@ -1718,18 +1720,18 @@ void myChain33_22_pdnnForVBFRSG_VBF_resolved_Wjet(TChain *f)
 void myChain33_22_pdnnForVBFRSG_VBF_resolved_Diboson(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/VBF/VBFRSG/";
   f->Add((filedir+"Scores_Diboson-0_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-3_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-4_resolved_VBF_VBFRSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/VBF/VBFRSG/";
   f->Add((filedir+"Scores_Diboson-0_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-3_resolved_VBF_VBFRSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/VBF/VBFRSG/";
   f->Add((filedir+"Scores_Diboson-0_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_resolved_VBF_VBFRSG.root").c_str());
@@ -1739,7 +1741,7 @@ void myChain33_22_pdnnForVBFRSG_VBF_resolved_Diboson(TChain *f)
 void myChain33_22_pdnnForVBFRSG_VBF_resolved_ttbar(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/VBF/VBFRSG/";
   f->Add((filedir+"Scores_ttbar-0_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-1_resolved_VBF_VBFRSG.root").c_str());
@@ -1751,7 +1753,7 @@ void myChain33_22_pdnnForVBFRSG_VBF_resolved_ttbar(TChain *f)
   f->Add((filedir+"Scores_ttbar-7_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-8_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-9_resolved_VBF_VBFRSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/VBF/VBFRSG/";
   f->Add((filedir+"Scores_ttbar-0_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-11_resolved_VBF_VBFRSG.root").c_str());
@@ -1767,7 +1769,7 @@ void myChain33_22_pdnnForVBFRSG_VBF_resolved_ttbar(TChain *f)
   f->Add((filedir+"Scores_ttbar-7_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-8_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-9_resolved_VBF_VBFRSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/VBF/VBFRSG/";
   f->Add((filedir+"Scores_ttbar-0_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_ttbar-11_resolved_VBF_VBFRSG.root").c_str());
@@ -1789,17 +1791,17 @@ void myChain33_22_pdnnForVBFRSG_VBF_resolved_ttbar(TChain *f)
 void myChain33_22_pdnnForVBFRSG_VBF_resolved_stop(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/VBF/VBFRSG/";
   f->Add((filedir+"Scores_stop-0_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_stop-1_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_stop-2_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_stop-3_resolved_VBF_VBFRSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/VBF/VBFRSG/";
   f->Add((filedir+"Scores_stop-0_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_stop-1_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_stop-2_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_stop-3_resolved_VBF_VBFRSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/VBF/VBFRSG/";
   f->Add((filedir+"Scores_stop-0_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_stop-1_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_stop-2_resolved_VBF_VBFRSG.root").c_str());
@@ -1810,7 +1812,7 @@ void myChain33_22_pdnnForVBFRSG_VBF_resolved_stop(TChain *f)
 void myChain33_22_pdnnForVBFRSG_VBF_resolved_data(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/VBF/VBFRSG/";
   f->Add((filedir+"Scores_data15-0_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_data15-10_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_data15-11_resolved_VBF_VBFRSG.root").c_str());
@@ -1896,7 +1898,7 @@ void myChain33_22_pdnnForVBFRSG_VBF_resolved_data(TChain *f)
   f->Add((filedir+"Scores_data16-7_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_data16-8_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_data16-9_resolved_VBF_VBFRSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/VBF/VBFRSG/";
   f->Add((filedir+"Scores_data17-0_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_data17-10_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_data17-11_resolved_VBF_VBFRSG.root").c_str());
@@ -1958,7 +1960,7 @@ void myChain33_22_pdnnForVBFRSG_VBF_resolved_data(TChain *f)
   f->Add((filedir+"Scores_data17-7_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_data17-8_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_data17-9_resolved_VBF_VBFRSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/VBF/VBFRSG/";
   f->Add((filedir+"Scores_data18-0_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_data18-10_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_data18-11_resolved_VBF_VBFRSG.root").c_str());
@@ -2039,17 +2041,17 @@ void myChain33_22_pdnnForVBFRSG_VBF_resolved_data(TChain *f)
 void myChain33_22_pdnnForVBFRSG_VBF_resolved_VBFRSG(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/VBF/VBFRSG/";
   f->Add((filedir+"Scores_VBFRSG-0_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_VBFRSG-1_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_VBFRSG-2_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_VBFRSG-3_resolved_VBF_VBFRSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/VBF/VBFRSG/";
   f->Add((filedir+"Scores_VBFRSG-0_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_VBFRSG-1_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_VBFRSG-2_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_VBFRSG-3_resolved_VBF_VBFRSG.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRSG/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/VBF/VBFRSG/";
   f->Add((filedir+"Scores_VBFRSG-0_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_VBFRSG-1_resolved_VBF_VBFRSG.root").c_str());
   f->Add((filedir+"Scores_VBFRSG-2_resolved_VBF_VBFRSG.root").c_str());
@@ -2059,7 +2061,7 @@ void myChain33_22_pdnnForVBFRSG_VBF_resolved_VBFRSG(TChain *f)
 void myChain33_22_pdnnForRadion_ggF_merged_Zjet(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/ggF/Radion/";
   f->Add((filedir+"Scores_Zjets-0_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_merged_ggF_Radion.root").c_str());
@@ -2088,7 +2090,7 @@ void myChain33_22_pdnnForRadion_ggF_merged_Zjet(TChain *f)
   f->Add((filedir+"Scores_Zjets-7_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Zjets-8_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Zjets-9_merged_ggF_Radion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/ggF/Radion/";
   f->Add((filedir+"Scores_Zjets-0_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_merged_ggF_Radion.root").c_str());
@@ -2119,7 +2121,7 @@ void myChain33_22_pdnnForRadion_ggF_merged_Zjet(TChain *f)
   f->Add((filedir+"Scores_Zjets-7_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Zjets-8_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Zjets-9_merged_ggF_Radion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/ggF/Radion/";
   f->Add((filedir+"Scores_Zjets-0_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_merged_ggF_Radion.root").c_str());
@@ -2157,7 +2159,7 @@ void myChain33_22_pdnnForRadion_ggF_merged_Zjet(TChain *f)
 void myChain33_22_pdnnForRadion_ggF_merged_Wjet(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/ggF/Radion/";
   f->Add((filedir+"Scores_Wjets-0_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_merged_ggF_Radion.root").c_str());
@@ -2176,7 +2178,7 @@ void myChain33_22_pdnnForRadion_ggF_merged_Wjet(TChain *f)
   f->Add((filedir+"Scores_Wjets-7_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Wjets-8_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Wjets-9_merged_ggF_Radion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/ggF/Radion/";
   f->Add((filedir+"Scores_Wjets-0_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_merged_ggF_Radion.root").c_str());
@@ -2194,7 +2196,7 @@ void myChain33_22_pdnnForRadion_ggF_merged_Wjet(TChain *f)
   f->Add((filedir+"Scores_Wjets-7_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Wjets-8_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Wjets-9_merged_ggF_Radion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/ggF/Radion/";
   f->Add((filedir+"Scores_Wjets-0_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_merged_ggF_Radion.root").c_str());
@@ -2232,18 +2234,18 @@ void myChain33_22_pdnnForRadion_ggF_merged_Wjet(TChain *f)
 void myChain33_22_pdnnForRadion_ggF_merged_Diboson(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/ggF/Radion/";
   f->Add((filedir+"Scores_Diboson-0_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Diboson-3_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Diboson-4_merged_ggF_Radion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/ggF/Radion/";
   f->Add((filedir+"Scores_Diboson-0_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Diboson-3_merged_ggF_Radion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/ggF/Radion/";
   f->Add((filedir+"Scores_Diboson-0_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_merged_ggF_Radion.root").c_str());
@@ -2253,7 +2255,7 @@ void myChain33_22_pdnnForRadion_ggF_merged_Diboson(TChain *f)
 void myChain33_22_pdnnForRadion_ggF_merged_ttbar(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/ggF/Radion/";
   f->Add((filedir+"Scores_ttbar-0_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_ttbar-1_merged_ggF_Radion.root").c_str());
@@ -2265,7 +2267,7 @@ void myChain33_22_pdnnForRadion_ggF_merged_ttbar(TChain *f)
   f->Add((filedir+"Scores_ttbar-7_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_ttbar-8_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_ttbar-9_merged_ggF_Radion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/ggF/Radion/";
   f->Add((filedir+"Scores_ttbar-0_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_ttbar-11_merged_ggF_Radion.root").c_str());
@@ -2281,7 +2283,7 @@ void myChain33_22_pdnnForRadion_ggF_merged_ttbar(TChain *f)
   f->Add((filedir+"Scores_ttbar-7_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_ttbar-8_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_ttbar-9_merged_ggF_Radion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/ggF/Radion/";
   f->Add((filedir+"Scores_ttbar-0_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_ttbar-11_merged_ggF_Radion.root").c_str());
@@ -2303,17 +2305,17 @@ void myChain33_22_pdnnForRadion_ggF_merged_ttbar(TChain *f)
 void myChain33_22_pdnnForRadion_ggF_merged_stop(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/ggF/Radion/";
   f->Add((filedir+"Scores_stop-0_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_stop-1_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_stop-2_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_stop-3_merged_ggF_Radion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/ggF/Radion/";
   f->Add((filedir+"Scores_stop-0_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_stop-1_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_stop-2_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_stop-3_merged_ggF_Radion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/ggF/Radion/";
   f->Add((filedir+"Scores_stop-0_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_stop-1_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_stop-2_merged_ggF_Radion.root").c_str());
@@ -2324,7 +2326,7 @@ void myChain33_22_pdnnForRadion_ggF_merged_stop(TChain *f)
 void myChain33_22_pdnnForRadion_ggF_merged_data(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/ggF/Radion/";
   f->Add((filedir+"Scores_data15-0_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_data15-10_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_data15-11_merged_ggF_Radion.root").c_str());
@@ -2410,7 +2412,7 @@ void myChain33_22_pdnnForRadion_ggF_merged_data(TChain *f)
   f->Add((filedir+"Scores_data16-7_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_data16-8_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_data16-9_merged_ggF_Radion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/ggF/Radion/";
   f->Add((filedir+"Scores_data17-0_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_data17-10_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_data17-11_merged_ggF_Radion.root").c_str());
@@ -2472,7 +2474,7 @@ void myChain33_22_pdnnForRadion_ggF_merged_data(TChain *f)
   f->Add((filedir+"Scores_data17-7_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_data17-8_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_data17-9_merged_ggF_Radion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/ggF/Radion/";
   f->Add((filedir+"Scores_data18-0_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_data18-10_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_data18-11_merged_ggF_Radion.root").c_str());
@@ -2553,18 +2555,18 @@ void myChain33_22_pdnnForRadion_ggF_merged_data(TChain *f)
 void myChain33_22_pdnnForRadion_ggF_merged_Radion(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/ggF/Radion/";
   f->Add((filedir+"Scores_Radion-0_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Radion-1_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Radion-2_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Radion-3_merged_ggF_Radion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/ggF/Radion/";
   f->Add((filedir+"Scores_Radion-0_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Radion-1_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Radion-2_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Radion-3_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Radion-4_merged_ggF_Radion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/ggF/Radion/";
   f->Add((filedir+"Scores_Radion-0_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Radion-1_merged_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Radion-2_merged_ggF_Radion.root").c_str());
@@ -2574,7 +2576,7 @@ void myChain33_22_pdnnForRadion_ggF_merged_Radion(TChain *f)
 void myChain33_22_pdnnForRadion_ggF_resolved_Zjet(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/ggF/Radion/";
   f->Add((filedir+"Scores_Zjets-0_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_resolved_ggF_Radion.root").c_str());
@@ -2603,7 +2605,7 @@ void myChain33_22_pdnnForRadion_ggF_resolved_Zjet(TChain *f)
   f->Add((filedir+"Scores_Zjets-7_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Zjets-8_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Zjets-9_resolved_ggF_Radion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/ggF/Radion/";
   f->Add((filedir+"Scores_Zjets-0_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_resolved_ggF_Radion.root").c_str());
@@ -2634,7 +2636,7 @@ void myChain33_22_pdnnForRadion_ggF_resolved_Zjet(TChain *f)
   f->Add((filedir+"Scores_Zjets-7_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Zjets-8_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Zjets-9_resolved_ggF_Radion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/ggF/Radion/";
   f->Add((filedir+"Scores_Zjets-0_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_resolved_ggF_Radion.root").c_str());
@@ -2672,7 +2674,7 @@ void myChain33_22_pdnnForRadion_ggF_resolved_Zjet(TChain *f)
 void myChain33_22_pdnnForRadion_ggF_resolved_Wjet(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/ggF/Radion/";
   f->Add((filedir+"Scores_Wjets-0_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_resolved_ggF_Radion.root").c_str());
@@ -2691,7 +2693,7 @@ void myChain33_22_pdnnForRadion_ggF_resolved_Wjet(TChain *f)
   f->Add((filedir+"Scores_Wjets-7_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Wjets-8_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Wjets-9_resolved_ggF_Radion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/ggF/Radion/";
   f->Add((filedir+"Scores_Wjets-0_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_resolved_ggF_Radion.root").c_str());
@@ -2709,7 +2711,7 @@ void myChain33_22_pdnnForRadion_ggF_resolved_Wjet(TChain *f)
   f->Add((filedir+"Scores_Wjets-7_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Wjets-8_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Wjets-9_resolved_ggF_Radion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/ggF/Radion/";
   f->Add((filedir+"Scores_Wjets-0_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_resolved_ggF_Radion.root").c_str());
@@ -2747,18 +2749,18 @@ void myChain33_22_pdnnForRadion_ggF_resolved_Wjet(TChain *f)
 void myChain33_22_pdnnForRadion_ggF_resolved_Diboson(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/ggF/Radion/";
   f->Add((filedir+"Scores_Diboson-0_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Diboson-3_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Diboson-4_resolved_ggF_Radion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/ggF/Radion/";
   f->Add((filedir+"Scores_Diboson-0_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Diboson-3_resolved_ggF_Radion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/ggF/Radion/";
   f->Add((filedir+"Scores_Diboson-0_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_resolved_ggF_Radion.root").c_str());
@@ -2768,7 +2770,7 @@ void myChain33_22_pdnnForRadion_ggF_resolved_Diboson(TChain *f)
 void myChain33_22_pdnnForRadion_ggF_resolved_ttbar(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/ggF/Radion/";
   f->Add((filedir+"Scores_ttbar-0_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_ttbar-1_resolved_ggF_Radion.root").c_str());
@@ -2780,7 +2782,7 @@ void myChain33_22_pdnnForRadion_ggF_resolved_ttbar(TChain *f)
   f->Add((filedir+"Scores_ttbar-7_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_ttbar-8_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_ttbar-9_resolved_ggF_Radion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/ggF/Radion/";
   f->Add((filedir+"Scores_ttbar-0_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_ttbar-11_resolved_ggF_Radion.root").c_str());
@@ -2796,7 +2798,7 @@ void myChain33_22_pdnnForRadion_ggF_resolved_ttbar(TChain *f)
   f->Add((filedir+"Scores_ttbar-7_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_ttbar-8_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_ttbar-9_resolved_ggF_Radion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/ggF/Radion/";
   f->Add((filedir+"Scores_ttbar-0_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_ttbar-11_resolved_ggF_Radion.root").c_str());
@@ -2818,17 +2820,17 @@ void myChain33_22_pdnnForRadion_ggF_resolved_ttbar(TChain *f)
 void myChain33_22_pdnnForRadion_ggF_resolved_stop(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/ggF/Radion/";
   f->Add((filedir+"Scores_stop-0_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_stop-1_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_stop-2_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_stop-3_resolved_ggF_Radion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/ggF/Radion/";
   f->Add((filedir+"Scores_stop-0_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_stop-1_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_stop-2_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_stop-3_resolved_ggF_Radion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/ggF/Radion/";
   f->Add((filedir+"Scores_stop-0_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_stop-1_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_stop-2_resolved_ggF_Radion.root").c_str());
@@ -2839,7 +2841,7 @@ void myChain33_22_pdnnForRadion_ggF_resolved_stop(TChain *f)
 void myChain33_22_pdnnForRadion_ggF_resolved_data(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/ggF/Radion/";
   f->Add((filedir+"Scores_data15-0_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_data15-10_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_data15-11_resolved_ggF_Radion.root").c_str());
@@ -2925,7 +2927,7 @@ void myChain33_22_pdnnForRadion_ggF_resolved_data(TChain *f)
   f->Add((filedir+"Scores_data16-7_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_data16-8_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_data16-9_resolved_ggF_Radion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/ggF/Radion/";
   f->Add((filedir+"Scores_data17-0_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_data17-10_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_data17-11_resolved_ggF_Radion.root").c_str());
@@ -2987,7 +2989,7 @@ void myChain33_22_pdnnForRadion_ggF_resolved_data(TChain *f)
   f->Add((filedir+"Scores_data17-7_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_data17-8_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_data17-9_resolved_ggF_Radion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/ggF/Radion/";
   f->Add((filedir+"Scores_data18-0_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_data18-10_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_data18-11_resolved_ggF_Radion.root").c_str());
@@ -3068,18 +3070,18 @@ void myChain33_22_pdnnForRadion_ggF_resolved_data(TChain *f)
 void myChain33_22_pdnnForRadion_ggF_resolved_Radion(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/ggF/Radion/";
   f->Add((filedir+"Scores_Radion-0_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Radion-1_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Radion-2_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Radion-3_resolved_ggF_Radion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/ggF/Radion/";
   f->Add((filedir+"Scores_Radion-0_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Radion-1_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Radion-2_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Radion-3_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Radion-4_resolved_ggF_Radion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/ggF/Radion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/ggF/Radion/";
   f->Add((filedir+"Scores_Radion-0_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Radion-1_resolved_ggF_Radion.root").c_str());
   f->Add((filedir+"Scores_Radion-2_resolved_ggF_Radion.root").c_str());
@@ -3089,7 +3091,7 @@ void myChain33_22_pdnnForRadion_ggF_resolved_Radion(TChain *f)
 void myChain33_22_pdnnForVBFRadion_VBF_merged_Zjet(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/VBF/VBFRadion/";
   f->Add((filedir+"Scores_Zjets-0_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_merged_VBF_VBFRadion.root").c_str());
@@ -3118,7 +3120,7 @@ void myChain33_22_pdnnForVBFRadion_VBF_merged_Zjet(TChain *f)
   f->Add((filedir+"Scores_Zjets-7_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Zjets-8_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Zjets-9_merged_VBF_VBFRadion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/VBF/VBFRadion/";
   f->Add((filedir+"Scores_Zjets-0_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_merged_VBF_VBFRadion.root").c_str());
@@ -3149,7 +3151,7 @@ void myChain33_22_pdnnForVBFRadion_VBF_merged_Zjet(TChain *f)
   f->Add((filedir+"Scores_Zjets-7_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Zjets-8_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Zjets-9_merged_VBF_VBFRadion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/VBF/VBFRadion/";
   f->Add((filedir+"Scores_Zjets-0_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_merged_VBF_VBFRadion.root").c_str());
@@ -3187,7 +3189,7 @@ void myChain33_22_pdnnForVBFRadion_VBF_merged_Zjet(TChain *f)
 void myChain33_22_pdnnForVBFRadion_VBF_merged_Wjet(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/VBF/VBFRadion/";
   f->Add((filedir+"Scores_Wjets-0_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_merged_VBF_VBFRadion.root").c_str());
@@ -3206,7 +3208,7 @@ void myChain33_22_pdnnForVBFRadion_VBF_merged_Wjet(TChain *f)
   f->Add((filedir+"Scores_Wjets-7_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Wjets-8_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Wjets-9_merged_VBF_VBFRadion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/VBF/VBFRadion/";
   f->Add((filedir+"Scores_Wjets-0_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_merged_VBF_VBFRadion.root").c_str());
@@ -3224,7 +3226,7 @@ void myChain33_22_pdnnForVBFRadion_VBF_merged_Wjet(TChain *f)
   f->Add((filedir+"Scores_Wjets-7_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Wjets-8_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Wjets-9_merged_VBF_VBFRadion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/VBF/VBFRadion/";
   f->Add((filedir+"Scores_Wjets-0_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_merged_VBF_VBFRadion.root").c_str());
@@ -3262,18 +3264,18 @@ void myChain33_22_pdnnForVBFRadion_VBF_merged_Wjet(TChain *f)
 void myChain33_22_pdnnForVBFRadion_VBF_merged_Diboson(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/VBF/VBFRadion/";
   f->Add((filedir+"Scores_Diboson-0_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Diboson-3_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Diboson-4_merged_VBF_VBFRadion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/VBF/VBFRadion/";
   f->Add((filedir+"Scores_Diboson-0_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Diboson-3_merged_VBF_VBFRadion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/VBF/VBFRadion/";
   f->Add((filedir+"Scores_Diboson-0_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_merged_VBF_VBFRadion.root").c_str());
@@ -3283,7 +3285,7 @@ void myChain33_22_pdnnForVBFRadion_VBF_merged_Diboson(TChain *f)
 void myChain33_22_pdnnForVBFRadion_VBF_merged_ttbar(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/VBF/VBFRadion/";
   f->Add((filedir+"Scores_ttbar-0_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_ttbar-1_merged_VBF_VBFRadion.root").c_str());
@@ -3295,7 +3297,7 @@ void myChain33_22_pdnnForVBFRadion_VBF_merged_ttbar(TChain *f)
   f->Add((filedir+"Scores_ttbar-7_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_ttbar-8_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_ttbar-9_merged_VBF_VBFRadion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/VBF/VBFRadion/";
   f->Add((filedir+"Scores_ttbar-0_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_ttbar-11_merged_VBF_VBFRadion.root").c_str());
@@ -3311,7 +3313,7 @@ void myChain33_22_pdnnForVBFRadion_VBF_merged_ttbar(TChain *f)
   f->Add((filedir+"Scores_ttbar-7_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_ttbar-8_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_ttbar-9_merged_VBF_VBFRadion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/VBF/VBFRadion/";
   f->Add((filedir+"Scores_ttbar-0_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_ttbar-11_merged_VBF_VBFRadion.root").c_str());
@@ -3333,17 +3335,17 @@ void myChain33_22_pdnnForVBFRadion_VBF_merged_ttbar(TChain *f)
 void myChain33_22_pdnnForVBFRadion_VBF_merged_stop(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/VBF/VBFRadion/";
   f->Add((filedir+"Scores_stop-0_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_stop-1_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_stop-2_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_stop-3_merged_VBF_VBFRadion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/VBF/VBFRadion/";
   f->Add((filedir+"Scores_stop-0_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_stop-1_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_stop-2_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_stop-3_merged_VBF_VBFRadion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/VBF/VBFRadion/";
   f->Add((filedir+"Scores_stop-0_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_stop-1_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_stop-2_merged_VBF_VBFRadion.root").c_str());
@@ -3354,7 +3356,7 @@ void myChain33_22_pdnnForVBFRadion_VBF_merged_stop(TChain *f)
 void myChain33_22_pdnnForVBFRadion_VBF_merged_data(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/VBF/VBFRadion/";
   f->Add((filedir+"Scores_data15-0_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_data15-10_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_data15-11_merged_VBF_VBFRadion.root").c_str());
@@ -3440,7 +3442,7 @@ void myChain33_22_pdnnForVBFRadion_VBF_merged_data(TChain *f)
   f->Add((filedir+"Scores_data16-7_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_data16-8_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_data16-9_merged_VBF_VBFRadion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/VBF/VBFRadion/";
   f->Add((filedir+"Scores_data17-0_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_data17-10_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_data17-11_merged_VBF_VBFRadion.root").c_str());
@@ -3502,7 +3504,7 @@ void myChain33_22_pdnnForVBFRadion_VBF_merged_data(TChain *f)
   f->Add((filedir+"Scores_data17-7_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_data17-8_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_data17-9_merged_VBF_VBFRadion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/VBF/VBFRadion/";
   f->Add((filedir+"Scores_data18-0_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_data18-10_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_data18-11_merged_VBF_VBFRadion.root").c_str());
@@ -3583,18 +3585,18 @@ void myChain33_22_pdnnForVBFRadion_VBF_merged_data(TChain *f)
 void myChain33_22_pdnnForVBFRadion_VBF_merged_VBFRadion(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/VBF/VBFRadion/";
   f->Add((filedir+"Scores_VBFRadion-0_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_VBFRadion-1_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_VBFRadion-2_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_VBFRadion-3_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_VBFRadion-4_merged_VBF_VBFRadion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/VBF/VBFRadion/";
   f->Add((filedir+"Scores_VBFRadion-0_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_VBFRadion-1_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_VBFRadion-2_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_VBFRadion-3_merged_VBF_VBFRadion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/VBF/VBFRadion/";
   f->Add((filedir+"Scores_VBFRadion-0_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_VBFRadion-1_merged_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_VBFRadion-2_merged_VBF_VBFRadion.root").c_str());
@@ -3604,7 +3606,7 @@ void myChain33_22_pdnnForVBFRadion_VBF_merged_VBFRadion(TChain *f)
 void myChain33_22_pdnnForVBFRadion_VBF_resolved_Zjet(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/VBF/VBFRadion/";
   f->Add((filedir+"Scores_Zjets-0_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_resolved_VBF_VBFRadion.root").c_str());
@@ -3633,7 +3635,7 @@ void myChain33_22_pdnnForVBFRadion_VBF_resolved_Zjet(TChain *f)
   f->Add((filedir+"Scores_Zjets-7_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Zjets-8_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Zjets-9_resolved_VBF_VBFRadion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/VBF/VBFRadion/";
   f->Add((filedir+"Scores_Zjets-0_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_resolved_VBF_VBFRadion.root").c_str());
@@ -3664,7 +3666,7 @@ void myChain33_22_pdnnForVBFRadion_VBF_resolved_Zjet(TChain *f)
   f->Add((filedir+"Scores_Zjets-7_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Zjets-8_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Zjets-9_resolved_VBF_VBFRadion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/VBF/VBFRadion/";
   f->Add((filedir+"Scores_Zjets-0_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_resolved_VBF_VBFRadion.root").c_str());
@@ -3702,7 +3704,7 @@ void myChain33_22_pdnnForVBFRadion_VBF_resolved_Zjet(TChain *f)
 void myChain33_22_pdnnForVBFRadion_VBF_resolved_Wjet(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/VBF/VBFRadion/";
   f->Add((filedir+"Scores_Wjets-0_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_resolved_VBF_VBFRadion.root").c_str());
@@ -3721,7 +3723,7 @@ void myChain33_22_pdnnForVBFRadion_VBF_resolved_Wjet(TChain *f)
   f->Add((filedir+"Scores_Wjets-7_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Wjets-8_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Wjets-9_resolved_VBF_VBFRadion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/VBF/VBFRadion/";
   f->Add((filedir+"Scores_Wjets-0_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_resolved_VBF_VBFRadion.root").c_str());
@@ -3739,7 +3741,7 @@ void myChain33_22_pdnnForVBFRadion_VBF_resolved_Wjet(TChain *f)
   f->Add((filedir+"Scores_Wjets-7_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Wjets-8_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Wjets-9_resolved_VBF_VBFRadion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/VBF/VBFRadion/";
   f->Add((filedir+"Scores_Wjets-0_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_resolved_VBF_VBFRadion.root").c_str());
@@ -3777,18 +3779,18 @@ void myChain33_22_pdnnForVBFRadion_VBF_resolved_Wjet(TChain *f)
 void myChain33_22_pdnnForVBFRadion_VBF_resolved_Diboson(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/VBF/VBFRadion/";
   f->Add((filedir+"Scores_Diboson-0_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Diboson-3_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Diboson-4_resolved_VBF_VBFRadion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/VBF/VBFRadion/";
   f->Add((filedir+"Scores_Diboson-0_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Diboson-3_resolved_VBF_VBFRadion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/VBF/VBFRadion/";
   f->Add((filedir+"Scores_Diboson-0_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_resolved_VBF_VBFRadion.root").c_str());
@@ -3798,7 +3800,7 @@ void myChain33_22_pdnnForVBFRadion_VBF_resolved_Diboson(TChain *f)
 void myChain33_22_pdnnForVBFRadion_VBF_resolved_ttbar(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/VBF/VBFRadion/";
   f->Add((filedir+"Scores_ttbar-0_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_ttbar-1_resolved_VBF_VBFRadion.root").c_str());
@@ -3810,7 +3812,7 @@ void myChain33_22_pdnnForVBFRadion_VBF_resolved_ttbar(TChain *f)
   f->Add((filedir+"Scores_ttbar-7_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_ttbar-8_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_ttbar-9_resolved_VBF_VBFRadion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/VBF/VBFRadion/";
   f->Add((filedir+"Scores_ttbar-0_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_ttbar-11_resolved_VBF_VBFRadion.root").c_str());
@@ -3826,7 +3828,7 @@ void myChain33_22_pdnnForVBFRadion_VBF_resolved_ttbar(TChain *f)
   f->Add((filedir+"Scores_ttbar-7_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_ttbar-8_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_ttbar-9_resolved_VBF_VBFRadion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/VBF/VBFRadion/";
   f->Add((filedir+"Scores_ttbar-0_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_ttbar-11_resolved_VBF_VBFRadion.root").c_str());
@@ -3848,17 +3850,17 @@ void myChain33_22_pdnnForVBFRadion_VBF_resolved_ttbar(TChain *f)
 void myChain33_22_pdnnForVBFRadion_VBF_resolved_stop(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/VBF/VBFRadion/";
   f->Add((filedir+"Scores_stop-0_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_stop-1_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_stop-2_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_stop-3_resolved_VBF_VBFRadion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/VBF/VBFRadion/";
   f->Add((filedir+"Scores_stop-0_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_stop-1_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_stop-2_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_stop-3_resolved_VBF_VBFRadion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/VBF/VBFRadion/";
   f->Add((filedir+"Scores_stop-0_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_stop-1_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_stop-2_resolved_VBF_VBFRadion.root").c_str());
@@ -3869,7 +3871,7 @@ void myChain33_22_pdnnForVBFRadion_VBF_resolved_stop(TChain *f)
 void myChain33_22_pdnnForVBFRadion_VBF_resolved_data(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/VBF/VBFRadion/";
   f->Add((filedir+"Scores_data15-0_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_data15-10_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_data15-11_resolved_VBF_VBFRadion.root").c_str());
@@ -3955,7 +3957,7 @@ void myChain33_22_pdnnForVBFRadion_VBF_resolved_data(TChain *f)
   f->Add((filedir+"Scores_data16-7_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_data16-8_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_data16-9_resolved_VBF_VBFRadion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/VBF/VBFRadion/";
   f->Add((filedir+"Scores_data17-0_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_data17-10_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_data17-11_resolved_VBF_VBFRadion.root").c_str());
@@ -4017,7 +4019,7 @@ void myChain33_22_pdnnForVBFRadion_VBF_resolved_data(TChain *f)
   f->Add((filedir+"Scores_data17-7_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_data17-8_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_data17-9_resolved_VBF_VBFRadion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/VBF/VBFRadion/";
   f->Add((filedir+"Scores_data18-0_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_data18-10_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_data18-11_resolved_VBF_VBFRadion.root").c_str());
@@ -4098,18 +4100,18 @@ void myChain33_22_pdnnForVBFRadion_VBF_resolved_data(TChain *f)
 void myChain33_22_pdnnForVBFRadion_VBF_resolved_VBFRadion(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/VBF/VBFRadion/";
   f->Add((filedir+"Scores_VBFRadion-0_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_VBFRadion-1_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_VBFRadion-2_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_VBFRadion-3_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_VBFRadion-4_resolved_VBF_VBFRadion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/VBF/VBFRadion/";
   f->Add((filedir+"Scores_VBFRadion-0_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_VBFRadion-1_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_VBFRadion-2_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_VBFRadion-3_resolved_VBF_VBFRadion.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFRadion/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/VBF/VBFRadion/";
   f->Add((filedir+"Scores_VBFRadion-0_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_VBFRadion-1_resolved_VBF_VBFRadion.root").c_str());
   f->Add((filedir+"Scores_VBFRadion-2_resolved_VBF_VBFRadion.root").c_str());
@@ -4119,7 +4121,7 @@ void myChain33_22_pdnnForVBFRadion_VBF_resolved_VBFRadion(TChain *f)
 void myChain33_22_pdnnForHVTWZ_ggF_merged_Zjet(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/ggF/HVTWZ/";
   f->Add((filedir+"Scores_Zjets-0_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_merged_ggF_HVTWZ.root").c_str());
@@ -4148,7 +4150,7 @@ void myChain33_22_pdnnForHVTWZ_ggF_merged_Zjet(TChain *f)
   f->Add((filedir+"Scores_Zjets-7_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-8_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-9_merged_ggF_HVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/ggF/HVTWZ/";
   f->Add((filedir+"Scores_Zjets-0_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_merged_ggF_HVTWZ.root").c_str());
@@ -4179,7 +4181,7 @@ void myChain33_22_pdnnForHVTWZ_ggF_merged_Zjet(TChain *f)
   f->Add((filedir+"Scores_Zjets-7_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-8_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-9_merged_ggF_HVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/ggF/HVTWZ/";
   f->Add((filedir+"Scores_Zjets-0_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_merged_ggF_HVTWZ.root").c_str());
@@ -4217,7 +4219,7 @@ void myChain33_22_pdnnForHVTWZ_ggF_merged_Zjet(TChain *f)
 void myChain33_22_pdnnForHVTWZ_ggF_merged_Wjet(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/ggF/HVTWZ/";
   f->Add((filedir+"Scores_Wjets-0_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_merged_ggF_HVTWZ.root").c_str());
@@ -4236,7 +4238,7 @@ void myChain33_22_pdnnForHVTWZ_ggF_merged_Wjet(TChain *f)
   f->Add((filedir+"Scores_Wjets-7_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-8_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-9_merged_ggF_HVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/ggF/HVTWZ/";
   f->Add((filedir+"Scores_Wjets-0_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_merged_ggF_HVTWZ.root").c_str());
@@ -4254,7 +4256,7 @@ void myChain33_22_pdnnForHVTWZ_ggF_merged_Wjet(TChain *f)
   f->Add((filedir+"Scores_Wjets-7_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-8_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-9_merged_ggF_HVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/ggF/HVTWZ/";
   f->Add((filedir+"Scores_Wjets-0_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_merged_ggF_HVTWZ.root").c_str());
@@ -4292,18 +4294,18 @@ void myChain33_22_pdnnForHVTWZ_ggF_merged_Wjet(TChain *f)
 void myChain33_22_pdnnForHVTWZ_ggF_merged_Diboson(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/ggF/HVTWZ/";
   f->Add((filedir+"Scores_Diboson-0_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-3_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-4_merged_ggF_HVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/ggF/HVTWZ/";
   f->Add((filedir+"Scores_Diboson-0_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-3_merged_ggF_HVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/ggF/HVTWZ/";
   f->Add((filedir+"Scores_Diboson-0_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_merged_ggF_HVTWZ.root").c_str());
@@ -4313,7 +4315,7 @@ void myChain33_22_pdnnForHVTWZ_ggF_merged_Diboson(TChain *f)
 void myChain33_22_pdnnForHVTWZ_ggF_merged_ttbar(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/ggF/HVTWZ/";
   f->Add((filedir+"Scores_ttbar-0_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-1_merged_ggF_HVTWZ.root").c_str());
@@ -4325,7 +4327,7 @@ void myChain33_22_pdnnForHVTWZ_ggF_merged_ttbar(TChain *f)
   f->Add((filedir+"Scores_ttbar-7_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-8_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-9_merged_ggF_HVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/ggF/HVTWZ/";
   f->Add((filedir+"Scores_ttbar-0_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-11_merged_ggF_HVTWZ.root").c_str());
@@ -4341,7 +4343,7 @@ void myChain33_22_pdnnForHVTWZ_ggF_merged_ttbar(TChain *f)
   f->Add((filedir+"Scores_ttbar-7_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-8_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-9_merged_ggF_HVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/ggF/HVTWZ/";
   f->Add((filedir+"Scores_ttbar-0_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-11_merged_ggF_HVTWZ.root").c_str());
@@ -4363,17 +4365,17 @@ void myChain33_22_pdnnForHVTWZ_ggF_merged_ttbar(TChain *f)
 void myChain33_22_pdnnForHVTWZ_ggF_merged_stop(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/ggF/HVTWZ/";
   f->Add((filedir+"Scores_stop-0_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-1_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-2_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-3_merged_ggF_HVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/ggF/HVTWZ/";
   f->Add((filedir+"Scores_stop-0_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-1_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-2_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-3_merged_ggF_HVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/ggF/HVTWZ/";
   f->Add((filedir+"Scores_stop-0_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-1_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-2_merged_ggF_HVTWZ.root").c_str());
@@ -4384,7 +4386,7 @@ void myChain33_22_pdnnForHVTWZ_ggF_merged_stop(TChain *f)
 void myChain33_22_pdnnForHVTWZ_ggF_merged_data(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/ggF/HVTWZ/";
   f->Add((filedir+"Scores_data15-0_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_data15-10_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_data15-11_merged_ggF_HVTWZ.root").c_str());
@@ -4470,7 +4472,7 @@ void myChain33_22_pdnnForHVTWZ_ggF_merged_data(TChain *f)
   f->Add((filedir+"Scores_data16-7_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_data16-8_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_data16-9_merged_ggF_HVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/ggF/HVTWZ/";
   f->Add((filedir+"Scores_data17-0_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_data17-10_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_data17-11_merged_ggF_HVTWZ.root").c_str());
@@ -4532,7 +4534,7 @@ void myChain33_22_pdnnForHVTWZ_ggF_merged_data(TChain *f)
   f->Add((filedir+"Scores_data17-7_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_data17-8_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_data17-9_merged_ggF_HVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/ggF/HVTWZ/";
   f->Add((filedir+"Scores_data18-0_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_data18-10_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_data18-11_merged_ggF_HVTWZ.root").c_str());
@@ -4613,19 +4615,19 @@ void myChain33_22_pdnnForHVTWZ_ggF_merged_data(TChain *f)
 void myChain33_22_pdnnForHVTWZ_ggF_merged_HVTWZ(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/ggF/HVTWZ/";
   f->Add((filedir+"Scores_HVTWZ-0_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_HVTWZ-1_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_HVTWZ-2_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_HVTWZ-3_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_HVTWZ-4_merged_ggF_HVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/ggF/HVTWZ/";
   f->Add((filedir+"Scores_HVTWZ-0_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_HVTWZ-1_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_HVTWZ-2_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_HVTWZ-3_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_HVTWZ-4_merged_ggF_HVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/ggF/HVTWZ/";
   f->Add((filedir+"Scores_HVTWZ-0_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_HVTWZ-1_merged_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_HVTWZ-2_merged_ggF_HVTWZ.root").c_str());
@@ -4634,7 +4636,7 @@ void myChain33_22_pdnnForHVTWZ_ggF_merged_HVTWZ(TChain *f)
 void myChain33_22_pdnnForHVTWZ_ggF_resolved_Zjet(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/ggF/HVTWZ/";
   f->Add((filedir+"Scores_Zjets-0_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_resolved_ggF_HVTWZ.root").c_str());
@@ -4663,7 +4665,7 @@ void myChain33_22_pdnnForHVTWZ_ggF_resolved_Zjet(TChain *f)
   f->Add((filedir+"Scores_Zjets-7_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-8_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-9_resolved_ggF_HVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/ggF/HVTWZ/";
   f->Add((filedir+"Scores_Zjets-0_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_resolved_ggF_HVTWZ.root").c_str());
@@ -4694,7 +4696,7 @@ void myChain33_22_pdnnForHVTWZ_ggF_resolved_Zjet(TChain *f)
   f->Add((filedir+"Scores_Zjets-7_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-8_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-9_resolved_ggF_HVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/ggF/HVTWZ/";
   f->Add((filedir+"Scores_Zjets-0_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_resolved_ggF_HVTWZ.root").c_str());
@@ -4732,7 +4734,7 @@ void myChain33_22_pdnnForHVTWZ_ggF_resolved_Zjet(TChain *f)
 void myChain33_22_pdnnForHVTWZ_ggF_resolved_Wjet(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/ggF/HVTWZ/";
   f->Add((filedir+"Scores_Wjets-0_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_resolved_ggF_HVTWZ.root").c_str());
@@ -4751,7 +4753,7 @@ void myChain33_22_pdnnForHVTWZ_ggF_resolved_Wjet(TChain *f)
   f->Add((filedir+"Scores_Wjets-7_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-8_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-9_resolved_ggF_HVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/ggF/HVTWZ/";
   f->Add((filedir+"Scores_Wjets-0_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_resolved_ggF_HVTWZ.root").c_str());
@@ -4769,7 +4771,7 @@ void myChain33_22_pdnnForHVTWZ_ggF_resolved_Wjet(TChain *f)
   f->Add((filedir+"Scores_Wjets-7_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-8_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-9_resolved_ggF_HVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/ggF/HVTWZ/";
   f->Add((filedir+"Scores_Wjets-0_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_resolved_ggF_HVTWZ.root").c_str());
@@ -4807,18 +4809,18 @@ void myChain33_22_pdnnForHVTWZ_ggF_resolved_Wjet(TChain *f)
 void myChain33_22_pdnnForHVTWZ_ggF_resolved_Diboson(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/ggF/HVTWZ/";
   f->Add((filedir+"Scores_Diboson-0_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-3_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-4_resolved_ggF_HVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/ggF/HVTWZ/";
   f->Add((filedir+"Scores_Diboson-0_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-3_resolved_ggF_HVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/ggF/HVTWZ/";
   f->Add((filedir+"Scores_Diboson-0_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_resolved_ggF_HVTWZ.root").c_str());
@@ -4828,7 +4830,7 @@ void myChain33_22_pdnnForHVTWZ_ggF_resolved_Diboson(TChain *f)
 void myChain33_22_pdnnForHVTWZ_ggF_resolved_ttbar(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/ggF/HVTWZ/";
   f->Add((filedir+"Scores_ttbar-0_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-1_resolved_ggF_HVTWZ.root").c_str());
@@ -4840,7 +4842,7 @@ void myChain33_22_pdnnForHVTWZ_ggF_resolved_ttbar(TChain *f)
   f->Add((filedir+"Scores_ttbar-7_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-8_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-9_resolved_ggF_HVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/ggF/HVTWZ/";
   f->Add((filedir+"Scores_ttbar-0_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-11_resolved_ggF_HVTWZ.root").c_str());
@@ -4856,7 +4858,7 @@ void myChain33_22_pdnnForHVTWZ_ggF_resolved_ttbar(TChain *f)
   f->Add((filedir+"Scores_ttbar-7_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-8_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-9_resolved_ggF_HVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/ggF/HVTWZ/";
   f->Add((filedir+"Scores_ttbar-0_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-11_resolved_ggF_HVTWZ.root").c_str());
@@ -4878,17 +4880,17 @@ void myChain33_22_pdnnForHVTWZ_ggF_resolved_ttbar(TChain *f)
 void myChain33_22_pdnnForHVTWZ_ggF_resolved_stop(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/ggF/HVTWZ/";
   f->Add((filedir+"Scores_stop-0_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-1_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-2_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-3_resolved_ggF_HVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/ggF/HVTWZ/";
   f->Add((filedir+"Scores_stop-0_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-1_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-2_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-3_resolved_ggF_HVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/ggF/HVTWZ/";
   f->Add((filedir+"Scores_stop-0_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-1_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-2_resolved_ggF_HVTWZ.root").c_str());
@@ -4899,7 +4901,7 @@ void myChain33_22_pdnnForHVTWZ_ggF_resolved_stop(TChain *f)
 void myChain33_22_pdnnForHVTWZ_ggF_resolved_data(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/ggF/HVTWZ/";
   f->Add((filedir+"Scores_data15-0_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_data15-10_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_data15-11_resolved_ggF_HVTWZ.root").c_str());
@@ -4985,7 +4987,7 @@ void myChain33_22_pdnnForHVTWZ_ggF_resolved_data(TChain *f)
   f->Add((filedir+"Scores_data16-7_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_data16-8_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_data16-9_resolved_ggF_HVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/ggF/HVTWZ/";
   f->Add((filedir+"Scores_data17-0_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_data17-10_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_data17-11_resolved_ggF_HVTWZ.root").c_str());
@@ -5047,7 +5049,7 @@ void myChain33_22_pdnnForHVTWZ_ggF_resolved_data(TChain *f)
   f->Add((filedir+"Scores_data17-7_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_data17-8_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_data17-9_resolved_ggF_HVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/ggF/HVTWZ/";
   f->Add((filedir+"Scores_data18-0_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_data18-10_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_data18-11_resolved_ggF_HVTWZ.root").c_str());
@@ -5128,19 +5130,19 @@ void myChain33_22_pdnnForHVTWZ_ggF_resolved_data(TChain *f)
 void myChain33_22_pdnnForHVTWZ_ggF_resolved_HVTWZ(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/ggF/HVTWZ/";
   f->Add((filedir+"Scores_HVTWZ-0_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_HVTWZ-1_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_HVTWZ-2_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_HVTWZ-3_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_HVTWZ-4_resolved_ggF_HVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/ggF/HVTWZ/";
   f->Add((filedir+"Scores_HVTWZ-0_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_HVTWZ-1_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_HVTWZ-2_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_HVTWZ-3_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_HVTWZ-4_resolved_ggF_HVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/ggF/HVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/ggF/HVTWZ/";
   f->Add((filedir+"Scores_HVTWZ-0_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_HVTWZ-1_resolved_ggF_HVTWZ.root").c_str());
   f->Add((filedir+"Scores_HVTWZ-2_resolved_ggF_HVTWZ.root").c_str());
@@ -5149,7 +5151,7 @@ void myChain33_22_pdnnForHVTWZ_ggF_resolved_HVTWZ(TChain *f)
 void myChain33_22_pdnnForVBFHVTWZ_VBF_merged_Zjet(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_Zjets-0_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_merged_VBF_VBFHVTWZ.root").c_str());
@@ -5178,7 +5180,7 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_merged_Zjet(TChain *f)
   f->Add((filedir+"Scores_Zjets-7_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-8_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-9_merged_VBF_VBFHVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_Zjets-0_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_merged_VBF_VBFHVTWZ.root").c_str());
@@ -5209,7 +5211,7 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_merged_Zjet(TChain *f)
   f->Add((filedir+"Scores_Zjets-7_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-8_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-9_merged_VBF_VBFHVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_Zjets-0_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_merged_VBF_VBFHVTWZ.root").c_str());
@@ -5247,7 +5249,7 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_merged_Zjet(TChain *f)
 void myChain33_22_pdnnForVBFHVTWZ_VBF_merged_Wjet(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_Wjets-0_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_merged_VBF_VBFHVTWZ.root").c_str());
@@ -5266,7 +5268,7 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_merged_Wjet(TChain *f)
   f->Add((filedir+"Scores_Wjets-7_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-8_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-9_merged_VBF_VBFHVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_Wjets-0_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_merged_VBF_VBFHVTWZ.root").c_str());
@@ -5284,7 +5286,7 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_merged_Wjet(TChain *f)
   f->Add((filedir+"Scores_Wjets-7_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-8_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-9_merged_VBF_VBFHVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_Wjets-0_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_merged_VBF_VBFHVTWZ.root").c_str());
@@ -5322,18 +5324,18 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_merged_Wjet(TChain *f)
 void myChain33_22_pdnnForVBFHVTWZ_VBF_merged_Diboson(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_Diboson-0_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-3_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-4_merged_VBF_VBFHVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_Diboson-0_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-3_merged_VBF_VBFHVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_Diboson-0_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_merged_VBF_VBFHVTWZ.root").c_str());
@@ -5343,7 +5345,7 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_merged_Diboson(TChain *f)
 void myChain33_22_pdnnForVBFHVTWZ_VBF_merged_ttbar(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_ttbar-0_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-1_merged_VBF_VBFHVTWZ.root").c_str());
@@ -5355,7 +5357,7 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_merged_ttbar(TChain *f)
   f->Add((filedir+"Scores_ttbar-7_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-8_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-9_merged_VBF_VBFHVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_ttbar-0_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-11_merged_VBF_VBFHVTWZ.root").c_str());
@@ -5371,7 +5373,7 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_merged_ttbar(TChain *f)
   f->Add((filedir+"Scores_ttbar-7_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-8_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-9_merged_VBF_VBFHVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_ttbar-0_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-11_merged_VBF_VBFHVTWZ.root").c_str());
@@ -5393,17 +5395,17 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_merged_ttbar(TChain *f)
 void myChain33_22_pdnnForVBFHVTWZ_VBF_merged_stop(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_stop-0_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-1_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-2_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-3_merged_VBF_VBFHVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_stop-0_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-1_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-2_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-3_merged_VBF_VBFHVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_stop-0_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-1_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-2_merged_VBF_VBFHVTWZ.root").c_str());
@@ -5414,7 +5416,7 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_merged_stop(TChain *f)
 void myChain33_22_pdnnForVBFHVTWZ_VBF_merged_data(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_data15-0_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_data15-10_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_data15-11_merged_VBF_VBFHVTWZ.root").c_str());
@@ -5500,7 +5502,7 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_merged_data(TChain *f)
   f->Add((filedir+"Scores_data16-7_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_data16-8_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_data16-9_merged_VBF_VBFHVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_data17-0_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_data17-10_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_data17-11_merged_VBF_VBFHVTWZ.root").c_str());
@@ -5562,7 +5564,7 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_merged_data(TChain *f)
   f->Add((filedir+"Scores_data17-7_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_data17-8_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_data17-9_merged_VBF_VBFHVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_data18-0_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_data18-10_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_data18-11_merged_VBF_VBFHVTWZ.root").c_str());
@@ -5643,15 +5645,15 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_merged_data(TChain *f)
 void myChain33_22_pdnnForVBFHVTWZ_VBF_merged_VBFHVTWZ(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/merged/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_VBFHVTWZ-0_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_VBFHVTWZ-1_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_VBFHVTWZ-2_merged_VBF_VBFHVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/merged/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_VBFHVTWZ-0_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_VBFHVTWZ-1_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_VBFHVTWZ-2_merged_VBF_VBFHVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/merged/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/merged/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_VBFHVTWZ-0_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_VBFHVTWZ-1_merged_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_VBFHVTWZ-2_merged_VBF_VBFHVTWZ.root").c_str());
@@ -5659,7 +5661,7 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_merged_VBFHVTWZ(TChain *f)
 void myChain33_22_pdnnForVBFHVTWZ_VBF_resolved_Zjet(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_Zjets-0_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_resolved_VBF_VBFHVTWZ.root").c_str());
@@ -5688,7 +5690,7 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_resolved_Zjet(TChain *f)
   f->Add((filedir+"Scores_Zjets-7_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-8_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-9_resolved_VBF_VBFHVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_Zjets-0_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_resolved_VBF_VBFHVTWZ.root").c_str());
@@ -5719,7 +5721,7 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_resolved_Zjet(TChain *f)
   f->Add((filedir+"Scores_Zjets-7_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-8_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-9_resolved_VBF_VBFHVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_Zjets-0_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-10_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Zjets-11_resolved_VBF_VBFHVTWZ.root").c_str());
@@ -5757,7 +5759,7 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_resolved_Zjet(TChain *f)
 void myChain33_22_pdnnForVBFHVTWZ_VBF_resolved_Wjet(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_Wjets-0_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_resolved_VBF_VBFHVTWZ.root").c_str());
@@ -5776,7 +5778,7 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_resolved_Wjet(TChain *f)
   f->Add((filedir+"Scores_Wjets-7_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-8_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-9_resolved_VBF_VBFHVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_Wjets-0_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_resolved_VBF_VBFHVTWZ.root").c_str());
@@ -5794,7 +5796,7 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_resolved_Wjet(TChain *f)
   f->Add((filedir+"Scores_Wjets-7_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-8_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-9_resolved_VBF_VBFHVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_Wjets-0_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-10_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Wjets-11_resolved_VBF_VBFHVTWZ.root").c_str());
@@ -5832,18 +5834,18 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_resolved_Wjet(TChain *f)
 void myChain33_22_pdnnForVBFHVTWZ_VBF_resolved_Diboson(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_Diboson-0_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-3_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-4_resolved_VBF_VBFHVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_Diboson-0_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-3_resolved_VBF_VBFHVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_Diboson-0_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-1_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_Diboson-2_resolved_VBF_VBFHVTWZ.root").c_str());
@@ -5853,7 +5855,7 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_resolved_Diboson(TChain *f)
 void myChain33_22_pdnnForVBFHVTWZ_VBF_resolved_ttbar(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_ttbar-0_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-1_resolved_VBF_VBFHVTWZ.root").c_str());
@@ -5865,7 +5867,7 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_resolved_ttbar(TChain *f)
   f->Add((filedir+"Scores_ttbar-7_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-8_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-9_resolved_VBF_VBFHVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_ttbar-0_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-11_resolved_VBF_VBFHVTWZ.root").c_str());
@@ -5881,7 +5883,7 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_resolved_ttbar(TChain *f)
   f->Add((filedir+"Scores_ttbar-7_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-8_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-9_resolved_VBF_VBFHVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_ttbar-0_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-10_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_ttbar-11_resolved_VBF_VBFHVTWZ.root").c_str());
@@ -5903,17 +5905,17 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_resolved_ttbar(TChain *f)
 void myChain33_22_pdnnForVBFHVTWZ_VBF_resolved_stop(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_stop-0_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-1_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-2_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-3_resolved_VBF_VBFHVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_stop-0_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-1_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-2_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-3_resolved_VBF_VBFHVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_stop-0_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-1_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_stop-2_resolved_VBF_VBFHVTWZ.root").c_str());
@@ -5924,7 +5926,7 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_resolved_stop(TChain *f)
 void myChain33_22_pdnnForVBFHVTWZ_VBF_resolved_data(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_data15-0_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_data15-10_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_data15-11_resolved_VBF_VBFHVTWZ.root").c_str());
@@ -6010,7 +6012,7 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_resolved_data(TChain *f)
   f->Add((filedir+"Scores_data16-7_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_data16-8_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_data16-9_resolved_VBF_VBFHVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_data17-0_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_data17-10_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_data17-11_resolved_VBF_VBFHVTWZ.root").c_str());
@@ -6072,7 +6074,7 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_resolved_data(TChain *f)
   f->Add((filedir+"Scores_data17-7_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_data17-8_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_data17-9_resolved_VBF_VBFHVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_data18-0_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_data18-10_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_data18-11_resolved_VBF_VBFHVTWZ.root").c_str());
@@ -6153,15 +6155,15 @@ void myChain33_22_pdnnForVBFHVTWZ_VBF_resolved_data(TChain *f)
 void myChain33_22_pdnnForVBFHVTWZ_VBF_resolved_VBFHVTWZ(TChain *f)
 {
   std::string filedir;
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16a_VV_2lep_"+typeStr+"/resolved/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_VBFHVTWZ-0_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_VBFHVTWZ-1_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_VBFHVTWZ-2_resolved_VBF_VBFHVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16d_VV_2lep_"+typeStr+"/resolved/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_VBFHVTWZ-0_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_VBFHVTWZ-1_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_VBFHVTWZ-2_resolved_VBF_VBFHVTWZ.root").c_str());
-  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_PFlow_UFO_Scores/resolved/VBF/VBFHVTWZ/";
+  filedir = "/nfs/kloe/einstein4/HDBS/ReaderOutput/reader_mc16e_VV_2lep_"+typeStr+"/resolved/VBF/VBFHVTWZ/";
   f->Add((filedir+"Scores_VBFHVTWZ-0_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_VBFHVTWZ-1_resolved_VBF_VBFHVTWZ.root").c_str());
   f->Add((filedir+"Scores_VBFHVTWZ-2_resolved_VBF_VBFHVTWZ.root").c_str());
