@@ -1,11 +1,10 @@
 Code to produce the (parametric) Deep Neural Network ((P)DNN) for the HDBS analysis.
 The necessary steps are described below. Each one of them corresponds to a python script in this project. Moreover, two .txt file and a python file imported by all the others are included and described below. A log file is saved at the end of each step.
 
-# Configuration_JETCOLLECTION_TAG.txt
-A different configuration file for each jet collection is stored.
-This text file contains the configuration parameters:
-- ntuplePath: path to the flat ntuples produced by the CxAODReader
-- dfPath: path to the pandas data frames into which the flat ntuples are converted by the saveToPkl.py file. At each step different subdirectories will be automatically created (if not already existing) where the results will be saved. The subdirectories will be created according to the type of data (jet collection, signal, background, analysis, channel, preselectionCuts) and neural network (DNN or PDNN) considered.
+# Configuration_{JETCOLLECTION}_TAG.txt
+A different configuration file for each jet collection (example: TCC, UFO-PFLOW) and tag (example: r33-24) is available. The most recent (default) configuration is Configuration_r33-24.ini (UFO-PFLOW is the default, not mentioned, jet collection). This text file contains all the configuration parameters that are used by all python scripts:
+- ntuplePath: path to the flat ntuples produced by the CxAODReader (in input to saveToPkl)
+- dfPath: path to the output pkl files where pandas data frames obtained by flat ntuples are converted by saveToPkl.py. In the following steps different subdirectories will be automatically created (if not already existing) where the results will be saved. The subdirectories will be created according to the type of data (jet collection, signal, background, analysis, channel, preselectionCuts) and neural network (DNN or PDNN) considered.
 - inputFiles: list of names of the input .root files that will be converted into pandas dataframes (without absolute path and extension)
 - backgrounds: list of the different backgrounds in the input files
 - signals: list of the different signals in the input files
