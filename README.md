@@ -1,6 +1,12 @@
 Code to produce the (parametric) Deep Neural Network ((P)DNN) for the HDBS analysis.
 The necessary steps are described below. Each one of them corresponds to a python script in this project. Moreover, two .txt file and a python file imported by all the others are included and described below. A log file is saved at the end of each step.
 
+# Setup the software environment
+```
+setupATLAS
+source /cvmfs/sft.cern.ch/lcg/views/LCG_103/x86_64-centos7-gcc11-opt/setup.sh
+```
+
 # Configuration_{JETCOLLECTION}_TAG.txt
 A different configuration file for each jet collection (example: TCC, UFO-PFLOW) and tag (example: r33-24) is available. The most recent (default) configuration is Configuration_r33-24.ini (UFO-PFLOW is the default, not mentioned, jet collection). This text file contains all the configuration parameters that are used by all python scripts:
 - ntuplePath: path to the flat ntuples produced by the CxAODReader (in input to saveToPkl)
