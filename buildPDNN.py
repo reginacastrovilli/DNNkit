@@ -1,8 +1,10 @@
 from Functions import *
 from keras.utils.vis_utils import plot_model
-import eli5
-from eli5.permutation_importance import get_score_importances
+#import eli5
+#from eli5.permutation_importance import get_score_importances
 from keras import backend
+from termcolor import colored, cprint
+
 
 ### Setting a seed for reproducibility
 #tf.random.set_seed(1234)
@@ -30,17 +32,19 @@ if 'WZ' in signalLabel:
     signalLabel = signal.replace('WZ', '')
 
 ### Reading the configuration file
-ntuplePath, dfPath, InputFeatures = ReadConfig(tag, analysis, signal, configFile)
+#ntuplePath, dfPath, InputFeatures = ReadConfig(tag, analysis, signal, configFile)
+ntuplePath, dfPath, InputFeatures = ReadConfig(tag, analysis, signal)
 #inputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/ggFVBF' + '/' + signal + '/' + background + '/'# + 'tmp/' # + '_fullStat/'
 #inputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + signal + '/' + background + '/'# + 'tmp/' # + '_fullStat/'
 inputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + signal + '/' + background + '/'# + 'tmp/' # + '_fullStat/' <<<<<----- questo
-print(Fore.GREEN + 'Input files directory: ' + inputDir)
+cprint('Input files directory: ' + inputDir,'green')
 #inputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + signal + '/' + background + '/' + 'ggFsameStatAsVBF/'# + 'tmp/' # + '_fullStat/'
 outputFileCommonName = NN + '_' + analysis + '_' + channel + '_' + preselectionCuts + '_' + signal + '_' + background
 
 ### Creating the output directory and the logFile
 #outputDir = inputDir + NN + '_trainSet' + str(trainSet)#0'# + '_3'# + '/withDNNscore'# + '/test1'# + '/3layers'#'/ggFsameStatAsVBF'# + '/withDNNscore' #'/DNNScore_Z'# + '/' + preselectionCuts # + '_halfStat'
 #outputDir = inputDir + NN + '_2layers48nodesSwish_mptetaphi/withoutLowWeights'
+configFile='Configuration_r33-24.ini'
 if 'mptetaphi' in configFile:
     outtt = 'mptetaphi'
 else:
@@ -48,8 +52,8 @@ else:
 outputDir = inputDir + NN + '_2layers48nodesSwish_' + outtt + '/10feb2023'
 #outputDir = inputDir + NN + '_3layers48nodesRelu_deltaphi'
 #outputDir = inputDir + NN + 'hpOptimization'
-print(format('Output directory: ' + Fore.GREEN + outputDir), checkCreateDir(outputDir))
-print(Fore.GREEN + 'Input files directory: ' + inputDir)
+cprint('Output directory: ' + outputDir + checkCreateDir(outputDir), 'green')
+cprint('Input files directory: ' + inputDir, 'green')
 
 logFileName = outputDir + '/logFile_' + outputFileCommonName + '.txt'
 logFile = open(logFileName, 'w')
@@ -84,7 +88,7 @@ rawTestBkg = data_test[data_test['isSignal'] == 0].shape[0]
 MCtest = round(sum(data_test['weight']), 1)
 MCtestSignal = round(sum(data_test[data_test['isSignal'] == 1]['weight']), 1)
 MCtestBkg = round(sum(data_test[data_test['isSignal'] == 0]['weight']), 1)
-print(Fore.BLUE + 'Number of train events: ' + str(rawTrain) + ' (' + str(rawTrainSignal) + ' signal and ' + str(rawTrainBkg) + ' background), with MC weights: ' + str(MCtrain) + ' (' + str(MCtrainSignal) + ' signal and ' + str(MCtrainBkg) + ' background)\nNumber of test events: ' + str(rawTest) + ' (' + str(rawTestSignal) + ' signal and ' + str(rawTestBkg) + ' background), with MC weights: ' + str(MCtest) + ' (' + str(MCtestSignal) + ' signal and ' + str(MCtestBkg) + ' background)')
+cprint('Number of train events: ' + str(rawTrain) + ' (' + str(rawTrainSignal) + ' signal and ' + str(rawTrainBkg) + ' background), with MC weights: ' + str(MCtrain) + ' (' + str(MCtrainSignal) + ' signal and ' + str(MCtrainBkg) + ' background)\nNumber of test events: ' + str(rawTest) + ' (' + str(rawTestSignal) + ' signal and ' + str(rawTestBkg) + ' background), with MC weights: ' + str(MCtest) + ' (' + str(MCtestSignal) + ' signal and ' + str(MCtestBkg) + ' background)', 'blue')
 logString = '\nNumber of train events: ' + str(rawTrain) + ' (' + str(rawTrainSignal) + ' signal and ' + str(rawTrainBkg) + ' background), with MC weights: ' + str(MCtrain) + ' (' + str(MCtrainSignal) + ' signal and ' + str(MCtrainBkg) + ' background)\nNumber of test events: ' + str(rawTest) + ' (' + str(rawTestSignal) + ' signal and ' + str(rawTestBkg) + ' background), with MC weights: ' + str(MCtest) + ' (' + str(MCtestSignal) + ' signal and ' + str(MCtestBkg) + ' background)'
 logFile.write(logString)
 logInfo += logString
@@ -94,7 +98,7 @@ data_train = scaleTrainTestDataset(data_train, inputDir, InputFeatures, 'train')
 data_test = scaleTrainTestDataset(data_test, inputDir, InputFeatures, 'test')
 outputFileName = outputDir + '/variables.json'
 shutil.copyfile(inputDir + 'variables.json', outputFileName)
-print(Fore.GREEN + 'Copied variables file to ' + outputFileName)
+cprint('Copied variables file to ' + outputFileName, 'green')
 
 ### Saving input features, truth and train weights vectors
 X_train, y_train, w_train = extractFeatures(data_train, InputFeatures)
@@ -116,7 +120,7 @@ else:
     model.compile(loss = Loss, optimizer = Optimizer, weighted_metrics = Metrics)
     NNdiagramName = outputDir + '/trainedModel.png'
     plot_model(model, to_file = NNdiagramName, show_shapes = True, show_layer_names = True)
-    print(Fore.GREEN + 'Saved ' + NNdiagramName)
+    cprint('Saved ' + NNdiagramName, 'green')
     logString = '\nNumber of nodes: ' + str(numberOfNodes) + '\nNumber of hidden layers: ' + str(numberOfLayers) + '\nDropout: ' + str(dropout) + '\nLoss: ' + Loss + '\nOptimizer: ' + str(Optimizer) + '\nInitial learning rate: ' + str(learningRate) + '\nMetrics: ' + str(Metrics) + '\nActivation function in hidden layers: ' + activationFunction
     logFile.write(logString)
     logInfo += logString
@@ -131,7 +135,7 @@ for iLoop in range(loop):
         outputFileCommonName += '_loop' + str(iLoop)
     else: 
         outputDirLoop = outputDir
-    print(format('Output directory: ' + Fore.GREEN + outputDirLoop), checkCreateDir(outputDirLoop))
+    cprint('Output directory: ' + outputDirLoop + checkCreateDir(outputDirLoop), 'green')
 
     if not doTrain:
         model = LoadNN('/nfs/kloe/einstein4/HDBS_new/NNoutput/r33-24/merged/ggF/none/Radion/all/PDNN_2layers48nodesSwish_deltaphi/')#outputDirLoop)
@@ -140,7 +144,7 @@ for iLoop in range(loop):
 
         ### Trainig the pDNN if not doStudyLRpatience, otherwise first choose the patience and then run this script withouth doStudyLRpatience
         if not doStudyLRpatience:
-            print(Fore.BLUE + 'Training the ' + NN + ' -- loop ' + str(iLoop) + ' out of ' + str(loop - 1))
+            cprint('Training the ' + NN + ' -- loop ' + str(iLoop) + ' out of ' + str(loop - 1), 'blue')
             modelMetricsHistory, callbacksList, patienceEarlyStopping, monitorEarlyStopping, patienceLR, deltaLR, minLR = TrainNN(X_train, y_train, w_train, numberOfEpochs, batchSize, validationFraction, model, doStudyLRpatience)#, iLoop, loop)
             logString = '\nCallbacks list: ' + str(callbacksList) + '\nPatience early stopping: ' + str(patienceEarlyStopping) + '\nMonitor early stopping: ' + monitorEarlyStopping + '\nLearning rate decrease at each step: ' + str(deltaLR) + '\nPatience learning rate: ' + str(patienceLR) + '\nMinimum learning rate: ' + str(minLR)
             logFile.write(logString)
@@ -160,7 +164,7 @@ for iLoop in range(loop):
 
     if doTest:
         ### Evaluating the performance of the PDNN on the test sample and writing results to the log file
-        print(Fore.BLUE + 'Evaluating the performance of the ' + NN)
+        cprint('Evaluating the performance of the ' + NN, 'blue')
         testLoss, testAccuracy = EvaluatePerformance(model, X_test, y_test, w_test, batchSize) ### using train_weight
 
         if iLoop == 0:
@@ -185,9 +189,9 @@ for iLoop in range(loop):
     if loop != 0:
         logFileLoop = outputDirLoop + '/logFile_' + outputFileCommonName + '.txt'
         shutil.move(logFileName, logFileLoop)
-        print(Fore.GREEN + 'Saved ' + logFileLoop)
+        cprint('Saved ' + logFileLoop, 'green')
     else:
-        print(Fore.GREEN + 'Saved ' + logFileName)
+        cprint('Saved ' + logFileName, 'green')
     
     if doTest == False:
         exit()
@@ -225,12 +229,12 @@ for iLoop in range(loop):
 
         ### Checking whether there are test events with the selected mass
         if unscaledMass not in unscaledTestMassPointsList:
-            print(Fore.RED + 'No test signal with mass ' + str(unscaledMass))
+            cprint('No test signal with mass ' + str(unscaledMass),'red')
             continue
 
         ### Creating new output directory and log file
         newOutputDir = outputDirLoop + '/' + str(int(unscaledMass))
-        print(format('Output directory: ' + Fore.GREEN + newOutputDir), checkCreateDir(newOutputDir))
+        cprint('Output directory: ' + checkCreateDir(newOutputDir), 'green')
         newLogFileName = newOutputDir + '/logFile_' + outputFileCommonName + '_' + str(unscaledMass) + '.txt'
         newLogFile = open(newLogFileName, 'w')
 
@@ -246,6 +250,7 @@ for iLoop in range(loop):
         X_test_bkg = np.asarray(data_test_bkg[InputFeatures].values).astype(np.float32)
         wMC_test_bkg = np.array(data_test_bkg['weight'])
 
+        '''
         if doFeaturesRanking:
             X = np.concatenate((X_test_signal_mass, X_test_bkg))
             y = np.concatenate((np.ones(len(X_test_signal_mass)), np.zeros(len(X_test_bkg))))
@@ -263,6 +268,7 @@ for iLoop in range(loop):
             deltasDict[unscaledMass] = relative_feature_importances
             print(deltasDict)
             #FeaturesRanking(model, X_test_signal_mass, X_test_bkg, deltasDict, InputFeatures, signal, analysis, channel, outputDir, outputFileCommonName, drawPlots)
+        '''
 
         if doStatisticTest:
             if iLoop == 0:
@@ -273,7 +279,7 @@ for iLoop in range(loop):
                 #print(data_test_20)
                 #print(data_test_20.shape)
                 data_test_20.to_pickle(outputDir + '/20events_test.pkl')
-                print(Fore.GREEN + 'Saved ' + outputDir + '/20events_test.pkl')
+                cprint('Saved ' + outputDir + '/20events_test.pkl', 'green')
                 #print(yhat_20)
                 #print(len(yhat_20))
             else:
@@ -310,7 +316,7 @@ for iLoop in range(loop):
         ### Computing ROC AUC
         fpr, tpr, thresholds = roc_curve(y_test_mass, yhat_test_mass)#, sample_weight = wMC_test_mass)
         roc_auc = auc(fpr, tpr)
-        print(format(Fore.BLUE + 'ROC_AUC: ' + str(roc_auc)))
+        cprint('ROC_AUC: ' + str(roc_auc), 'blue')
         newLogFile.write('\nROC_AUC: ' + str(roc_auc))
         if doStatisticTest:
             AUCfile.write(str(roc_auc) + '\n')
@@ -332,7 +338,7 @@ for iLoop in range(loop):
         
         ### Closing the newLogFile
         newLogFile.close()
-        print(Fore.GREEN + 'Saved ' + newLogFileName)
+        cprint('Saved ' + newLogFileName, 'green')
 
         if drawPlots and doFeaturesRanking:
             PlotFeaturesRanking(InputFeatures, deltasDict, newOutputDir, outputFileCommonName)
@@ -348,8 +354,8 @@ for iLoop in range(loop):
 
 if doStatisticTest:
     AUCfile.close()
-    print(Fore.GREEN + 'Saved ' + outputDir + '/AUCvalues.txt')
+    cprint('Saved ' + outputDir + '/AUCvalues.txt', 'green')
     lossFile.close()
-    print(Fore.GREEN + 'Saved ' + outputDir + '/lossValues.txt')
+    cprint('Saved ' + outputDir + '/lossValues.txt', 'green')
     scoresFile.close()
-    print(Fore.GREEN + 'Saved ' + outputDir + '/scoresValues.txt')
+    cprint('Saved ' + outputDir + '/scoresValues.txt', 'green')

@@ -1,37 +1,64 @@
 #!/bin/bash 
 
+
 dryRun=false
-maind=$PWD 
+defaultMode="buildPDNN"
+
+if [ $# -le 2 ]
+then
+  echo "$0 requires at least tree arguents: Usage is "
+  echo "$0 [analysis] [channel] [signal] [mode=buildPDNN]"
+  echo "possible values for [analysis] = merged, resolved"
+  echo "possible values for [channel]  = ggF,    VBF"
+  echo "possible values for [signal]   = Radion, RSG, HVTWZ"
+  echo "possible values for [mode]     = buildPDNN (=default), buildDataset, splitDataSet, ... "
+  exit
+fi
+#
+
 
 analysis=$1
 channel=$2
 signal=$3
+if [ $# -ge 4 ]
+then
+  mode=$4
+else
+  mode=${defaultMode}
+fi
 #
-tag=`date +"%Y%m%d_%H_%M_%S"`
-echo 'tag = ' ${tag}
-mynode=`cat /proc/sys/kernel/hostname`
-mynodes=${mynode:0:5}
-wdir=/scratch/spagnolo/${tag}
-echo 'wdir = ' ${wdir}
-#
-mkdir ${wdir}
-log=log_${analysis}_${channel}_${signal}_${tag}
-cp *.py ${wdir}/
-cp *.ini ${wdir}/
-cd ${wdir}
-echo 'Now working in ' $PWD
-echo 'Files available ...'
-ls -al 
-echo 'Now working in ' $PWD >${log}
-echo 'Files available ...' >>${log}
-ls -al >>${log}
-myCmd="python buildPDNN.py -a ${analysis} -c ${channel} -s ${signal} --doTrain 1 > ${log}"
-echo $myCmd
+
+echo "$0 ===================================== dryRun = " ${dryRun} 
+xfound=false
+for x in "buildDataset" "splitDataset" "buildPDNN" "buildDNN" "SaveToPkl"; do
+    if [ ${x} == ${mode} ]; then
+	xfound=true
+    fi
+done
+if [ "$xfound" = false ]; then
+    echo "mode = " ${mode} " does not correspond to a known script to run - stop here"
+    exit
+fi
+
+echo "analysis / channel / signal:       " ${analysis} ${channel} ${signal} 
+echo "for macro:                         " ${mode}".py"
+echo "running in:                        " $PWD
+
+myCmd="python buildPDNN.py -a ${analysis} -c ${channel} -s ${signal} --doTrain 1"
+
+if [ ${mode} == "buildPDNN" ]; then
+  myCmd="python buildPDNN.py -a ${analysis} -c ${channel} -s ${signal} --doTrain 1"
+else 
+  myCmd="python ${mode}.py -a ${analysis} -c ${channel} -s ${signal}"
+fi 
+
+#myCmd="python splitDataset.py -a ${analysis} -c ${channel} -s ${signal}"
+echo "About to launch < " $myCmd " >"
 if [ "$dryRun" = false ]; then
    echo "We are here ... "
    $myCmd 
 fi
-ln -sf ${PWD}/${log} ${maind}/logs/${log}_${mynodes}
+#ln -sf ${PWD}/${log} ${maind}/logs/${log}_${mynodes}
     
 
 
