@@ -17,6 +17,10 @@ patienceValue = 5
 
 ### Reading the command line
 tag, analysis, channel, preselectionCuts, background, trainingFraction, signal, numberOfNodes, numberOfLayers, numberOfEpochs, validationFraction, dropout, testMass, doTrain, doTest, loop, doHpOptimization, drawPlots, trainSet, doStudyLRpatience, configFile = ReadArgParser()
+cprint('Job configuration has been read / initialized: ', 'green')
+cprint('Number of iterations requested               : ' +str(loop))
+
+
 originsBkgTest = list(background.split('_'))
 
 drawPlots = True
@@ -48,8 +52,9 @@ configFile='Configuration_r33-24.ini'
 if 'mptetaphi' in configFile:
     outtt = 'mptetaphi'
 else:
-    outtt = 'deltaphi'
-outputDir = inputDir + NN + '_2layers48nodesSwish_' + outtt + '/10feb2023'
+    outtt = 'mptetaDPhi'
+outputDir = inputDir + NN + '_2layers48nodesSwish/' + outtt + '/loop'
+#outputDir = inputDir + NN + '_2layers48nodesSwish_' + outtt + '/DeltaPhi'
 #outputDir = inputDir + NN + '_3layers48nodesRelu_deltaphi'
 #outputDir = inputDir + NN + 'hpOptimization'
 cprint('Output directory: ' + outputDir + checkCreateDir(outputDir), 'green')
@@ -128,11 +133,17 @@ else:
 if doStudyLRpatience:
     studyLRpatience(X_train, y_train, w_train, numberOfEpochs, batchSize, validationFraction, model, outputDir, outputFileCommonName)
 
-for iLoop in range(loop):
 
-    if iLoop != 0:
+
+loopOffset=0    
+cprint('Going to enter the loop of '+str(loop)+' iterations', 'green')
+for iL in range(loop):
+
+    iLoop=iL+loopOffset
+    outputFileCommonNameLoop = outputFileCommonName
+    if loop != 0:
         outputDirLoop = outputDir + '/loop' + str(iLoop)
-        outputFileCommonName += '_loop' + str(iLoop)
+        outputFileCommonNameLoop += '_loop' + str(iLoop)
     else: 
         outputDirLoop = outputDir
     cprint('Output directory: ' + outputDirLoop + checkCreateDir(outputDirLoop), 'green')
@@ -144,7 +155,7 @@ for iLoop in range(loop):
 
         ### Trainig the pDNN if not doStudyLRpatience, otherwise first choose the patience and then run this script withouth doStudyLRpatience
         if not doStudyLRpatience:
-            cprint('Training the ' + NN + ' -- loop ' + str(iLoop) + ' out of ' + str(loop - 1), 'blue')
+            cprint('Training the ' + NN + ' -- loop ' + str( iLoop+1 ) + ' out of ' + str(loop), 'blue')
             modelMetricsHistory, callbacksList, patienceEarlyStopping, monitorEarlyStopping, patienceLR, deltaLR, minLR = TrainNN(X_train, y_train, w_train, numberOfEpochs, batchSize, validationFraction, model, doStudyLRpatience)#, iLoop, loop)
             logString = '\nCallbacks list: ' + str(callbacksList) + '\nPatience early stopping: ' + str(patienceEarlyStopping) + '\nMonitor early stopping: ' + monitorEarlyStopping + '\nLearning rate decrease at each step: ' + str(deltaLR) + '\nPatience learning rate: ' + str(patienceLR) + '\nMinimum learning rate: ' + str(minLR)
             logFile.write(logString)
@@ -160,6 +171,7 @@ for iLoop in range(loop):
         ### Saving to files
         #model.load_weights('tmp/checkpoint/model.hdf5')
         SaveModel(model, outputDirLoop, NN)
+        cprint("Model saved in dir "+outputDirLoop)
         plot_model(model, to_file = 'trainedModel.png', show_shapes = True, show_layer_names = True)
 
     if doTest:
@@ -167,31 +179,23 @@ for iLoop in range(loop):
         cprint('Evaluating the performance of the ' + NN, 'blue')
         testLoss, testAccuracy = EvaluatePerformance(model, X_test, y_test, w_test, batchSize) ### using train_weight
 
-        if iLoop == 0:
-            logString = '\nTest loss: ' + str(testLoss) + '\nTest accuracy: ' + str(testAccuracy)
-            logFile.write(logString)
-            logInfo += logString
+        logString = '\nTest loss: ' + str(testLoss) + '\nTest accuracy: ' + str(testAccuracy)
+        logFile.write(logString)
+        logInfo += logString
             
     else:
         testLoss = testAccuracy = None
 
     ### Drawing accuracy and loss
     if drawPlots and doTrain: ### THINK
-        DrawLoss(modelMetricsHistory, testLoss, patienceEarlyStopping, outputDirLoop, NN, analysis, channel, preselectionCuts, signal, background, outputFileCommonName)
-        DrawAccuracy(modelMetricsHistory, testAccuracy, patienceEarlyStopping, outputDirLoop, NN, analysis, channel, preselectionCuts, signal, background, outputFileCommonName)
+        DrawLoss(modelMetricsHistory, testLoss, patienceEarlyStopping, outputDirLoop, NN, analysis, channel, preselectionCuts, signal, background, outputFileCommonNameLoop)
+        DrawAccuracy(modelMetricsHistory, testAccuracy, patienceEarlyStopping, outputDirLoop, NN, analysis, channel, preselectionCuts, signal, background, outputFileCommonNameLoop)
     '''
     if iLoop == 0:
         logFile.close()
         print(Fore.GREEN + 'Saved ' + logFileName)
     '''
     
-    logFile.close()
-    if loop != 0:
-        logFileLoop = outputDirLoop + '/logFile_' + outputFileCommonName + '.txt'
-        shutil.move(logFileName, logFileLoop)
-        cprint('Saved ' + logFileLoop, 'green')
-    else:
-        cprint('Saved ' + logFileName, 'green')
     
     if doTest == False:
         exit()
@@ -224,25 +228,29 @@ for iLoop in range(loop):
 
     for unscaledMass in testMass:
 
-        if unscaledMass != 1000:# and unscaledMass != 600:
-            continue
+        #if unscaledMass != 1000:# and unscaledMass != 600:
+        #    continue
 
         ### Checking whether there are test events with the selected mass
         if unscaledMass not in unscaledTestMassPointsList:
             cprint('No test signal with mass ' + str(unscaledMass),'red')
             continue
 
+        
         ### Creating new output directory and log file
         newOutputDir = outputDirLoop + '/' + str(int(unscaledMass))
         cprint('Output directory: ' + checkCreateDir(newOutputDir), 'green')
-        newLogFileName = newOutputDir + '/logFile_' + outputFileCommonName + '_' + str(unscaledMass) + '.txt'
-        newLogFile = open(newLogFileName, 'w')
+        #newLogFileName = newOutputDir + '/logFile_' + outputFileCommonNameLoop + '_' + str(unscaledMass) + '.txt'
+        #newLogFile = open(newLogFileName, 'w')
+        newLogFile = logFile
+        
 
         ### Selecting only test signal events with the same mass value and saving them as an array
         data_test_signal_mass = data_test_signal[data_test_signal['unscaledMass'] == unscaledMass]
         scaledMass = list(set(list(data_test_signal_mass['mass'])))[0]
         X_test_signal_mass = np.asarray(data_test_signal_mass[InputFeatures].values).astype(np.float32)
-        newLogFile.write(logInfo + '\nNumber of test signal events with mass ' + str(int(unscaledMass)) + ' GeV: ' + str(len(X_test_signal_mass)))
+        #newLogFile.write(logInfo + '\nNumber of test signal events with mass ' + str(int(unscaledMass)) + ' GeV: ' + str(len(X_test_signal_mass)))
+        newLogFile.write('\nNumber of test signal events with mass ' + str(int(unscaledMass)) + ' GeV: ' + str(len(X_test_signal_mass)))
         wMC_test_signal_mass = np.array(data_test_signal_mass['weight'])
 
         ### Assigning the same mass value to test background events and saving them as an array
@@ -310,7 +318,7 @@ for iLoop in range(loop):
         y_test_mass = np.concatenate((np.ones(len(yhat_test_signal_mass)), np.zeros(len(yhat_test_bkg_mass))))
         wMC_test_mass = np.concatenate((wMC_test_signal_mass, wMC_test_bkg))
 
-        TNR, FPR, FNR, TPR = DrawCM(yhat_test_mass, y_test_mass, wMC_test_mass, newOutputDir, unscaledMass, background, outputFileCommonName, analysis, channel, preselectionCuts, signal, drawPlots)
+        TNR, FPR, FNR, TPR = DrawCM(yhat_test_mass, y_test_mass, wMC_test_mass, newOutputDir, unscaledMass, background, outputFileCommonNameLoop, analysis, channel, preselectionCuts, signal, drawPlots)
         newLogFile.write('\nTNR (TN/N): ' + str(TNR) + '\nFPR (FP/N): ' + str(FPR) + '\nFNR (FN/P): ' + str(FNR) + '\nTPR (TP/P): ' + str(TPR))
 
         ### Computing ROC AUC
@@ -333,15 +341,15 @@ for iLoop in range(loop):
         '''
 
         ### Plotting ROC, background rejection and scores
-        WP, bkgRejWP = DrawROCbkgRejectionScores(fpr, tpr, roc_auc, newOutputDir, NN, unscaledMass, analysis, channel, preselectionCuts, signal, background, outputFileCommonName, yhat_train_signal_mass, yhat_test_signal_mass, yhat_train_bkg_mass, yhat_test_bkg_mass, wMC_train_signal_mass, wMC_test_signal_mass, wMC_train_bkg, wMC_test_bkg, drawPlots)
+        WP, bkgRejWP = DrawROCbkgRejectionScores(fpr, tpr, roc_auc, newOutputDir, NN, unscaledMass, analysis, channel, preselectionCuts, signal, background, outputFileCommonNameLoop, yhat_train_signal_mass, yhat_test_signal_mass, yhat_train_bkg_mass, yhat_test_bkg_mass, wMC_train_signal_mass, wMC_test_signal_mass, wMC_train_bkg, wMC_test_bkg, drawPlots)
         newLogFile.write('\nWorking points: ' + str(WP) + '\nBackground rejection at each working point: ' + str(bkgRejWP))
         
         ### Closing the newLogFile
-        newLogFile.close()
-        cprint('Saved ' + newLogFileName, 'green')
+        ##newLogFile.close()
+        ##cprint('Saved ' + newLogFileName, 'green')
 
         if drawPlots and doFeaturesRanking:
-            PlotFeaturesRanking(InputFeatures, deltasDict, newOutputDir, outputFileCommonName)
+            PlotFeaturesRanking(InputFeatures, deltasDict, newOutputDir, outputFileCommonNameLoop)
 
         ### Plotting calibration curve on signal (train + test) scores
         #CalibrationCurves(wMC_test_signal_mass, wMC_train_signal_mass, yhat_test_signal_mass, yhat_train_signal_mass, wMC_test_bkg, wMC_train_bkg, yhat_test_bkg_mass, yhat_train_bkg_mass, unscaledMass, newOutputDir, outputFileCommonName)
@@ -351,6 +359,19 @@ for iLoop in range(loop):
 
     #if (len(testMass) > 1):
     #    DrawRejectionVsMass(testMass, WP, bkgRej90, bkgRej94, bkgRej97, bkgRej99, outputDir, analysis, channel, preselectionCuts, signal, background, outputFileCommonName) 
+
+
+    #### at the end of the loop 
+    logFile.close()
+    if loop != 0:
+        logFileLoop = outputDirLoop + '/logFile_' + outputFileCommonNameLoop + '.txt'
+        shutil.move(logFileName, logFileLoop)
+        cprint('Logfile ' + logFileLoop + ' saved', 'green')
+        logFile = open(logFileName, 'w')
+    else:
+        cprint('Saved ' + logFileName, 'green')
+
+logFile.close()
 
 if doStatisticTest:
     AUCfile.close()
