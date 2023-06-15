@@ -30,8 +30,9 @@ tmpOutputDir = localPath + analysis + '/' + channel + '/' + preselectionCuts# + 
 print(format('First output directory (for selected events organized by process): ' + tmpOutputDir), checkCreateDir(tmpOutputDir))
 tmpFileCommonName = tag + '_' + analysis + '_' + channel + '_' + preselectionCuts
 
+tmpOutputDir1 = localPath + analysis + '/' + channel + '/MELAvar' # + '/ggFandVBF'# + '/ggFVBF'
 
-outputDir = tmpOutputDir + '/' + signal + '/' + background
+outputDir = tmpOutputDir1 + '/' + signal + '/' + background
 print(format('Second output directory (dataframe mixing signal and background, Input for training and test): ' + outputDir), checkCreateDir(outputDir))
 fileCommonName = tmpFileCommonName + '_' + signal + '_' + background
 logFileName = outputDir + '/logFile_buildDataset_' + fileCommonName + '.txt'
