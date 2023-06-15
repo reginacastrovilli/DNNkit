@@ -1,6 +1,6 @@
 ### Assigning script names to variables
 fileNameSaveToPkl = 'saveToPkl.py'
-fileNameBuildDataSet = 'buildDataset.py'
+fileNameBuildDataSet = 'buildDataset'
 fileNameComputeSignificance = 'computeSignificance.py'#'computeSignificanceScores.py' #'computeSignificance.py'#New.py' ##2
 fileNameSplitDataSet = 'splitDataset.py'
 fileNameBuildDNN = 'buildDNN.py'
