@@ -142,7 +142,7 @@ for iL in range(loop):
     iLoop=iL+loopOffset
     outputFileCommonNameLoop = outputFileCommonName
     if loop != 0:
-        outputDirLoop = outputDir + '/loop' + str(iLoop)
+        outputDirLoop = outputDir + '/loopShuffleRndm' + str(iLoop)
         outputFileCommonNameLoop += '_loop' + str(iLoop)
     else: 
         outputDirLoop = outputDir
@@ -155,7 +155,14 @@ for iL in range(loop):
 
         ### Trainig the pDNN if not doStudyLRpatience, otherwise first choose the patience and then run this script withouth doStudyLRpatience
         if not doStudyLRpatience:
-            cprint('Training the ' + NN + ' -- loop ' + str( iLoop+1 ) + ' out of ' + str(loop), 'blue')
+            cprint('Training the ' + NN + ' -- loop ' + str( iL+1 ) + ' out of ' + str(loop) + ' current loop index = '+ str( iLoop ) , 'blue')
+            if iL != 0:
+                cprint('Shuffling data_train to get a different training / validation set')
+                # --- this way, each training will be obtained with a different train set (the validation set being the latest 20% fraction of a randomized training set)'
+                # --- notice: this randomization from iteration to iteration works if the ShufflingData method does not set fixed seeds !!!! 
+                data_train = ShufflingData(data_train)
+                X_train, y_train, w_train = extractFeatures(data_train, InputFeatures)
+                
             modelMetricsHistory, callbacksList, patienceEarlyStopping, monitorEarlyStopping, patienceLR, deltaLR, minLR = TrainNN(X_train, y_train, w_train, numberOfEpochs, batchSize, validationFraction, model, doStudyLRpatience)#, iLoop, loop)
             logString = '\nCallbacks list: ' + str(callbacksList) + '\nPatience early stopping: ' + str(patienceEarlyStopping) + '\nMonitor early stopping: ' + monitorEarlyStopping + '\nLearning rate decrease at each step: ' + str(deltaLR) + '\nPatience learning rate: ' + str(patienceLR) + '\nMinimum learning rate: ' + str(minLR)
             logFile.write(logString)

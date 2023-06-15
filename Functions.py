@@ -355,7 +355,8 @@ def CutMasses(dataFrame, analysis):
 import sklearn.utils
 
 def ShufflingData(dataFrame):
-    dataFrame = sklearn.utils.shuffle(dataFrame, random_state = 123)
+    dataFrame = sklearn.utils.shuffle(dataFrame)
+    #dataFrame = sklearn.utils.shuffle(dataFrame, random_state = 123)
     #dataFrame = dataFrame.reset_index(drop = True)
     return dataFrame
 
