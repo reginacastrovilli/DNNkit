@@ -13,6 +13,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import math
 from termcolor import colored, cprint
+from MELAvariables import computeDerivedMELAVariables
 #print(sys.executable, ' '.join(map(shlex.quote, sys.argv)))
 
 overwriteDataFrame = False
@@ -20,8 +21,14 @@ overwriteDataFrame = False
 ### Reading the command line
 tag, analysis, channel, preselectionCuts, signal, background, drawPlots = ReadArgParser()
 
+if analysis == 'merged':
+    cprint('MELA variables are not defined for the regime ' + analysis + ': stopping here', 'red')
+    quit()
+
+
 ### Reading from config file
 ntuplePath, InputFeatures, dfPath, variablesToSave, variablesToDerive, backgroundsList = ReadConfig(tag, analysis, signal)
+print('derived variables are ', variablesToDerive)
 
 #localPath = "/scratch/stefania/selectedEventsDF/"
 localPath=dfPath
@@ -189,13 +196,17 @@ for origin in inputOrigins:
 #for i in range(len(listOfcounters)):
 #    cprint('index, name, counter, wcounter ' + str(i) + ' ' + listOfcNames[i] + ' ' + str(listOfcounters[i]) + ' ' + str(listOfwcounters[i]) ,  'green')
 
+cprint('\nOriginal df has '+str(len(dataFrame.columns))+' coloumns', 'green')
 cprint('\nGoing to compute derived variables')
 ### Computing derived variables
-dataFrame = computeDerivedVariables(variablesToDerive, dataFrame, signal, analysis)
+dataFrame = computeDerivedMELAVariables(variablesToDerive, dataFrame)
+cprint('\nDerived variables are computed: df has now '+str(len(dataFrame.columns))+' coloumns', 'green')
 
 cprint('\nRedefining the DF to hold only relavant and new variables')
 ### Selecting in the dataframe only the variables relevant for the next steps
 dataFrame = dataFrame[variablesToSave + variablesToDerive]
+cprint('\nDf has now '+str(len(dataFrame.columns))+' coloumns', 'green')
+#quit()
 
 cprint('\nGoint to delete events with extreme scores')
 ### Removing events with high absoulte MC weights

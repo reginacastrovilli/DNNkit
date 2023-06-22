@@ -1,5 +1,6 @@
 ### Assigning script names to variables
 fileNameSaveToPkl = 'saveToPkl.py'
+fileNameBuildDataSetMELA = 'buildDataset_MELA'
 fileNameBuildDataSet = 'buildDataset'
 fileNameComputeSignificance = 'computeSignificance.py'#'computeSignificanceScores.py' #'computeSignificance.py'#New.py' ##2
 fileNameSplitDataSet = 'splitDataset.py'
@@ -9,6 +10,10 @@ fileNameBuildPDNN = 'buildPDNN.py'#'buildPDNNscores.py'#'buildPDNN.py'
 fileName6 = 'tuningHyperparameters.py'
 fileNamePlots = 'tests/drawPlots.py'
 fileNameCreateScoresBranch = 'addScoreBranch.py'#'createScoresBranch.py'
+
+
+### importing basic user functions 
+import MELAvariables
 
 ### Reading the command line
 from argparse import ArgumentParser
@@ -178,7 +183,7 @@ def ReadConfigSaveToPkl(tag):
     #shutil.copyfile(configurationFile, dfPath + configurationFile)
     return ntuplePath, inputFiles, dfPath, rootBranchSubSample
 
-def ReadConfig(tag, analysis, signal):
+def ReadConfig(tag, analysis, signal, preselection='none'):
 #def ReadConfig(tag, analysis, signal, configFile):
     configurationFile = 'Configuration_' + tag + '.ini'
     #configurationFile = configFile
@@ -198,6 +203,7 @@ def ReadConfig(tag, analysis, signal):
         variablesToDerive = ast.literal_eval(config.get('config', 'variablesToDeriveMerged'))
         variablesToSave = ast.literal_eval(config.get('config', 'variablesToSaveMerged'))
     elif analysis == 'resolved':
+        variablesMELA   = ast.literal_eval(config.get('config', 'VariablesMELA_Resolved'))
         #if signal == 'Radion' or signal == 'RSG':
         if 'Radion' in signal or 'RSG' in signal:
             InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesResolvedRadionRSG'))
@@ -207,6 +213,8 @@ def ReadConfig(tag, analysis, signal):
             InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesResolvedHVT'))
             variablesToDerive = ast.literal_eval(config.get('config', 'variablesToDeriveResolvedHVT'))
             variablesToSave = ast.literal_eval(config.get('config', 'variablesToSaveResolvedHVT'))
+    if fileNameBuildDataSetMELA in sys.argv[0]:
+        return ntuplePath, InputFeatures, dfPath, variablesToSave, variablesMELA, backgroundsList        
     if fileNameBuildDataSet in sys.argv[0]:
         return ntuplePath, InputFeatures, dfPath, variablesToSave, variablesToDerive, backgroundsList
     if fileNameComputeSignificance in sys.argv[0] or fileNameCreateScoresBranch in sys.argv[0] or 'computeSignificance_2.py' in sys.argv[0]:
@@ -2673,6 +2681,8 @@ def computeDerivedVariables(variablesToDerive, dataFrame, signal, analysis):
         #dataFrame = dataFrame.assign({variableToDerive: newColumn})
         dataFrame[variableToDerive] = newColumn
     return dataFrame
+
+
 
 
 ### Training the newtork with different learning rate and saving plots of learning rate, accuracy and loss vs epochs
