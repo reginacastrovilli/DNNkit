@@ -6,7 +6,7 @@ fileNameComputeSignificance = 'computeSignificance.py'#'computeSignificanceScore
 fileNameSplitDataSet = 'splitDataset.py'
 fileNameBuildDNN = 'buildDNN.py'
 #fileNameBuildPDNN = 'buildPDNNtuningHyp.py'
-fileNameBuildPDNN = 'buildPDNN.py'#'buildPDNNscores.py'#'buildPDNN.py'
+fileNameBuildPDNN = 'buildPDNN'#.py'#'buildPDNNscores.py'#'buildPDNN.py'
 fileName6 = 'tuningHyperparameters.py'
 fileNamePlots = 'tests/drawPlots.py'
 fileNameCreateScoresBranch = 'addScoreBranch.py'#'createScoresBranch.py'
@@ -206,13 +206,21 @@ def ReadConfig(tag, analysis, signal, preselection='none'):
         variablesMELA   = ast.literal_eval(config.get('config', 'VariablesMELA_Resolved'))
         #if signal == 'Radion' or signal == 'RSG':
         if 'Radion' in signal or 'RSG' in signal:
-            InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesResolvedRadionRSG'))
+            if preselection=='MELAvar':
+                InputFeatures = ast.literal_eval(config.get('config', 'InputFeaturesResRRwithMELA'))
+            else:
+                InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesResolvedRadionRSG'))
             variablesToDerive = ast.literal_eval(config.get('config', 'variablesToDeriveResolvedRadionRSG'))
             variablesToSave = ast.literal_eval(config.get('config', 'variablesToSaveResolvedRadionRSG'))
         else:
-            InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesResolvedHVT'))
+            if preselection=='MELAvar':
+                InputFeatures = ast.literal_eval(config.get('config', 'InputFeaturesResHVTwithMELA'))
+            else:
+                InputFeatures = ast.literal_eval(config.get('config', 'inputFeaturesResolvedHVT'))
             variablesToDerive = ast.literal_eval(config.get('config', 'variablesToDeriveResolvedHVT'))
             variablesToSave = ast.literal_eval(config.get('config', 'variablesToSaveResolvedHVT'))
+        if preselection=='MELAvar':
+            InputFeatures +=  ast.literal_eval(config.get('config', 'VariablesMELA_Resolved'))
     if fileNameBuildDataSetMELA in sys.argv[0]:
         return ntuplePath, InputFeatures, dfPath, variablesToSave, variablesMELA, backgroundsList        
     if fileNameBuildDataSet in sys.argv[0]:
