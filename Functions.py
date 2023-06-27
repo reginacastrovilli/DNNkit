@@ -1678,7 +1678,6 @@ def defineVariableBins(bkgEvents, weightsBkgEvents, resolutionRangeLeft, resolut
         for bkg, weight in zip(bkgEventsResolutionArray, weightsBkgEventsResolutionArray):
             #print('bkg:', bkg)
             #print('weight:', weight)
-            #weightsSum += weight --> eventi bkg attesi secondo il MC che nei dati fluttuerà come sqrt(weightsSum) 
             weightsSumSquared += weight * weight # --> errore sulla predizione MC sul numero di eventi 
             weightsSum += weight
             if weightsSum <= 0:
@@ -1765,7 +1764,6 @@ def defineVariableBinsNew(bkgEvents, weightsBkgEvents, resolution, leftEdge, rig
     if feature == 'InvariantMass':# or feature == 'Scores':
         reachedLastElement = False
         for bkg, weight in zip(bkgEvents, weightsBkgEvents):
-            #weightsSum += weight --> eventi bkg attesi secondo il MC che nei dati fluttuerà come sqrt(weightsSum) 
             weightsSumSquared += weight * weight # --> errore sulla predizione MC sul numero di eventi 
             weightsSum += weight
             if weightsSum <= 0 and bkg != bkgEvents[len(bkgEvents) - 1]:
@@ -2265,8 +2263,8 @@ def SignalBackgroundScores(wMC_test, wMC_train, yhat_test, yhat_train):
     wMC = np.concatenate((wMC_test, wMC_train))
     yhat = np.concatenate((yhat_test, yhat_train))
     Nbins = np.linspace(0, 1, 51)
-    y, bins, _ = plt.hist(yhat, weights = wMC, bins = Nbins, histtype = 'step', lw = 2, color = 'blue', density = False) #, label = [r'Signal train + test']          
-    y = y / np.sum(wMC) ### perché density = False                                                                                                                    
+    y, bins, _ = plt.hist(yhat, weights = wMC, bins = Nbins, histtype = 'step', lw = 2, color = 'blue', density = False)
+    y = y / np.sum(wMC) ### perche' density = False                                                                                                                    
     print(y)
 
     ### Computing error on bin contents neglecting correlation between single bin content and whole histogram content                                                 
@@ -2287,8 +2285,8 @@ def SignalBackgroundScores(wMC_test, wMC_train, yhat_test, yhat_train):
             if iBin == len(bins) - 1:
                 break
 
-    ### fin qui ho y_signal_error che è un array con la somma dei quadrati dei pesi in ogni bin                                                                       
-    histo_error = np.sqrt(np.sum(y_error2)) ### l'errore su tutto l'histo è la somma degli errori in ogni bin                                                         
+    ### fin qui ho y_signal_error che e' un array con la somma dei quadrati dei pesi in ogni bin
+    histo_error = np.sqrt(np.sum(y_error2)) ### l'errore su tutto l'histo e' la somma degli errori in ogni bin                                                         
     t1 = 1 / sum(wMC)
     t2 = y_error2
     t3 = (y / sum(wMC)) **2
@@ -2732,12 +2730,11 @@ def significance(n,b):
     print(np.sqrt( (2*(n*np.log(n/b)+b-n)).sum() ))
     return np.sqrt( (2*(n*np.log(n/b)+b-n)).sum() )
 
-def rescaling_distr(yeld_bkg,yeld_sig,ϵ):
-    #return int_v(yeld_bkg+int_v(ϵ*yeld_sig)),int_v(yeld_bkg)
-    return yeld_bkg+ϵ*yeld_sig, yeld_bkg
+def rescaling_distr(yeld_bkg,yeld_sig,eps):
+    return yeld_bkg+eps*yeld_sig, yeld_bkg
 
-def compute_Z0(bkg_yeld,bkg_weights,sig_yeld,sig_weights,x_min,x_max,x,ϵ):
-    #b_inf=10
+def compute_Z0(bkg_yeld,bkg_weights,sig_yeld,sig_weights,x_min,x_max,x,eps):
+    #b_inf=10 ... prova ε
     if x==-1:
         yeld_bkg,_=np.histogram(bkg_yeld,bins=1,weights=bkg_weights)
         yeld_sig,_=np.histogram(sig_yeld,bins=1,weights=sig_weights)
@@ -2745,7 +2742,7 @@ def compute_Z0(bkg_yeld,bkg_weights,sig_yeld,sig_weights,x_min,x_max,x,ϵ):
         yeld_bkg,yeld_sig=derive_distr(bkg_yeld,bkg_weights,sig_yeld,sig_weights,x_min,x_max,x)
         
 #    print(x,yeld_bkg,yeld_sig)
-    n,b=rescaling_distr(yeld_bkg,yeld_sig,ϵ)
+    n,b=rescaling_distr(yeld_bkg,yeld_sig,eps)
 #    print('printing n,b from compute_Z0:', n,b)
 
     #if b.min()>b_inf:
@@ -2754,7 +2751,7 @@ def compute_Z0(bkg_yeld,bkg_weights,sig_yeld,sig_weights,x_min,x_max,x,ϵ):
     #    return 0,b.min()
     return significance(n,b), b.min()
 
-def compute_sigz0(bkg_yeld,bkg_weights,sig_yeld,sig_weights,ϵ,flag):
+def compute_sigz0(bkg_yeld,bkg_weights,sig_yeld,sig_weights,eps,flag):
     b_inf = 0.005 * sum(bkg_weights)
     a=min(bkg_yeld.min(),sig_yeld.min())
     b=max(sig_yeld.max(),bkg_yeld.max())
@@ -2772,7 +2769,7 @@ def compute_sigz0(bkg_yeld,bkg_weights,sig_yeld,sig_weights,ϵ,flag):
         x1=1. #b
     #print(x0,x1)
     for x in x_interval:
-        z,b=compute_Z0(bkg_yeld,bkg_weights,sig_yeld,sig_weights,x0,x1,x,ϵ)
+        z,b=compute_Z0(bkg_yeld,bkg_weights,sig_yeld,sig_weights,x0,x1,x,eps)
         Z0=np.append(Z0,z)
         bmin=np.append(bmin,b)
 
