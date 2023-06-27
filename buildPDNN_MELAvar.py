@@ -40,7 +40,11 @@ if 'WZ' in signalLabel:
 
 ### Reading the configuration file
 #ntuplePath, dfPath, InputFeatures = ReadConfig(tag, analysis, signal, configFile)
-ntuplePath, dfPath, InputFeatures = ReadConfig(tag, analysis, signal)
+ntuplePath, dfPath, InputFeatures = ReadConfig(tag, analysis, signal, preselectionCuts)
+cprint('Input features will be: '+str(InputFeatures),'green')
+quit()
+
+### Input directory 
 #inputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/ggFVBF' + '/' + signal + '/' + background + '/'# + 'tmp/' # + '_fullStat/'
 #inputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + signal + '/' + background + '/'# + 'tmp/' # + '_fullStat/'
 inputDir = dfPath + analysis + '/' + channel + '/' + preselectionCuts + '/' + signal + '/' + background + '/'# + 'tmp/' # + '_fullStat/' <<<<<----- questo

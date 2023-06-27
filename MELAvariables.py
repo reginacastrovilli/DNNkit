@@ -3,7 +3,7 @@ from math import acos
 from ROOT import TLorentzVector, TVector3
 import numpy as np
 import pandas as pd
-
+import time
 
 '''
 def computeDerivedMELAVariables(variablesToDerive, dataFrame, signal, analysis):
@@ -27,13 +27,17 @@ def computeDerivedMELAVariables(variablesToDerive, dataFrame, signal, analysis):
 def computeDerivedMELAVariables(MELAvarNames, df): # starting fom the dataframe
                                           
 
-    dfmela = pd.DataFrame(columns=MELAvarNames)
+    #dfmela = pd.DataFrame(columns=MELAvarNames)
+    dfmela = pd.DataFrame(np.random.randn(len(df), len(MELAvarNames)),columns=MELAvarNames)
 
     partonMass = 0.
     vl1 = TLorentzVector()
     vl2 = TLorentzVector()
     vj1 = TLorentzVector()
     vj2 = TLorentzVector()
+    curr_time = time.time()
+    start_time= curr_time
+    print("computeDerivedMELAVariables:: starting time is ",curr_time)
 
     for i in range(len(df)):
 
@@ -61,10 +65,18 @@ def computeDerivedMELAVariables(MELAvarNames, df): # starting fom the dataframe
         cthstr, phi, phi1, cth1, cth2, X_Y, X_Pt = getMELAvar(vl1, vl2, vj1, vj2)
         #dataframe.at[index,'column-name']='new value'
         dfmela.loc[i] = [cthstr, phi, phi1, cth1, cth2, X_Y, X_Pt]
-        if i%10000 == 0:
+        if i%100000 == 0:
             print("index i="+str(i)+" mela var = "+str(cthstr)+" "+str(phi)+" "+str(phi1)+" "+str(cth1)+" "+str(cth2)+" "+str(X_Y)+" "+str(X_Pt))
+            newtime = time.time()
+            dtime = newtime-curr_time
+            print("elapsed time (for 100000 events)= ",dtime)
+            curr_time=newtime
 
+
+    DT=(curr_time-start_time)/60. 
+    print('computeDerivedMELAVariables: variables computed for ',i,' events in ',DT, ' minutes')
     df_concat = pd.concat([df, dfmela], axis=1)
+    print('computeDerivedMELAVariables: input and new variables in a single concatenated DF ')
         
     return df_concat
     
